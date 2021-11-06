@@ -169,6 +169,8 @@ fn screenify(input: Pair<f64>, pixels: Pair<i64>) -> Pair<i16> {
 }
 
 pub trait Blittable {
+    fn set_targeted(&mut self, input: bool);
+    fn is_targeted(&self) -> bool;
     fn find_angle(&self, start: Pair<f64>, dest: Pair<f64>) -> f64 {
         // we now want to know:
         // what's the angle from the perspective of the ship?
@@ -180,29 +182,21 @@ pub trait Blittable {
     fn get_size(&self) -> f64;
     fn get_vertices(&self) -> &Vec<Polar>;
     fn get_color(&self) -> Option<Color>;
-    // remember that i store my vertices as polars,
-    // so that's where we're coming from
-    fn blit(
+    fn blit_vertices(
         &self,
+        vertices: &Vec<Polar>,
         canvas: &mut WindowCanvas,
         sdl: &Sdl,
         camera: &Camera,
+        filled: bool,
+        rotate: bool,
+        color: Option<Color>,
     ) -> Result<()> {
-        // this is where i shall plop my logic to blit the ship at the
-        // appropriate scale
-
-        // the end point is i have an array of pairs to blit
-        // first i have to discover what my radius in pixels is
-        // we have a constant called pixels_to_kilometers somewhere,
-        // let's dig that up
-        let dim = get_screen_size(sdl);
-        let pixels_per_km = camera.pixels_per_km(&dim);
-        //println!("pixels_per_km = {}", pixels_per_km);
+        let screen_dim = get_screen_size(sdl);
+        let pixels_per_km = camera.pixels_per_km(&screen_dim);
         let radius_in_km = self.get_size();
-        // so now we can find out our radius in pixels
-        // 1/km_per_pixel == pixel_per_km
         let radius_in_pixels = radius_in_km * pixels_per_km;
-        let dim2 = Pair {
+        let pixel_dim = Pair {
             x: radius_in_pixels as i64,
             y: radius_in_pixels as i64,
         };
@@ -210,13 +204,15 @@ pub trait Blittable {
         // we need to collect an array of polar coords
         let mut screen_x_vec = Vec::new();
         let mut screen_y_vec = Vec::new();
-        for polar in self.get_vertices().iter() {
+        for polar in vertices.iter() {
             let mut polar_mod = *polar;
-            polar_mod.angle += self.get_angle();
+            if rotate {
+                polar_mod.angle += self.get_angle();
+            }
             // our polars -> relative cartesian
             let relative_cart = polar_mod.as_cartesian();
             // then we need to convert them into screen cartesian
-            let screen_cart = screenify(relative_cart, dim2);
+            let screen_cart = screenify(relative_cart, pixel_dim);
             screen_x_vec.push(screen_cart.x);
             screen_y_vec.push(screen_cart.y);
         }
@@ -224,18 +220,14 @@ pub trait Blittable {
         // note that location is in km, relative to the world
         let location = self.get_location();
 
-        // we want to keep everything in km for now,
-        // our question is purely a km question:
-        // what is the min x/y of our screen?
         // and what is the max x/y? and is the ship within it?
-        let dim = get_screen_size(sdl);
         // TODO(ken): move this logic into camera?
         let camera_min = Pair {
-            x: camera.center.x - (camera.km_per_width(&dim) / 2.0),
+            x: camera.center.x - (camera.km_per_width(&screen_dim) / 2.0),
             y: camera.center.y - (camera.km_per_height / 2.0),
         };
         let camera_max = Pair {
-            x: camera.center.x + (camera.km_per_width(&dim) / 2.0),
+            x: camera.center.x + (camera.km_per_width(&screen_dim) / 2.0),
             y: camera.center.y + (camera.km_per_height / 2.0),
         };
         if location.x < camera_min.x
@@ -292,17 +284,72 @@ pub trait Blittable {
             *y += object_offset.y;
         }
 
-        let color;
-        if let Some(col) = self.get_color() {
-            color = col
+        let final_color;
+        // if we passed in a color explicitly, use that
+
+        if let Some(col) = color {
+            final_color = col;
+        } else if let Some(col) = self.get_color() {
+            final_color = col
         } else {
-            color = Color::RGB(255, 255, 255);
+            final_color = Color::RGB(255, 255, 255);
         }
         // then we blit with color
-        canvas
-            .filled_polygon(&screen_x_vec, &screen_y_vec, color)
-            .map_err(Error::msg)?;
+        if filled {
+            canvas
+                .filled_polygon(&screen_x_vec, &screen_y_vec, final_color)
+                .map_err(Error::msg)?;
+        } else {
+            canvas
+                .polygon(&screen_x_vec, &screen_y_vec, final_color)
+                .map_err(Error::msg)?;
+        }
+        Ok(())
+    }
+    // remember that i store my vertices as polars,
+    // so that's where we're coming from
+    fn blit(
+        &self,
+        canvas: &mut WindowCanvas,
+        sdl: &Sdl,
+        camera: &Camera,
+    ) -> Result<()> {
+        self.blit_vertices(
+            self.get_vertices(),
+            canvas,
+            sdl,
+            camera,
+            true,
+            true,
+            None,
+        );
+        if self.is_targeted() {
+            self.blit_target(canvas, sdl, camera)?;
+        }
 
+        Ok(())
+    }
+    fn blit_target(
+        &self,
+        canvas: &mut WindowCanvas,
+        sdl: &Sdl,
+        camera: &Camera,
+    ) -> Result<()> {
+        let square_vertices = vec![
+            Polar::new(1.0, 0.25 * PI),
+            Polar::new(1.0, 0.75 * PI),
+            Polar::new(1.0, 1.25 * PI),
+            Polar::new(1.0, 1.75 * PI),
+        ];
+        self.blit_vertices(
+            &square_vertices,
+            canvas,
+            sdl,
+            camera,
+            false,
+            false,
+            Some(Color::RGB(255, 0, 0)),
+        );
         Ok(())
     }
 }
@@ -316,6 +363,7 @@ struct World {
     asteroids: Vec<Asteroid>,
     last_think: Option<DateTime<Utc>>,
     bullet_bank: BulletBank,
+    target_index: Option<usize>,
 }
 
 impl World {
@@ -333,6 +381,7 @@ impl World {
             ..Default::default()
         }
     }
+
     fn spawn_ship(&mut self, location: Pair<f64>) {
         self.ship = Ship::new(location, Some(Color::RGB(0, 255, 255)), 0.01);
     }
@@ -355,11 +404,15 @@ impl World {
     }
 
     fn turn_left(&mut self) {
-        self.ship.turn_left();
+        //self.ship.turn_left();
     }
 
     fn turn_right(&mut self) {
-        self.ship.turn_right();
+        //self.ship.turn_right();
+    }
+
+    fn orbit_target(&mut self) {
+        println!("TODO: then the target is used for orbiting!");
     }
 
     fn blit(&self, canvas: &mut WindowCanvas, sdl: &Sdl) -> Result<()> {
@@ -410,8 +463,39 @@ impl World {
     fn shoot(&mut self) {
         // spawn a bullet at our location
         // the bullet is moving toward the asteroid
-        self.bullet_bank
-            .spawn(self.ship.location, self.enemy.location);
+        let mut tar_loc = None;
+        if let Some(t) = self.get_target() {
+            tar_loc = Some(t.get_location());
+        }
+        if let Some(t) = tar_loc {
+            self.bullet_bank.spawn(self.ship.location, t);
+        }
+    }
+
+    fn tab_target(&mut self) {
+        // what is our current target index?
+        if let Some(ti) = self.target_index {
+            self.get_target().unwrap().set_targeted(false);
+            let mut next_target = ti + 1;
+            if next_target >= 1 + self.asteroids.len() {
+                next_target = 0;
+            }
+            self.target_index = Some(next_target);
+        } else {
+            self.target_index = Some(0);
+        }
+        self.get_target().unwrap().set_targeted(true);
+    }
+    fn get_target(&mut self) -> Option<&mut dyn Blittable> {
+        if let Some(ti) = self.target_index {
+            if ti == 0 {
+                // the first target should be the enemy
+                return Some(&mut self.enemy);
+            } else {
+                return Some(&mut self.asteroids[ti - 1]);
+            }
+        }
+        None
     }
 }
 
@@ -443,10 +527,17 @@ struct Ship {
     destination: Option<Pair<f64>>,
     color: Option<Color>,
     velocity: f64,
+    targeted: bool,
     // TODO(ken): consider per-entity last-think values
 }
 
 impl Blittable for Ship {
+    fn set_targeted(&mut self, input: bool) {
+        self.targeted = input;
+    }
+    fn is_targeted(&self) -> bool {
+        self.targeted
+    }
     fn get_angle(&self) -> f64 {
         self.angle
     }
@@ -475,7 +566,7 @@ impl Ship {
         Ship {
             vertices: polars,
             location,
-            size: 0.1,
+            size: 0.05,
             color,
             velocity,
             ..Default::default()
@@ -579,6 +670,7 @@ struct Asteroid {
     angle: f64,
     location: Pair<f64>,
     size: f64,
+    targeted: bool,
 }
 
 impl fmt::Display for Asteroid {
@@ -588,6 +680,12 @@ impl fmt::Display for Asteroid {
 }
 
 impl Blittable for Asteroid {
+    fn set_targeted(&mut self, input: bool) {
+        self.targeted = input;
+    }
+    fn is_targeted(&self) -> bool {
+        self.targeted
+    }
     fn get_angle(&self) -> f64 {
         self.angle
     }
@@ -618,7 +716,7 @@ impl Asteroid {
         Asteroid {
             vertices: polars,
             location,
-            size: 0.1,
+            size: 0.05,
             ..Default::default()
         }
     }
@@ -640,6 +738,10 @@ impl fmt::Display for Bullet {
 }
 
 impl Blittable for Bullet {
+    fn set_targeted(&mut self, input: bool) {}
+    fn is_targeted(&self) -> bool {
+        false
+    }
     fn get_angle(&self) -> f64 {
         self.angle
     }
@@ -792,7 +894,7 @@ fn run_game() -> Result<(), String> {
     let char_h = allowed_height as i32;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
     let window = video_subsys
-        .window("reverie", winwidth, winheight)
+        .window("hovercraft", winwidth, winheight)
         .position_centered()
         .opengl()
         .build()
@@ -846,6 +948,14 @@ fn run_game() -> Result<(), String> {
                     keycode: Some(Keycode::Space),
                     ..
                 } => world.shoot(),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Tab),
+                    ..
+                } => world.tab_target(),
+                Event::KeyDown {
+                    keycode: Some(Keycode::O),
+                    ..
+                } => world.orbit_target(),
                 _ => {}
             }
         }
