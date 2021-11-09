@@ -168,9 +168,56 @@ fn screenify(input: Pair<f64>, pixels: Pair<i64>) -> Pair<i16> {
     Pair::new(x_int as i16, y_int as i16)
 }
 
-pub trait Blittable {
-    fn set_targeted(&mut self, input: bool);
+pub trait Targetable: Blittable {
     fn is_targeted(&self) -> bool;
+    fn set_targeted(&mut self, input: bool);
+    fn blit_target(
+        &self,
+        canvas: &mut WindowCanvas,
+        sdl: &Sdl,
+        camera: &Camera,
+    ) -> Result<()> {
+        let square_vertices = vec![
+            Polar::new(1.0, 0.25 * PI),
+            Polar::new(1.0, 0.75 * PI),
+            Polar::new(1.0, 1.25 * PI),
+            Polar::new(1.0, 1.75 * PI),
+        ];
+        self.blit_vertices(
+            &square_vertices,
+            canvas,
+            sdl,
+            camera,
+            false,
+            false,
+            Some(Color::RGB(255, 0, 0)),
+        )?;
+        Ok(())
+    }
+    fn blit(
+        &self,
+        canvas: &mut WindowCanvas,
+        sdl: &Sdl,
+        camera: &Camera,
+    ) -> Result<()> {
+        self.blit_vertices(
+            self.get_vertices(),
+            canvas,
+            sdl,
+            camera,
+            true,
+            true,
+            None,
+        )?;
+        if self.is_targeted() {
+            self.blit_target(canvas, sdl, camera)?;
+        }
+
+        Ok(())
+    }
+}
+
+pub trait Blittable {
     fn find_angle(&self, start: Pair<f64>, dest: Pair<f64>) -> f64 {
         // we now want to know:
         // what's the angle from the perspective of the ship?
@@ -323,33 +370,7 @@ pub trait Blittable {
             true,
             None,
         )?;
-        if self.is_targeted() {
-            self.blit_target(canvas, sdl, camera)?;
-        }
 
-        Ok(())
-    }
-    fn blit_target(
-        &self,
-        canvas: &mut WindowCanvas,
-        sdl: &Sdl,
-        camera: &Camera,
-    ) -> Result<()> {
-        let square_vertices = vec![
-            Polar::new(1.0, 0.25 * PI),
-            Polar::new(1.0, 0.75 * PI),
-            Polar::new(1.0, 1.25 * PI),
-            Polar::new(1.0, 1.75 * PI),
-        ];
-        self.blit_vertices(
-            &square_vertices,
-            canvas,
-            sdl,
-            camera,
-            false,
-            false,
-            Some(Color::RGB(255, 0, 0)),
-        )?;
         Ok(())
     }
 }
@@ -387,8 +408,7 @@ impl World {
     }
 
     fn spawn_enemy(&mut self, location: Pair<f64>) {
-        self.enemy =
-            Ship::new(location, Some(Color::RGB(255, 0, 0)), 0.03);
+        self.enemy = Ship::new(location, Some(Color::RGB(255, 0, 0)), 0.03);
     }
 
     fn spawn_asteroid(&mut self, location: Pair<f64>) {
@@ -408,10 +428,10 @@ impl World {
     }
 
     fn blit(&self, canvas: &mut WindowCanvas, sdl: &Sdl) -> Result<()> {
-        self.ship.blit(canvas, sdl, &self.camera)?;
-        self.enemy.blit(canvas, sdl, &self.camera)?;
+        Targetable::blit(&self.ship, canvas, sdl, &self.camera)?;
+        Targetable::blit(&self.enemy, canvas, sdl, &self.camera)?;
         for asteroid in self.asteroids.iter() {
-            asteroid.blit(canvas, sdl, &self.camera)?;
+            Targetable::blit(asteroid, canvas, sdl, &self.camera)?;
         }
         self.bullet_bank.blit_all(canvas, sdl, &self.camera)?;
         Ok(())
@@ -478,7 +498,7 @@ impl World {
         }
         self.get_target().unwrap().set_targeted(true);
     }
-    fn get_target(&mut self) -> Option<&mut dyn Blittable> {
+    fn get_target(&mut self) -> Option<&mut dyn Targetable> {
         if let Some(ti) = self.target_index {
             if ti == 0 {
                 // the first target should be the enemy
@@ -523,13 +543,16 @@ struct Ship {
     // TODO(ken): consider per-entity last-think values
 }
 
-impl Blittable for Ship {
+impl Targetable for Ship {
     fn set_targeted(&mut self, input: bool) {
         self.targeted = input;
     }
     fn is_targeted(&self) -> bool {
         self.targeted
     }
+}
+
+impl Blittable for Ship {
     fn get_angle(&self) -> f64 {
         self.angle
     }
@@ -659,13 +682,16 @@ impl fmt::Display for Asteroid {
     }
 }
 
-impl Blittable for Asteroid {
+impl Targetable for Asteroid {
     fn set_targeted(&mut self, input: bool) {
         self.targeted = input;
     }
     fn is_targeted(&self) -> bool {
         self.targeted
     }
+}
+
+impl Blittable for Asteroid {
     fn get_angle(&self) -> f64 {
         self.angle
     }
@@ -718,12 +744,6 @@ impl fmt::Display for Bullet {
 }
 
 impl Blittable for Bullet {
-    // TODO(ken): a class around blittable for important entities
-    // maybe targetable?
-    fn set_targeted(&mut self, input: bool) {}
-    fn is_targeted(&self) -> bool {
-        false
-    }
     fn get_angle(&self) -> f64 {
         self.angle
     }
