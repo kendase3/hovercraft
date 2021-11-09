@@ -200,15 +200,7 @@ pub trait Targetable: Blittable {
         sdl: &Sdl,
         camera: &Camera,
     ) -> Result<()> {
-        self.blit_vertices(
-            self.get_vertices(),
-            canvas,
-            sdl,
-            camera,
-            true,
-            true,
-            None,
-        )?;
+        Blittable::blit(self, canvas, sdl, camera)?;
         if self.is_targeted() {
             self.blit_target(canvas, sdl, camera)?;
         }
