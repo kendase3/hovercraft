@@ -148,7 +148,7 @@ fn screenify(input: Pair<f64>, pixels: Pair<i64>) -> Pair<i16> {
     // r value with multiplication by some constant
 
     // if you want to rescale differently for x and y, reweight it
-    // once its broken into cartesian
+    // once it's broken into cartesian
 
     // input in the form of a value between -1 and +1
     // pixels: length or width in pixels
