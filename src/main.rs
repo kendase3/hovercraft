@@ -58,7 +58,7 @@ fn font_fits(
     let font = ttf_context.load_font(font_path, font_size)?;
     let surface = font
         .render("J") // j is a pretty big letter imo
-        .blended(Color::RGBA(255, 255, 255, 255))
+        .blended(Color::RGB(255, 255, 255))
         .map_err(|e| e.to_string())?;
     let texture = texture_creator
         .create_texture_from_surface(&surface)
@@ -322,7 +322,7 @@ pub trait Blittable {
             true,
             true,
             None,
-        );
+        )?;
         if self.is_targeted() {
             self.blit_target(canvas, sdl, camera)?;
         }
@@ -349,7 +349,7 @@ pub trait Blittable {
             false,
             false,
             Some(Color::RGB(255, 0, 0)),
-        );
+        )?;
         Ok(())
     }
 }
@@ -388,7 +388,7 @@ impl World {
 
     fn spawn_enemy(&mut self, location: Pair<f64>) {
         self.enemy =
-            Ship::new(location, Some(Color::RGBA(255, 0, 0, 255)), 0.03);
+            Ship::new(location, Some(Color::RGB(255, 0, 0)), 0.03);
     }
 
     fn spawn_asteroid(&mut self, location: Pair<f64>) {
@@ -401,14 +401,6 @@ impl World {
             .ship
             .find_angle(self.ship.location, self.asteroids[0].location);
         self.ship.destination = Some(self.asteroids[0].location);
-    }
-
-    fn turn_left(&mut self) {
-        //self.ship.turn_left();
-    }
-
-    fn turn_right(&mut self) {
-        //self.ship.turn_right();
     }
 
     fn orbit_target(&mut self) {
@@ -573,18 +565,6 @@ impl Ship {
         }
     }
 
-    fn turn_left(&mut self) {
-        println!("turning left!");
-        self.angle -= 0.01;
-        self.angle %= 2.0 * PI;
-    }
-
-    fn turn_right(&mut self) {
-        println!("turning right!");
-        self.angle += 0.01;
-        self.angle %= 2.0 * PI;
-    }
-
     fn orbit(&mut self, distance: f64, clockwise: bool, target: Pair<f64>) {
         // how far away should we set the waypoint in angular distance?
         // at 0.5 * PI we move in squares
@@ -738,6 +718,8 @@ impl fmt::Display for Bullet {
 }
 
 impl Blittable for Bullet {
+    // TODO(ken): a class around blittable for important entities
+    // maybe targetable?
     fn set_targeted(&mut self, input: bool) {}
     fn is_targeted(&self) -> bool {
         false
@@ -913,7 +895,7 @@ fn run_game() -> Result<(), String> {
     let text = "bogey demo";
     let surface = font
         .render(text)
-        .blended(Color::RGBA(255, 255, 255, 255))
+        .blended(Color::RGB(255, 255, 255))
         .map_err(|e| e.to_string())?;
     let texture = texture_creator
         .create_texture_from_surface(&surface)
@@ -936,14 +918,6 @@ fn run_game() -> Result<(), String> {
                     ..
                 }
                 | Event::Quit { .. } => break 'mainloop,
-                Event::KeyDown {
-                    keycode: Some(Keycode::A),
-                    ..
-                } => world.turn_left(),
-                Event::KeyDown {
-                    keycode: Some(Keycode::D),
-                    ..
-                } => world.turn_right(),
                 Event::KeyDown {
                     keycode: Some(Keycode::Space),
                     ..
