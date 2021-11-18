@@ -183,15 +183,12 @@ pub trait Targetable: Blittable {
             Polar::new(1.0, 1.25 * PI),
             Polar::new(1.0, 1.75 * PI),
         ];
-        self.blit_vertices(
-            &square_vertices,
-            canvas,
-            sdl,
-            camera,
-            false,
-            false,
-            Some(Color::RGB(255, 0, 0)),
-        )?;
+        let details = BlitDetails {
+            filled: false,
+            rotate: false,
+            color: Some(Color::RGB(255, 0, 0)),
+        };
+        self.blit_vertices(&square_vertices, canvas, sdl, camera, details)?;
         Ok(())
     }
     fn blit(
@@ -209,6 +206,12 @@ pub trait Targetable: Blittable {
     }
 }
 
+pub struct BlitDetails {
+    filled: bool,
+    rotate: bool,
+    color: Option<Color>,
+}
+
 pub trait Blittable {
     fn find_angle(&self, start: Pair<f64>, dest: Pair<f64>) -> f64 {
         // we now want to know:
@@ -223,13 +226,11 @@ pub trait Blittable {
     fn get_color(&self) -> Option<Color>;
     fn blit_vertices(
         &self,
-        vertices: &Vec<Polar>,
+        vertices: &[Polar],
         canvas: &mut WindowCanvas,
         sdl: &Sdl,
         camera: &Camera,
-        filled: bool,
-        rotate: bool,
-        color: Option<Color>,
+        details: BlitDetails,
     ) -> Result<()> {
         let screen_dim = get_screen_size(sdl);
         let pixels_per_km = camera.pixels_per_km(&screen_dim);
@@ -245,7 +246,7 @@ pub trait Blittable {
         let mut screen_y_vec = Vec::new();
         for polar in vertices.iter() {
             let mut polar_mod = *polar;
-            if rotate {
+            if details.rotate {
                 polar_mod.angle += self.get_angle();
             }
             // our polars -> relative cartesian
@@ -326,7 +327,7 @@ pub trait Blittable {
         let final_color;
         // if we passed in a color explicitly, use that
 
-        if let Some(col) = color {
+        if let Some(col) = details.color {
             final_color = col;
         } else if let Some(col) = self.get_color() {
             final_color = col
@@ -334,7 +335,7 @@ pub trait Blittable {
             final_color = Color::RGB(255, 255, 255);
         }
         // then we blit with color
-        if filled {
+        if details.filled {
             canvas
                 .filled_polygon(&screen_x_vec, &screen_y_vec, final_color)
                 .map_err(Error::msg)?;
@@ -353,15 +354,12 @@ pub trait Blittable {
         sdl: &Sdl,
         camera: &Camera,
     ) -> Result<()> {
-        self.blit_vertices(
-            self.get_vertices(),
-            canvas,
-            sdl,
-            camera,
-            true,
-            true,
-            None,
-        )?;
+        let details = BlitDetails {
+            filled: true,
+            rotate: true,
+            color: None,
+        };
+        self.blit_vertices(self.get_vertices(), canvas, sdl, camera, details)?;
 
         Ok(())
     }
@@ -369,7 +367,8 @@ pub trait Blittable {
 
 #[derive(Default)]
 struct World {
-    size: Pair<f64>,
+    // TODO(ken): introduce idea of dynamic world size
+    //size: Pair<f64>,
     camera: Camera,
     ship: Ship,
     enemy: Ship,
@@ -386,7 +385,7 @@ impl World {
             y: size.y / 2.0,
         };
         World {
-            size,
+            //size,
             camera: Camera {
                 km_per_height: 0.5,
                 center,
@@ -406,13 +405,6 @@ impl World {
     fn spawn_asteroid(&mut self, location: Pair<f64>) {
         let asteroid = Asteroid::new(location);
         self.asteroids.push(asteroid);
-    }
-
-    fn ship_face_asteroid(&mut self) {
-        self.ship.angle = self
-            .ship
-            .find_angle(self.ship.location, self.asteroids[0].location);
-        self.ship.destination = Some(self.asteroids[0].location);
     }
 
     fn orbit_target(&mut self) {
@@ -481,7 +473,7 @@ impl World {
         if let Some(ti) = self.target_index {
             self.get_target().unwrap().set_targeted(false);
             let mut next_target = ti + 1;
-            if next_target >= 1 + self.asteroids.len() {
+            if next_target > self.asteroids.len() {
                 next_target = 0;
             }
             self.target_index = Some(next_target);
@@ -972,11 +964,14 @@ impl Polar {
         let y = self.radius * f64::sin(self.angle);
         Pair::new(x, y)
     }
+    // TODO(ken): use
+    /*
     fn from_cartesian(x: f64, y: f64) -> Polar {
         let z = f64::sqrt(x * x + y * y);
         let angle = f64::atan2(y, x);
         Polar::new(z, angle)
     }
+    */
 }
 
 fn main() -> Result<(), String> {
