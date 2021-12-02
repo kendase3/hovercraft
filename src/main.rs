@@ -40,6 +40,15 @@ macro_rules! rect(
     )
 );
 
+// the current existing user (movement-only?) command
+// the ship should execute every think
+#[derive(Debug, Clone, Copy)]
+enum ShipCommand {
+    Approach(usize),
+    Orbit(usize, f64),
+    KeepDistance(usize, f64),
+}
+
 /// reduce an angle to no more than 2PI radians
 // TODO(ken): maybe this should be +/- 1PI rads
 fn simplify(angle: f64) -> f64 {
@@ -411,6 +420,13 @@ impl World {
         println!("TODO: then the target is used for orbiting!");
     }
 
+    fn approach_target(&mut self) {
+        let target = self.target_index;
+        if let Some(t) = target {
+            self.ship.command = Some(ShipCommand::Approach(t));
+        }
+    }
+
     fn blit(&self, canvas: &mut WindowCanvas, sdl: &Sdl) -> Result<()> {
         Targetable::blit(&self.ship, canvas, sdl, &self.camera)?;
         Targetable::blit(&self.enemy, canvas, sdl, &self.camera)?;
@@ -446,12 +462,21 @@ impl World {
         time_as_float
     }
 
+    fn get_ship_target_index(&self) -> usize {
+        self.ship.get_target_index().unwrap()
+    }
+
     fn think(&mut self) {
-        // last arg is destination
-        self.ship
-            .think(self.get_seconds_elapsed(), self.asteroids[0].location);
-        self.enemy
-            .think(self.get_seconds_elapsed(), self.ship.location);
+        // FIXME(ken): cannot have two refs to same object (self.ship)
+        // we mut on ship and we pass it the targets presently
+        // we instead need to ask the ship its target
+        // then pass it just that one
+        //let target = self.get_target();
+        let target_index = self.get_ship_target_index();
+        let target = self.get_target_liny(target_index).unwrap();
+        self.ship.think(self.get_seconds_elapsed(), target);
+        //self.enemy
+        //    .think(self.get_seconds_elapsed(), targets);
         self.bullet_bank.think();
         // then update last_think to now
         self.last_think = Some(Utc::now());
@@ -493,6 +518,18 @@ impl World {
         }
         None
     }
+    // FIXME(ken): all i really need is a subset of target info
+    // and i believe all of that is primitive
+    // so there is no reason to wring myself up over this ownership
+    // business when a targetable could arguably all implement 'copy'
+    fn get_target_liny(&self, index: usize) -> Option<&dyn Targetable> {
+        if index == 0 {
+            // the first target should be the enemy
+            return Some(&self.enemy.clone());
+        } else {
+            return Some(&self.asteroids[index - 1].clone());
+        }
+    }
 }
 
 // world could eventually have a vector of players
@@ -524,6 +561,7 @@ struct Ship {
     color: Option<Color>,
     velocity: f64,
     targeted: bool,
+    command: Option<ShipCommand>,
     // TODO(ken): consider per-entity last-think values
 }
 
@@ -628,7 +666,18 @@ impl Ship {
         maybe_close_enough_x < x_close_enough
             && maybe_close_enough_y < y_close_enough
     }
-    fn think(&mut self, seconds_elapsed: f64, dest: Pair<f64>) {
+    // i will need to add the idea of acceleration and max velocity
+    fn think(&mut self, seconds_elapsed: f64, target: &dyn Targetable) {
+        if self.command.is_none() {
+            return;
+        }
+        let comm = self.command.unwrap();
+        match comm {
+            ShipCommand::Approach(target_index) => {}
+            _ => {}
+        }
+        /*
+        // TODO(ken): this is all for the orbit command
         if self.has_arrived() {
             self.orbit(0.2, true, dest);
         }
@@ -642,6 +691,17 @@ impl Ship {
         let y_distance = f64::sin(self.angle) * km_moved;
         self.location.x += x_distance;
         self.location.y += y_distance;
+        */
+    }
+    fn get_target_index(&self) -> Option<usize> {
+        if self.command.is_none() {
+            return None;
+        }
+        let comm = self.command.unwrap();
+        match comm {
+            ShipCommand::Approach(target_index) => Some(target_index),
+            _ => None,
+        }
     }
 }
 
@@ -934,6 +994,10 @@ fn run_game() -> Result<(), String> {
                     keycode: Some(Keycode::O),
                     ..
                 } => world.orbit_target(),
+                Event::KeyDown {
+                    keycode: Some(Keycode::A),
+                    ..
+                } => world.approach_target(),
                 _ => {}
             }
         }
