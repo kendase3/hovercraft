@@ -42,6 +42,8 @@ macro_rules! rect(
 
 // the current existing user navigation command
 // the ship should execute every think
+// FIXME(ken): use approach and keepdistance types
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 enum ShipCommand {
     Approach(usize),
@@ -55,11 +57,12 @@ struct Snack {
 }
 
 fn command_to_index(command: Option<ShipCommand>) -> Option<usize> {
+    // TODO(ken): use distance values in these
     match command {
         None => None,
         Some(ShipCommand::Approach(index)) => Some(index),
-        Some(ShipCommand::Orbit(index, distance)) => Some(index),
-        Some(ShipCommand::KeepDistance(index, distance)) => Some(index),
+        Some(ShipCommand::Orbit(index, _distance)) => Some(index),
+        Some(ShipCommand::KeepDistance(index, _distance)) => Some(index),
     }
 }
 
@@ -122,14 +125,12 @@ fn get_fontsize(
             break;
         }
     }
-    let fontsize;
-    match highest_fit {
-        Some(x) => fontsize = x,
-        None => {
-            println!("no valid fontsize found!");
-            fontsize = 8;
-        }
-    }
+    let fontsize = if let Some(x) = highest_fit {
+        x
+    } else {
+        println!("no valid fontsize found!");
+        8
+    };
     println!("fontsize = {}", fontsize);
     Ok(fontsize)
 }
@@ -537,16 +538,12 @@ impl World {
     }
     // for a given index, return snack struct representing its state
     fn get_snack(&self, index: Option<usize>) -> Option<Snack> {
-        if index.is_none() {
-            return None;
-        }
-        let index = index.unwrap();
-        let loc;
-        if index == 0 {
-            loc = self.enemy.location;
+        let index = index?;
+        let loc = if index == 0 {
+            self.enemy.location
         } else {
-            loc = self.asteroids[index - 1].location;
-        }
+            self.asteroids[index - 1].location
+        };
         Some(Snack { location: loc })
     }
 }
@@ -647,12 +644,11 @@ impl Ship {
         let angle_facing_ship = simplify(angle_facing_asteroid + PI);
         // we'll add 45 degrees if we want to orbit clockwise.
         // we subtract for counter-clockwise
-        let modi;
-        if clockwise {
-            modi = rads_away;
+        let modi = if clockwise {
+            rads_away
         } else {
-            modi = -1.0 * rads_away;
-        }
+            -1.0 * rads_away
+        };
         let perp_angle = simplify(angle_facing_ship + modi);
         // we basically start at the asteroid, then add the polar coordinate
         // the easist way would be to convert the polar to a cart coord
@@ -674,13 +670,12 @@ impl Ship {
     }
 
     fn has_arrived(&self) -> bool {
-        let destination;
-        if let Some(dest) = self.destination {
-            destination = dest;
+        let destination = if let Some(dest) = self.destination {
+            dest
         } else {
             // if we have nowhere to go then sure we've arrived
             return true;
-        }
+        };
         let close_enough = 0.04;
         let x_close_enough = f64::abs(f64::cos(self.angle) * close_enough);
         let y_close_enough = f64::abs(f64::sin(self.angle) * close_enough);
