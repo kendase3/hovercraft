@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,6 +39,29 @@ macro_rules! rect(
         Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
     )
 );
+
+// the current existing user navigation command
+// the ship should execute every think
+#[derive(Debug, Clone, Copy)]
+enum ShipCommand {
+    Approach(usize),
+    Orbit(usize, f64),
+    KeepDistance(usize, f64),
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Snack {
+    location: Pair<f64>,
+}
+
+fn command_to_index(command: Option<ShipCommand>) -> Option<usize> {
+    match command {
+        None => None,
+        Some(ShipCommand::Approach(index)) => Some(index),
+        Some(ShipCommand::Orbit(index, distance)) => Some(index),
+        Some(ShipCommand::KeepDistance(index, distance)) => Some(index),
+    }
+}
 
 /// reduce an angle to no more than 2PI radians
 // TODO(ken): maybe this should be +/- 1PI rads
@@ -408,7 +431,13 @@ impl World {
     }
 
     fn orbit_target(&mut self) {
-        println!("TODO: then the target is used for orbiting!");
+        // TODO(ken): first we get the current target's index
+        // interestingly this is stored on world, not ship
+        // that is kind of dumb but we'll roll with it for now
+        if let Some(ti) = self.target_index {
+            // we update the ship's command to be orbit the current target
+            self.ship.set_command(ShipCommand::Orbit(ti, 0.2));
+        }
     }
 
     fn blit(&self, canvas: &mut WindowCanvas, sdl: &Sdl) -> Result<()> {
@@ -446,10 +475,23 @@ impl World {
         time_as_float
     }
 
+    // what will change here is that the ship for example will need some
+    // information about external entities
+    //
+    // problems for the future:
+    // i think we'll ultimately want to say something like 'for each of the
+    // entities in local, think'
+    //
+    // even bullets have to assess if they've hit anything
+    // though they don't at the moment
     fn think(&mut self) {
+        // a snack implements copy trait and holds (for now just one)
+        // values from a ship-like object
+        let ship_thinkee = self.ship.get_thinkee();
+        let snack = self.get_snack(ship_thinkee);
         // last arg is destination
         self.ship
-            .think(self.get_seconds_elapsed(), self.asteroids[0].location);
+            .think(self.get_seconds_elapsed(), snack.unwrap().location);
         self.enemy
             .think(self.get_seconds_elapsed(), self.ship.location);
         self.bullet_bank.think();
@@ -493,6 +535,20 @@ impl World {
         }
         None
     }
+    // for a given index, return snack struct representing its state
+    fn get_snack(&self, index: Option<usize>) -> Option<Snack> {
+        if index.is_none() {
+            return None;
+        }
+        let index = index.unwrap();
+        let loc;
+        if index == 0 {
+            loc = self.enemy.location;
+        } else {
+            loc = self.asteroids[index - 1].location;
+        }
+        Some(Snack { location: loc })
+    }
 }
 
 // world could eventually have a vector of players
@@ -524,6 +580,7 @@ struct Ship {
     color: Option<Color>,
     velocity: f64,
     targeted: bool,
+    command: Option<ShipCommand>,
     // TODO(ken): consider per-entity last-think values
 }
 
@@ -568,8 +625,13 @@ impl Ship {
             size: 0.05,
             color,
             velocity,
+            command: Some(ShipCommand::Orbit(0, 0.2)),
             ..Default::default()
         }
+    }
+
+    fn get_thinkee(&self) -> Option<usize> {
+        command_to_index(self.command)
     }
 
     fn orbit(&mut self, distance: f64, clockwise: bool, target: Pair<f64>) {
@@ -642,6 +704,9 @@ impl Ship {
         let y_distance = f64::sin(self.angle) * km_moved;
         self.location.x += x_distance;
         self.location.y += y_distance;
+    }
+    fn set_command(&mut self, command: ShipCommand) {
+        self.command = Some(command);
     }
 }
 
