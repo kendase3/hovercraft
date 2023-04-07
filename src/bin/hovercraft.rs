@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 use anyhow::{Error, Result};
 use chrono::{DateTime, Duration, Utc};
+use hovercraft::Pair;
 use sdl2::event::Event;
 use sdl2::gfx::primitives::DrawRenderer;
 use sdl2::keyboard::Keycode;
@@ -133,34 +134,6 @@ fn get_fontsize(
     };
     println!("fontsize = {}", fontsize);
     Ok(fontsize)
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct Pair<T> {
-    x: T,
-    y: T,
-}
-
-impl<T> Pair<T> {
-    fn new(x: T, y: T) -> Pair<T> {
-        Pair { x, y }
-    }
-}
-
-impl fmt::Display for Pair<f64> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{},{}", self.x, self.y)
-    }
-}
-impl fmt::Display for Pair<i64> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{},{}", self.x, self.y)
-    }
-}
-impl fmt::Display for Pair<i16> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{},{}", self.x, self.y)
-    }
 }
 
 fn screenify(input: Pair<f64>, pixels: Pair<i64>) -> Pair<i16> {
