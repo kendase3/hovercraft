@@ -3,6 +3,8 @@ a vector-based 2d vehicle combat game
 
 ## Goals
 - create a series of 1v1 battles with AI opponents with different loadouts
+- model architecture on https://johanhelsing.studio/posts/extreme-bevy
+- see also https://github.com/johanhelsing/extreme_bevy/tree/part-1
 
 ## Contributing
 
