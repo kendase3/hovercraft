@@ -27,3 +27,6 @@ See https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md
 
 ### Docker dependencies
 https://github.com/rust-windowing/winit/issues/3603#issuecomment-2204376719
+
+## Work in Progress
+I'm still iterating on even basic, outer things for this game. Currently, one must manually run wasm_server_runner on the target wasm, rather than running it via cargo run.
