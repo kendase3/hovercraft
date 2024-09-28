@@ -31,19 +31,21 @@ fn spawn_player(mut commands: Commands) {
     commands.spawn((
         Player,
         SpriteBundle {
-        sprite: Sprite {
-            color: Color::srgb(0., 0.47, 1.),
-            custom_size: Some(Vec2::new(1.,1.)),
+            sprite: Sprite {
+                color: Color::srgb(0., 0.47, 1.),
+                custom_size: Some(Vec2::new(1., 1.)),
+                ..default()
+            },
             ..default()
         },
-        ..default()
-    }));
+    ));
 }
 
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
-    time: Res<Time>) {
+    time: Res<Time>,
+) {
     let mut direction = Vec2::ZERO;
     if keys.any_pressed([KeyCode::KeyW]) {
         direction.y += 1.;
