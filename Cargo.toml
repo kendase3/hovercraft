@@ -15,3 +15,6 @@ anyhow = "1.0.44"
 bevy = "0.14"
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.6.5"
+
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"

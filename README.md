@@ -22,5 +22,8 @@ merchantability, or fitness for a particular purpose.
 
 This is not an officially supported Google product.
 
-### Build Dependencies
+## Build Dependencies
 See https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md
+
+### Docker dependencies
+https://github.com/rust-windowing/winit/issues/3603#issuecomment-2204376719
