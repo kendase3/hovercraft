@@ -21,3 +21,6 @@ Google and Google specifically disclaims all warranties as to its quality,
 merchantability, or fitness for a particular purpose.
 
 This is not an officially supported Google product.
+
+### Build Dependencies
+See https://github.com/bevyengine/bevy/blob/main/docs/linux_dependencies.md
