@@ -2,7 +2,7 @@
 name = "hovercraft"
 version = "0.1.0"
 edition = "2021"
-default-run = "hovercraft"                                                                              
+default-run = "hovercraft"
 
 [build]
 target = "wasm32-unknown-unknown"
@@ -10,8 +10,8 @@ target = "wasm32-unknown-unknown"
 [profile.dev.package."*"]
 opt-level = 2
 
-[dependencies]                                                                                          
-anyhow = "1.0.44"                                                                                       
+[dependencies]
+anyhow = "1.0.44"
 bevy = "0.14"
-chrono = { version = "0.4", features = ["serde"] }                                                      
-rand = "0.6.5"                                                                                          
+chrono = { version = "0.4", features = ["serde"] }
+rand = "0.6.5"
