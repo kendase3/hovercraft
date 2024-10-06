@@ -1,4 +1,5 @@
-use bevy::{prelude::*, render::camera::ScalingMode};
+//use bevy::{prelude::*, render::camera::ScalingMode};
+use bevy::prelude::*;
 
 #[derive(Component)]
 struct Player;
@@ -21,10 +22,19 @@ fn main() {
         .run();
 }
 
-fn startup(mut commands: Commands) {
-    let mut camera_bundle = Camera2dBundle::default();
-    camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(10.);
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    //let mut camera_bundle = Camera2dBundle::default();
+    let camera_bundle = Camera3dBundle {
+        transform: Transform::from_xyz(35., 35., 35.)
+            .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
+        ..default()
+    };
+    //camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(10.);
     commands.spawn(camera_bundle);
+    commands.spawn(SceneBundle {
+        scene: asset_server.load("bagel.glb#Scene0"),
+        ..default()
+    });
 }
 
 fn spawn_player(mut commands: Commands) {
