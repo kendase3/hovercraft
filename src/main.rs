@@ -22,7 +22,7 @@ fn main() {
         .run();
 }
 
-fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn startup(mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,
@@ -37,21 +37,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ..default()
     };
     commands.spawn(camera_bundle);
-    commands.spawn(SceneBundle {
-        scene: asset_server.load("bagel.glb#Scene0"),
-        ..default()
-    });
 }
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Player,
-        SpriteBundle {
-            sprite: Sprite {
-                color: Color::srgb(0., 0.47, 1.),
-                custom_size: Some(Vec2::new(1., 1.)),
-                ..default()
-            },
+        SceneBundle {
+            scene: asset_server.load("bagel.glb#Scene0"),
             ..default()
         },
     ));
