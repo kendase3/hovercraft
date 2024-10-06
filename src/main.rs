@@ -23,13 +23,19 @@ fn main() {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    //let mut camera_bundle = Camera2dBundle::default();
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            shadows_enabled: true,
+            illuminance: 50000.,
+            ..Default::default()
+        },
+        ..default()
+    });
     let camera_bundle = Camera3dBundle {
         transform: Transform::from_xyz(35., 35., 35.)
             .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
         ..default()
     };
-    //camera_bundle.projection.scaling_mode = ScalingMode::FixedVertical(10.);
     commands.spawn(camera_bundle);
     commands.spawn(SceneBundle {
         scene: asset_server.load("bagel.glb#Scene0"),
