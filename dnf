@@ -1,3 +1,4 @@
+# must-have
 ripgrep
 tmux
 gcc-c++
@@ -5,3 +6,5 @@ gcc-c++
 alsa-lib-devel
 libX11-devel
 systemd-devel
+# meh
+vim-enhanced
