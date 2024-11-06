@@ -22,6 +22,8 @@ Please read before proceeding to [Getting Started](#getting-started)
 
 - Installing `rustup` also will automatically install `cargo` and add it to your `PATH`. Your shell may need to be restarted to see this change reflected
 
+- See `dnf` file for required Fedora packages
+
 ### Build and Run
 
 ```
