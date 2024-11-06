@@ -12,8 +12,3 @@ anyhow = "1.0.44"
 bevy = "0.14"
 chrono = { version = "0.4", features = ["serde"] }
 rand = "0.6.5"
-
-#[[bin]]
-#name = "mappenstance"
-#[build]
-#target = "x86_64-unknown-linux-gnu"
