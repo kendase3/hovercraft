@@ -1,3 +1,7 @@
 ripgrep
 tmux
 gcc-c++
+# for native
+alsa-lib-devel
+libX11-devel
+systemd-devel
