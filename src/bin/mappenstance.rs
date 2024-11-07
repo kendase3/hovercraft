@@ -28,10 +28,11 @@ fn startup(
 
     let num_shapes = shapes.len();
 
+    /*
     for (i, shape) in shapes.into_iter().enumerate() {
         commands.spawn((
-            Mesh3d(shape),
-            MeshMaterial3d(debug_material.clone()),
+            Mesh(shape),
+            MeshMaterial(debug_material.clone()),
             // then the tutorial had some kind of transform i'm skipping
             Shape,
         ));
@@ -39,11 +40,12 @@ fn startup(
     let num_extrusions = extrusions.len();
     for (i, shape) in extrusions.into_iter().enumerate() {
         commands.spawn((
-            Mesh3d(shape),
-            MeshMaterial3d(debug_material.clone()),
+            Mesh(shape),
+            MeshMaterial(debug_material.clone()),
             Shape,
         ));
     }
+    */
 
     commands.spawn((
         PointLight {
@@ -57,21 +59,16 @@ fn startup(
     ));
 
     // ground plane
+    /*
     commands.spawn((
-        Mesh3d(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
-        MeshMaterial3d(materials.add(Color::from(SILVER))),
+        Mesh(meshes.add(Plane3d::default().mesh().size(50.0, 50.0).subdivisions(10))),
+        MeshMaterial(materials.add(Color::from(SILVER))),
         ));
+    */
     commands.spawn((
         Camera3d::default(),
         Transform::from_xyz(0.0, 7., 14.0).looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
     ));
-}
-
-// #[allow(dead_code)]
-fn rotate(mut query: Query<&mut Transform, With<Shape>>, time: Res<Time>) {
-    for mut transform in &mut query {
-        transform.rotate_y(time.delta_secs() / 2.);
-    }
 }
 
 fn uv_debug_texture() -> Image {
@@ -119,10 +116,8 @@ fn main() {
                         ..default()
                     }),
                     ..default()
-                }
-            )
-                //ImagePlugin::default_nearest()))
-        )
+                },
+        ))
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, startup)
         //.add_systems(Update, move_player)
