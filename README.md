@@ -29,7 +29,6 @@ Please read before proceeding to [Getting Started](#getting-started)
 ```
 rustup target add wasm32-unknown-unknown
 cargo install wasm-server-runner
-cargo build
 cargo run
 ```
 
