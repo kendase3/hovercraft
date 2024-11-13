@@ -80,15 +80,10 @@ impl Mapp {
     }
     fn add_room(&mut self) -> bool {
         let mut rng = rand::thread_rng();
-        //let start_x = rng.gen_range(0..=10);
-        //let start_y = rng.gen_range(0..=10);
-        //let size_x = rng.gen_range(3..=5);
-        //let size_y = rng.gen_range(3..=5);
-        let start_x = 0;
-        let start_y = 0;
-        let size_x = 5;
-        let size_y = 3;
-        println!("size y = {}, size x = {}", size_y, size_x);
+        let start_x = rng.gen_range(0..=10);
+        let start_y = rng.gen_range(0..=10);
+        let size_x = rng.gen_range(4..=10);
+        let size_y = rng.gen_range(4..=9);
         // i think we want the end to be inclusive
         let end_x = start_x + size_x;
         let end_y = start_y + size_y;
@@ -111,7 +106,7 @@ impl Mapp {
         for i in start_y + 1..end_y - 1 {
             self.data[i][start_x].terrain = Terrain::TallWall;
             for j in start_x + 1..end_x - 1 {
-               self.data[i][j].terrain = Terrain::Innards;
+                self.data[i][j].terrain = Terrain::Innards;
             }
             self.data[i][end_x - 1].terrain = Terrain::TallWall;
         }
