@@ -14,8 +14,51 @@
 
 /// a star implementation
 
-struct Mapp {}
+use std::fmt;
+
+#[derive(Copy, Clone, Debug)]
+enum Terrain {
+    Wall,
+    Room,
+    Corridor
+}
+
+// a map unit, roughly a square meter i guess
+#[derive(Copy, Clone, Debug)]
+struct Cell {
+    terrain: Terrain
+}
+
+impl Cell {
+    fn new(terrain: Terrain) -> Self {
+       Cell { terrain }
+    }
+}
+
+// a 2d map displayable as characters
+#[derive(Clone, Debug)]
+struct Mapp {
+    data: Vec<Vec<Cell>>
+}
+
+impl Mapp {
+    fn new(height: i32, width: i32) -> Self {
+        let mut rows = Vec::new();
+        for _ in 0..height {
+            let row = vec![Cell::new(Terrain::Wall); width as usize];
+            rows.push(row);
+        }
+        Mapp { data: rows }
+    }
+}
+
+impl fmt::Display for Mapp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "TODO")
+    }
+}
 
 fn main() {
-    println!("Hello, world!");
+    let mapp = Mapp::new(4, 4);
+    println!("{}", mapp);
 }
