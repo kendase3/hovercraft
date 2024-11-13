@@ -77,7 +77,11 @@ impl Room {
 
 impl fmt::Display for Room {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "room y = {}, x = {}, height = {}, width = {}", self.y, self.x, self.height, self.width)
+        write!(
+            f,
+            "room y = {}, x = {}, height = {}, width = {}",
+            self.y, self.x, self.height, self.width
+        )
     }
 }
 
@@ -165,6 +169,32 @@ impl Mapp {
                 addroom_fails += 1;
             }
         }
+    }
+    fn add_paths(&mut self) {
+        if self.rooms.len() > 2 {
+            return;
+        }
+        // the a-star business
+        let mut closed_set = Vec::new();
+        closed_set.push(self.rooms[0]);
+        let mut open_set = Vec::new();
+        for i in 1..self.rooms.len() {
+            open_set.push(self.rooms[i]);
+        }
+        while open_set.len() > 0 {
+            let src = closed_set[0]; // can make random
+            let dst = open_set.pop().unwrap();
+            // then we do a bunch of map stuff
+            self.path(&src, &dst);
+            // then we add it to the closed set
+            closed_set.push(dst);
+        }
+    }
+    fn path(&mut self, src: &Room, dst: &Room) {
+        // the hairy part of pathing
+        // we make a door in a valid-ish spot on the src
+
+        // we make a door in a valid-ish spot on the dst
     }
 }
 
