@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// a star implementation 
+/// a star implementation
+
+struct Mapp {}
 
 fn main() {
     println!("Hello, world!");
