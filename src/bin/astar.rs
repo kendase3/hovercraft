@@ -15,7 +15,6 @@
 /// a star implementation
 use rand::Rng;
 use std::cmp::min;
-use std::collections::HashMap;
 use std::fmt;
 
 const MAX_ADDROOM_FAILS: u32 = 3;
@@ -162,7 +161,7 @@ impl Mapp {
         let mut addroom_fails = 0;
         while addroom_fails < MAX_ADDROOM_FAILS {
             let ret = self.add_room();
-            if ret == false {
+            if !ret {
                 addroom_fails += 1;
             }
         }
