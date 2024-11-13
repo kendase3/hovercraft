@@ -35,7 +35,9 @@ impl Cell {
     }
     fn as_char(&self) -> char {
        match self.terrain {
-            Terrain::Wall => ' ',
+            //Terrain::Wall => ' ',
+            // FIXME(skend): for testing
+            Terrain::Wall => '~',
             Terrain::Room => '_',
             Terrain::Corridor => '#',
        }
@@ -58,7 +60,7 @@ impl Mapp {
     fn new(height: i32, width: i32) -> Self {
         let mut rows = Vec::new();
         for _ in 0..height {
-            let row = vec![Cell::new(Terrain::Corridor); width as usize];
+            let row = vec![Cell::new(Terrain::Wall); width as usize];
             rows.push(row);
         }
         Mapp { data: rows }
