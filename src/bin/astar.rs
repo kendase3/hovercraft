@@ -15,9 +15,10 @@
 /// a star implementation
 use rand::Rng;
 use std::cmp::min;
+use std::collections::HashMap;
 use std::fmt;
 
-const MAX_ADDROOM_FAILS: i32 = 3;
+const MAX_ADDROOM_FAILS: u32 = 3;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Terrain {
@@ -56,29 +57,58 @@ impl fmt::Display for Cell {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+struct Room {
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+}
+
+impl Room {
+    fn new(x: u32, y: u32, width: u32, height: u32) -> Self {
+        Room {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+}
+
+impl fmt::Display for Room {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "room y = {}, x = {}, height = {}, width = {}", self.y, self.x, self.height, self.width)
+    }
+}
+
 // a 2d map displayable as characters
 #[derive(Clone, Debug)]
 struct Mapp {
     data: Vec<Vec<Cell>>,
+    rooms: Vec<Room>,
 }
 
 impl Mapp {
-    fn new(height: i32, width: i32) -> Self {
+    fn new(height: u32, width: u32) -> Self {
         let mut rows = Vec::new();
         for _ in 0..height {
             let row = vec![Cell::new(Terrain::Full); width as usize];
             rows.push(row);
         }
-        Mapp { data: rows }
+        Mapp {
+            data: rows,
+            rooms: Vec::new(),
+        }
     }
     fn default() -> Self {
         Mapp::new(20, 80)
     }
-    fn height(&self) -> i32 {
-        self.data.len() as i32
+    fn height(&self) -> u32 {
+        self.data.len() as u32
     }
-    fn width(&self) -> i32 {
-        self.data[0].len() as i32
+    fn width(&self) -> u32 {
+        self.data[0].len() as u32
     }
     fn add_room(&mut self) -> bool {
         let mut rng = rand::thread_rng();
@@ -100,6 +130,14 @@ impl Mapp {
             return false;
         }
         // we can place this room!
+        // add the room entity to our list of rooms
+        self.rooms.push(Room::new(
+            start_x as u32,
+            start_y as u32,
+            size_x as u32,
+            size_y as u32,
+        ));
+
         // make the top row wide walls
         // and the bottom row too
         for i in start_x..end_x {
@@ -134,6 +172,9 @@ impl Mapp {
 impl fmt::Display for Mapp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut ret = "".to_owned();
+        for room in self.rooms.iter() {
+            ret += &format!("{}\n", room);
+        }
         for i in 0..self.height() as usize {
             for j in 0..self.width() as usize {
                 ret += &format!("{}", self.data[i][j]);
