@@ -42,7 +42,7 @@ impl Cell {
             Terrain::TallWall => '|',
             Terrain::WideWall => '-',
             Terrain::Full => '~',
-            Terrain::Innards => '_',
+            Terrain::Innards => '.',
             Terrain::Corridor => '#',
         }
     }
@@ -80,10 +80,16 @@ impl Mapp {
     }
     fn add_room(&mut self) -> bool {
         let mut rng = rand::thread_rng();
-        let start_x = rng.gen_range(0..=10);
-        let start_y = rng.gen_range(0..=10);
-        let size_x = rng.gen_range(2..=5);
-        let size_y = rng.gen_range(2..=5);
+        //let start_x = rng.gen_range(0..=10);
+        //let start_y = rng.gen_range(0..=10);
+        //let size_x = rng.gen_range(3..=5);
+        //let size_y = rng.gen_range(3..=5);
+        let start_x = 0;
+        let start_y = 0;
+        let size_x = 5;
+        let size_y = 3;
+        println!("size y = {}, size x = {}", size_y, size_x);
+        // i think we want the end to be inclusive
         let end_x = start_x + size_x;
         let end_y = start_y + size_y;
         // make sure the two diagonal corners are empty
@@ -97,15 +103,17 @@ impl Mapp {
         // and the bottom row too
         for i in start_x..end_x {
             self.data[start_y][i].terrain = Terrain::WideWall;
-            self.data[end_y][i].terrain = Terrain::WideWall;
+            self.data[end_y - 1][i].terrain = Terrain::WideWall;
         }
         // start and end each inner row with tallwalls
+        // weirdly we end up at just end_y because we -1 and +1 i think
+        // notably this is running up to but not including the end
         for i in start_y + 1..end_y - 1 {
             self.data[i][start_x].terrain = Terrain::TallWall;
             for j in start_x + 1..end_x - 1 {
-               self.data[i][j].terrain = Terrain::Innards; 
+               self.data[i][j].terrain = Terrain::Innards;
             }
-            self.data[i][end_x].terrain = Terrain::TallWall;
+            self.data[i][end_x - 1].terrain = Terrain::TallWall;
         }
         // then say we did it
         true
