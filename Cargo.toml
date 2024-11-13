@@ -10,4 +10,4 @@ opt-level = 2
 [dependencies]
 anyhow = "1.0.44"
 chrono = { version = "0.4", features = ["serde"] }
-rand = "0.6.5"
+rand = "0.8.5"

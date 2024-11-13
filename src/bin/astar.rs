@@ -12,40 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use rand::Rng;
 /// a star implementation
-
 use std::fmt;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum Terrain {
-    Wall,
-    Room,
-    Corridor
+    Innards,
+    Corridor,
+    TallWall,
+    WideWall,
+    Full,
 }
 
 // a map unit, roughly a square meter i guess
 #[derive(Copy, Clone, Debug)]
 struct Cell {
-    terrain: Terrain
+    terrain: Terrain,
 }
 
 impl Cell {
     fn new(terrain: Terrain) -> Self {
-       Cell { terrain }
+        Cell { terrain }
     }
     fn as_char(&self) -> char {
-       match self.terrain {
+        match self.terrain {
             //Terrain::Wall => ' ',
             // FIXME(skend): for testing
-            Terrain::Wall => '~',
-            Terrain::Room => '_',
+            Terrain::TallWall => '|',
+            Terrain::WideWall => '-',
+            Terrain::Full => '~',
+            Terrain::Innards => '_',
             Terrain::Corridor => '#',
-       }
+        }
     }
 }
 
 impl fmt::Display for Cell {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt:: Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_char())
     }
 }
@@ -53,26 +57,58 @@ impl fmt::Display for Cell {
 // a 2d map displayable as characters
 #[derive(Clone, Debug)]
 struct Mapp {
-    data: Vec<Vec<Cell>>
+    data: Vec<Vec<Cell>>,
 }
 
 impl Mapp {
     fn new(height: i32, width: i32) -> Self {
         let mut rows = Vec::new();
         for _ in 0..height {
-            let row = vec![Cell::new(Terrain::Wall); width as usize];
+            let row = vec![Cell::new(Terrain::Full); width as usize];
             rows.push(row);
         }
         Mapp { data: rows }
     }
     fn default() -> Self {
-       Mapp::new(20, 80) 
+        Mapp::new(20, 80)
     }
     fn height(&self) -> i32 {
         self.data.len() as i32
     }
     fn width(&self) -> i32 {
         self.data[0].len() as i32
+    }
+    fn add_room(&mut self) -> bool {
+        let mut rng = rand::thread_rng();
+        let start_x = rng.gen_range(0..=10);
+        let start_y = rng.gen_range(0..=10);
+        let size_x = rng.gen_range(2..=5);
+        let size_y = rng.gen_range(2..=5);
+        let end_x = start_x + size_x;
+        let end_y = start_y + size_y;
+        // make sure the two diagonal corners are empty
+        if self.data[start_y][start_x].terrain != Terrain::Full
+            || self.data[end_y][end_x].terrain != Terrain::Full
+        {
+            return false;
+        }
+        // we can place this room!
+        // make the top row wide walls
+        // and the bottom row too
+        for i in start_x..end_x {
+            self.data[start_y][i].terrain = Terrain::WideWall;
+            self.data[end_y][i].terrain = Terrain::WideWall;
+        }
+        // start and end each inner row with tallwalls
+        for i in start_y + 1..end_y - 1 {
+            self.data[i][start_x].terrain = Terrain::TallWall;
+            for j in start_x + 1..end_x - 1 {
+               self.data[i][j].terrain = Terrain::Innards; 
+            }
+            self.data[i][end_x].terrain = Terrain::TallWall;
+        }
+        // then say we did it
+        true
     }
 }
 
@@ -90,6 +126,8 @@ impl fmt::Display for Mapp {
 }
 
 fn main() {
-    let mapp = Mapp::default();
+    let mut mapp = Mapp::default();
+    println!("{}", mapp);
+    mapp.add_room();
     println!("{}", mapp);
 }
