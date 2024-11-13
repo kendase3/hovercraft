@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use rand::Rng;
 /// a star implementation
+use rand::Rng;
+use std::cmp::min;
 use std::fmt;
+
+const MAX_ADDROOM_FAILS: i32 = 3;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Terrain {
@@ -37,10 +40,9 @@ impl Cell {
     }
     fn as_char(&self) -> char {
         match self.terrain {
-            //Terrain::Wall => ' ',
-            // FIXME(skend): for testing
             Terrain::TallWall => '|',
             Terrain::WideWall => '-',
+            // FIXME(skend): for testing
             Terrain::Full => '~',
             Terrain::Innards => '.',
             Terrain::Corridor => '#',
@@ -80,16 +82,20 @@ impl Mapp {
     }
     fn add_room(&mut self) -> bool {
         let mut rng = rand::thread_rng();
-        let start_x = rng.gen_range(0..=10);
-        let start_y = rng.gen_range(0..=10);
-        let size_x = rng.gen_range(4..=10);
-        let size_y = rng.gen_range(4..=9);
+        let start_x = rng.gen_range(0..75);
+        let start_y = rng.gen_range(0..15);
+        let max_width = min(10, 79 - start_x);
+        let max_height = min(10, 19 - start_y);
+        let size_x = rng.gen_range(4..=max_width);
+        let size_y = rng.gen_range(4..=max_height);
         // i think we want the end to be inclusive
         let end_x = start_x + size_x;
         let end_y = start_y + size_y;
-        // make sure the two diagonal corners are empty
+        // make sure the four corners are empty
         if self.data[start_y][start_x].terrain != Terrain::Full
             || self.data[end_y][end_x].terrain != Terrain::Full
+            || self.data[start_y][end_x].terrain != Terrain::Full
+            || self.data[end_y][start_x].terrain != Terrain::Full
         {
             return false;
         }
@@ -113,6 +119,16 @@ impl Mapp {
         // then say we did it
         true
     }
+    fn add_rooms(&mut self) {
+        // add rooms until MAX_ADDROOM_FAILS in a row
+        let mut addroom_fails = 0;
+        while addroom_fails < MAX_ADDROOM_FAILS {
+            let ret = self.add_room();
+            if ret == false {
+                addroom_fails += 1;
+            }
+        }
+    }
 }
 
 impl fmt::Display for Mapp {
@@ -130,7 +146,6 @@ impl fmt::Display for Mapp {
 
 fn main() {
     let mut mapp = Mapp::default();
-    println!("{}", mapp);
-    mapp.add_room();
+    mapp.add_rooms();
     println!("{}", mapp);
 }
