@@ -33,6 +33,19 @@ impl Cell {
     fn new(terrain: Terrain) -> Self {
        Cell { terrain }
     }
+    fn as_char(&self) -> char {
+       match self.terrain {
+            Terrain::Wall => '|',
+            Terrain::Room => '_',
+            Terrain::Corridor => '#',
+       }
+    }
+}
+
+impl fmt::Display for Cell {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt:: Result {
+        write!(f, "{}", self.as_char())
+    }
 }
 
 // a 2d map displayable as characters
@@ -50,11 +63,24 @@ impl Mapp {
         }
         Mapp { data: rows }
     }
+    fn height(&self) -> i32 {
+        self.data.len() as i32
+    }
+    fn width(&self) -> i32 {
+        self.data[0].len() as i32
+    }
 }
 
 impl fmt::Display for Mapp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "TODO")
+        let mut ret = "".to_owned();
+        for i in 0..self.height() as usize {
+            for j in 0..self.width() as usize {
+                ret += &format!("{}", self.data[i][j]);
+            }
+            ret += "\n"
+        }
+        write!(f, "{}", ret)
     }
 }
 
