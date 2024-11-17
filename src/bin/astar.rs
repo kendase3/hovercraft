@@ -175,26 +175,51 @@ impl Mapp {
             return;
         }
         // the a-star business
-        let mut closed_set = Vec::new();
-        closed_set.push(self.rooms[0]);
-        let mut open_set = Vec::new();
+        let mut connected_rooms = Vec::new();
+        connected_rooms.push(self.rooms[0]);
+        let mut distant_rooms = Vec::new();
         for i in 1..self.rooms.len() {
-            open_set.push(self.rooms[i]);
+            distant_rooms.push(self.rooms[i]);
         }
-        while open_set.len() > 0 {
-            let src = closed_set[0]; // can make random
-            let dst = open_set.pop().unwrap();
+        while distant_rooms.len() > 0 {
+            let src = connected_rooms[0]; // can make random
+            let dst = distant_rooms.pop().unwrap();
             // then we do a bunch of map stuff
             self.path(&src, &dst);
             // then we add it to the closed set
-            closed_set.push(dst);
+            // TODO(skend): make it return a bool for success?
+            connected_rooms.push(dst);
         }
     }
+    fn get_random_wall(&self, src: &Room) -> &Cell {
+        let mut candidates = Vec::new();
+        // TODO(skend): start with just the top wall and don't validate yet
+        for i in 1..(src.width - 1) {
+            candidates.push(&self.data[src.height as usize][i as usize]);
+        }
+        // TODO(skend): pick one at random
+        candidates[0]
+    }
+
     fn path(&mut self, src: &Room, dst: &Room) {
         // the hairy part of pathing
         // we make a door in a valid-ish spot on the src
-
+        // just needs to be a wall node without an adjacent
+        // wall perpendicular to its wall type...does that
+        // make sense?
+        // we can just have the room mark for us its walls
+        // we'll pick one at random and validate it
+        // if it's bad, pick another one
+        let start_cell = self.get_random_wall(&src);
         // we make a door in a valid-ish spot on the dst
+        // in the same kind of way we chose a valid start
+
+        // we construct an open set of nodes around the src node
+
+        // and then we just execute the algorithm, take the most
+        // promising one and dig in
+
+        // we retrieve the heuristic, manhattan distance in our case
     }
 }
 
