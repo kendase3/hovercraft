@@ -197,8 +197,9 @@ impl Mapp {
         for i in 1..(src.width - 1) {
             candidates.push(&self.data[src.height as usize][i as usize]);
         }
-        // TODO(skend): pick one at random
-        candidates[0]
+        let mut rng = rand::thread_rng();
+        let ret = rng.gen_range(0..candidates.len());
+        candidates[ret]
     }
 
     fn path(&mut self, src: &Room, dst: &Room) {
