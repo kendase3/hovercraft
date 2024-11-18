@@ -184,40 +184,46 @@ impl Mapp {
         }
         // the a-star business
         let mut connected_rooms = Vec::new();
-        connected_rooms.push(self.rooms[0]);
+        connected_rooms.push(0);
         let mut distant_rooms = Vec::new();
         for i in 1..self.rooms.len() {
-            distant_rooms.push(self.rooms[i]);
+            distant_rooms.push(i as u32);
         }
         while distant_rooms.len() > 0 {
             let src = connected_rooms[0]; // can make random
             let dst = distant_rooms.pop().unwrap();
             // then we do a bunch of map stuff
-            self.path(&src, &dst);
+            self.path(src, dst);
             // then we add it to the closed set
             // TODO(skend): make it return a bool for success?
-            connected_rooms.push(dst);
+            connected_rooms.push(dst as u32);
         }
     }
-    fn get_random_wall(&mut self, src: &Room) -> &Cell {
+    fn get_random_wall(&mut self, src_index: u32) -> &Cell {
+        let src = self.rooms[src_index as usize];
         let mut candidates = Vec::new();
         // add the top and bottom walls' cells
         for i in 1..(src.width - 1) {
             let data_buddy = &mut self.data;
-            //candidates.push(data_buddy[src.y as usize][(src.x + i) as usize]);
             candidates.push(Pair {
                 y: src.y,
                 x: src.x + i,
             });
-            //candidates.push(data_buddy[(src.y + src.height) as usize][(src.x + i) as usize]);
             candidates.push(Pair {
                 y: src.y + src.height,
                 x: src.x + i,
             });
         }
-        //for i in 1..(src.height - 1) {
-        //    candidates.push(&self.data[src.
-        //}
+        for i in 1..(src.height - 1) {
+            candidates.push(Pair {
+                y: src.y + i,
+                x: src.x,
+            });
+            candidates.push(Pair {
+                y: src.y + i,
+                x: src.x + src.width,
+            });
+        }
         let mut rng = rand::thread_rng();
         let ret = rng.gen_range(0..candidates.len());
         // before we return our guy, let's first make sure our set is correct
@@ -230,7 +236,9 @@ impl Mapp {
         &self.data[y as usize][x as usize]
     }
 
-    fn path(&mut self, src: &Room, dst: &Room) {
+    // FIXME(skend): just use room indices, not rooms themselves
+    // we already have the data in the outer struct
+    fn path(&mut self, src: u32, dst: u32) {
         // the hairy part of pathing
         // we make a door in a valid-ish spot on the src
         // just needs to be a wall node without an adjacent
@@ -239,7 +247,7 @@ impl Mapp {
         // we can just have the room mark for us its walls
         // we'll pick one at random and validate it
         // if it's bad, pick another one
-        let start_cell = self.get_random_wall(&src);
+        let start_cell = self.get_random_wall(src);
         // we make a door in a valid-ish spot on the dst
         // in the same kind of way we chose a valid start
 
@@ -271,5 +279,7 @@ impl fmt::Display for Mapp {
 fn main() {
     let mut mapp = Mapp::default();
     mapp.add_rooms();
+    //println!("{}", mapp);
+    mapp.get_random_wall(0);
     println!("{}", mapp);
 }
