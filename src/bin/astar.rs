@@ -45,6 +45,37 @@ struct Pair {
     y: u32,
 }
 
+impl Pair {
+    fn get_neighbors(&self, map_height: u32, map_width: u32) -> Vec<Pair> {
+        let mut ret = Vec::new();
+        if self.y > 0 {
+            ret.push(Pair {
+                y: self.y - 1,
+                x: self.x,
+            });
+        }
+        if self.y + 1 < map_height {
+            ret.push(Pair {
+                y: self.y + 1,
+                x: self.x,
+            });
+        }
+        if self.x > 0 {
+            ret.push(Pair {
+                y: self.y,
+                x: self.x - 1,
+            });
+        }
+        if self.x + 1 < map_width {
+            ret.push(Pair {
+                y: self.y,
+                x: self.x + 1,
+            });
+        }
+        ret
+    }
+}
+
 // a map unit, roughly a square meter i guess
 #[derive(Copy, Clone, Debug)]
 struct Cell {
@@ -206,13 +237,13 @@ impl Mapp {
             self.path(src, dst);
             // then we add it to the closed set
             // TODO(skend): make it return a bool for success?
-            connected_rooms.push(dst as u32);
+            connected_rooms.push(dst);
         }
     }
 
     // TODO(skend): rethink this func; work primarily in pairs
     // with only actual data access using the mapp struct
-    fn get_random_wall(&mut self, src_index: u32) -> (Pair, Pair) {
+    fn get_random_wall(&mut self, src_index: u32) -> Pair {
         let mut data = &mut self.data;
         let src = self.rooms[src_index as usize];
         let mut candidates = Vec::new();
@@ -244,6 +275,9 @@ impl Mapp {
         let mut maybe_ret = &mut data[0][0]; // temporary sane value
         let mut x = 0;
         let mut y = 0;
+        // this is going to be used to look at the first
+        // cell 'outside' of the wall to make sure it
+        // is a good place to start
         let mut coord2 = Pair { y: 0, x: 0 };
         while !wall_validated {
             let rand_pair = rng.gen_range(0..candidates.len());
@@ -283,9 +317,7 @@ impl Mapp {
                 wall_validated = true;
             }
         }
-        // FIXME(skend): why was i returning Cell? cells don't even know
-        // their own coords
-        (Pair { y, x }, coord2)
+        Pair { y, x }
     }
 
     fn path(&mut self, src: u32, dst: u32) {
@@ -297,9 +329,35 @@ impl Mapp {
         // we can just have the room mark for us its walls
         // we'll pick one at random and validate it
         // if it's bad, pick another one
-        let (start_cell, first_node) = self.get_random_wall(src);
-        // we make a door in a valid-ish spot on the dst
-        let (end_cell, _) = self.get_random_wall(dst);
+        let start_cell = self.get_random_wall(src);
+        let end_cell = self.get_random_wall(dst);
+
+        // let's make the default weight 10
+        const FULL_WEIGHT: u32 = 10;
+        // prefer to use already-dug tunnels
+        const CORRIDOR_WEIGHT: u32 = 5;
+        // needs to be no larger than smallest weight
+        const HEURISTIC_WEIGHT: u32 = 5;
+
+        // let's look at all 4 of our neighboring nodes.
+        let mut open_set = Vec::new();
+        //let mut closed_set = Vec::new();
+
+        open_set.push(start_cell);
+
+        // while there still might be a valid path
+        while let Some(mut cur_node) = open_set.pop() {
+            // make a list of neighboring nodes to check
+            let mut neighbors =
+                cur_node.get_neighbors(self.height(), self.width());
+            for neighbor in neighbors {
+                // it occurs to me my open set actually needs to be
+                // a hashmap based on the sum of heuristic cost
+                // and traveled cost
+                // and i guess for that i will have to extend my
+                // pair struct to be an astarpair or something
+            }
+        }
 
         // we construct an open set of nodes around the src node
         // TODO(skend): we could save time by not simming around
