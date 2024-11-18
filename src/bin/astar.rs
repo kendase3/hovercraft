@@ -299,7 +299,7 @@ impl Mapp {
         // if it's bad, pick another one
         let (start_cell, first_node) = self.get_random_wall(src);
         // we make a door in a valid-ish spot on the dst
-        let (end_cell, last_node) = self.get_random_wall(dst);
+        let (end_cell, _) = self.get_random_wall(dst);
 
         // we construct an open set of nodes around the src node
         // TODO(skend): we could save time by not simming around
