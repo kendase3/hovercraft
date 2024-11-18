@@ -29,6 +29,16 @@ enum Terrain {
     Debug,
 }
 
+impl Terrain {
+    fn diggable(self) -> bool {
+        if self == Terrain::Corridor || self == Terrain::Full {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 struct Pair {
     x: u32,
@@ -199,12 +209,15 @@ impl Mapp {
             connected_rooms.push(dst as u32);
         }
     }
-    fn get_random_wall(&mut self, src_index: u32) -> &Cell {
+
+    // TODO(skend): rethink this func; work primarily in pairs
+    // with only actual data access using the mapp struct
+    fn get_random_wall(&mut self, src_index: u32) -> (Pair, Pair) {
+        let mut data = &mut self.data;
         let src = self.rooms[src_index as usize];
         let mut candidates = Vec::new();
         // add the top and bottom walls' cells
         for i in 1..(src.width - 1) {
-            let data_buddy = &mut self.data;
             candidates.push(Pair {
                 y: src.y,
                 x: src.x + i,
@@ -225,19 +238,56 @@ impl Mapp {
             });
         }
         let mut rng = rand::thread_rng();
-        let ret = rng.gen_range(0..candidates.len());
-        // before we return our guy, let's first make sure our set is correct
-        for candidate in candidates.iter() {
-            self.data[candidate.y as usize][candidate.x as usize].terrain =
-                Terrain::Debug;
+        let mut wall_validated = false;
+        // FIXME(skend): temp mut
+        //let maybe_ret = &self.data[0][0]; // temporary sane value
+        let mut maybe_ret = &mut data[0][0]; // temporary sane value
+        let mut x = 0;
+        let mut y = 0;
+        let mut coord2 = Pair { y: 0, x: 0 };
+        while !wall_validated {
+            let rand_pair = rng.gen_range(0..candidates.len());
+            x = candidates[rand_pair].x;
+            y = candidates[rand_pair].y;
+            maybe_ret = &mut data[y as usize][x as usize];
+            // determine which face of the wall it's on
+            // check if it's on the north wall
+            let mut terr = Terrain::Full; // stub value
+            if y == src.y {
+                // check the cell outside it
+                if y == 0 {
+                    continue;
+                }
+                coord2 = Pair { y: y - 1, x };
+            } else if y == src.y + src.height - 1 {
+                // TODO(skend): check off-by-one on this
+                if src.y + src.height >= data.len() as u32 {
+                    continue;
+                }
+                coord2 = Pair { y: y + 1, x };
+            } else if x == src.x {
+                if x == 0 {
+                    continue;
+                }
+                coord2 = Pair { y, x: x - 1 };
+            } else if x == src.x + src.width - 1 {
+                if src.x + src.width >= data[0].len() as u32 {
+                    continue;
+                }
+                coord2 = Pair { y, x: x + 1 };
+            } else {
+                println!("uh oh...");
+            }
+            let terr = data[coord2.y as usize][coord2.x as usize].terrain;
+            if terr.diggable() {
+                wall_validated = true;
+            }
         }
-        let x = candidates[ret].x;
-        let y = candidates[ret].y;
-        &self.data[y as usize][x as usize]
+        // FIXME(skend): why was i returning Cell? cells don't even know
+        // their own coords
+        (Pair { y, x }, coord2)
     }
 
-    // FIXME(skend): just use room indices, not rooms themselves
-    // we already have the data in the outer struct
     fn path(&mut self, src: u32, dst: u32) {
         // the hairy part of pathing
         // we make a door in a valid-ish spot on the src
@@ -247,11 +297,17 @@ impl Mapp {
         // we can just have the room mark for us its walls
         // we'll pick one at random and validate it
         // if it's bad, pick another one
-        let start_cell = self.get_random_wall(src);
+        let (start_cell, first_node) = self.get_random_wall(src);
         // we make a door in a valid-ish spot on the dst
-        // in the same kind of way we chose a valid start
+        let (end_cell, last_node) = self.get_random_wall(dst);
 
         // we construct an open set of nodes around the src node
+        // TODO(skend): we could save time by not simming around
+        // inside the room, always start path on valid outer node
+        // which we did discover in get_random_wall, maybe could be
+        // part of return? or maybe that should just be the start
+        // of the path? but we want to turn the wall into a door
+        // so that could be annoying to go find again
 
         // and then we just execute the algorithm, take the most
         // promising one and dig in
