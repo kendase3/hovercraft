@@ -210,7 +210,7 @@ impl Mapp {
                 x: src.x + i,
             });
             candidates.push(Pair {
-                y: src.y + src.height,
+                y: src.y + src.height - 1,
                 x: src.x + i,
             });
         }
@@ -221,7 +221,7 @@ impl Mapp {
             });
             candidates.push(Pair {
                 y: src.y + i,
-                x: src.x + src.width,
+                x: src.x + src.width - 1,
             });
         }
         let mut rng = rand::thread_rng();
@@ -279,7 +279,7 @@ impl fmt::Display for Mapp {
 fn main() {
     let mut mapp = Mapp::default();
     mapp.add_rooms();
-    //println!("{}", mapp);
+    println!("{}", mapp);
     mapp.get_random_wall(0);
     println!("{}", mapp);
 }
