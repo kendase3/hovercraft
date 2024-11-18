@@ -26,6 +26,13 @@ enum Terrain {
     TallWall,
     WideWall,
     Full,
+    Debug,
+}
+
+#[derive(Copy, Clone, Debug)]
+struct Pair {
+    x: u32,
+    y: u32,
 }
 
 // a map unit, roughly a square meter i guess
@@ -46,6 +53,7 @@ impl Cell {
             Terrain::Full => '~',
             Terrain::Innards => '.',
             Terrain::Corridor => '#',
+            Terrain::Debug => 'C',
         }
     }
 }
@@ -191,15 +199,35 @@ impl Mapp {
             connected_rooms.push(dst);
         }
     }
-    fn get_random_wall(&self, src: &Room) -> &Cell {
+    fn get_random_wall(&mut self, src: &Room) -> &Cell {
         let mut candidates = Vec::new();
-        // TODO(skend): start with just the top wall and don't validate yet
+        // add the top and bottom walls' cells
         for i in 1..(src.width - 1) {
-            candidates.push(&self.data[src.height as usize][i as usize]);
+            let data_buddy = &mut self.data;
+            //candidates.push(data_buddy[src.y as usize][(src.x + i) as usize]);
+            candidates.push(Pair {
+                y: src.y,
+                x: src.x + i,
+            });
+            //candidates.push(data_buddy[(src.y + src.height) as usize][(src.x + i) as usize]);
+            candidates.push(Pair {
+                y: src.y + src.height,
+                x: src.x + i,
+            });
         }
+        //for i in 1..(src.height - 1) {
+        //    candidates.push(&self.data[src.
+        //}
         let mut rng = rand::thread_rng();
         let ret = rng.gen_range(0..candidates.len());
-        candidates[ret]
+        // before we return our guy, let's first make sure our set is correct
+        for candidate in candidates.iter() {
+            self.data[candidate.y as usize][candidate.x as usize].terrain =
+                Terrain::Debug;
+        }
+        let x = candidates[ret].x;
+        let y = candidates[ret].y;
+        &self.data[y as usize][x as usize]
     }
 
     fn path(&mut self, src: &Room, dst: &Room) {
