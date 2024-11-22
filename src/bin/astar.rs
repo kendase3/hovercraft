@@ -17,6 +17,10 @@ use rand::Rng;
 use std::cmp::min;
 use std::fmt;
 
+//use crate::hovercraft::astarlib::hellolib;
+//pub mod astarlib;
+use hovercraft::astarlib;
+
 const MAX_ADDROOM_FAILS: u32 = 3;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -391,9 +395,12 @@ impl fmt::Display for Mapp {
 }
 
 fn main() {
+/*
     let mut mapp = Mapp::default();
     mapp.add_rooms();
     println!("{}", mapp);
     mapp.get_random_wall(0);
     println!("{}", mapp);
+*/
+    astarlib::hellolib();
 }
