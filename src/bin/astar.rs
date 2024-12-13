@@ -17,8 +17,6 @@ use rand::Rng;
 use std::cmp::min;
 use std::fmt;
 
-//use crate::hovercraft::astarlib::hellolib;
-//pub mod astarlib;
 use hovercraft::astarlib;
 
 const MAX_ADDROOM_FAILS: u32 = 3;
@@ -77,6 +75,12 @@ impl Pair {
             });
         }
         ret
+    }
+}
+
+impl fmt::Display for Pair {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "y: {}, x: {}", self.y, self.x)
     }
 }
 
@@ -395,12 +399,13 @@ impl fmt::Display for Mapp {
 }
 
 fn main() {
-/*
     let mut mapp = Mapp::default();
     mapp.add_rooms();
     println!("{}", mapp);
-    mapp.get_random_wall(0);
+    println!("{}", mapp.get_random_wall(0));
     println!("{}", mapp);
-*/
+    // the lib should just handle the creation of a path from a to b
+    // i think i had the idea to not mutate the mapp, but instead create
+    // a proposed path of coords to return from the lib
     astarlib::hellolib();
 }
