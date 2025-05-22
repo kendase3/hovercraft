@@ -13,10 +13,7 @@
 // limitations under the License.
 
 /// Currently more or less a mashup of existing tutorials, but one day!
-
-//use bevy::{prelude::*, render::camera::ScalingMode};
-use bevy::prelude::*;
-
+use bevy::{prelude::*, text::FontSmoothing};
 
 #[derive(Component)]
 struct Player;
@@ -39,7 +36,7 @@ fn main() {
         .run();
 }
 
-fn startup(mut commands: Commands) {
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(DirectionalLightBundle {
         directional_light: DirectionalLight {
             shadows_enabled: true,
@@ -54,13 +51,22 @@ fn startup(mut commands: Commands) {
         ..default()
     };
     commands.spawn(camera_bundle);
+    // FIXME(skend): dink around with text stuff here
+    let font = asset_server.load("fonts/DejaVuMonoSans.ttf");
+    let text_font = TextFont {
+        font: font.clone(),
+        font_size: 50.0,
+        ..default()
+    };
 }
 
 fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn((
         Player,
         SceneBundle {
-            scene: asset_server.load("bagel.glb#Scene0"),
+            scene: bevy::prelude::SceneRoot(
+                asset_server.load("bagel.glb#Scene0"),
+            ),
             ..default()
         },
     ));
@@ -86,7 +92,7 @@ fn move_player(
     }
 
     let move_speed = 7.;
-    let move_delta = direction * move_speed * time.delta_seconds();
+    let move_delta = direction * move_speed * time.delta_secs();
 
     for mut transform in &mut players {
         transform.translation += move_delta.extend(0.);
