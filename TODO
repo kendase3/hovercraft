@@ -1,0 +1,7 @@
+https://bevyengine.org/examples/2d-rendering/mesh2d/
+https://bevyengine.org/examples/math/render-primitives/
+https://bevyengine.org/examples/math/custom-primitives/
+https://bevyengine.org/examples/2d-rendering/text2d/
+
+--- plan ---
+our entities will be characters such as '@' rendered over a mesh2d background color. when i want to get more adventurous, i can render arbitrary 'primitives' in 2d or even 3d if necessary. i wonder if it would look acceptable to just have text and primitives with flat coloring.
