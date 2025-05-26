@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bevy::render::camera::ScalingMode;
 /// Currently more or less a mashup of existing tutorials, but one day!
-use bevy::{prelude::*, text::FontSmoothing};
+use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 
 #[derive(Component)]
 struct Player;
@@ -45,18 +46,32 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn(Camera2d);
+    commands.spawn((
+        Camera2d,
+        Camera {
+            hdr: true, // HDR is required for the bloom effect
+            ..default()
+        },
+        Bloom::NATURAL,
+        Projection::from(OrthographicProjection {
+            // We can set the scaling mode to FixedVertical to keep the viewport height constant as its aspect ratio changes.
+            // The viewport height is the height of the camera's view in world units when the scale is 1.
+            scaling_mode: ScalingMode::FixedVertical {
+                viewport_height: 100.,
+            },
+            // This is the default value for scale for orthographic projections.
+            // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
+            scale: 1.,
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
     let player = meshes.add(Rectangle::new(50.0, 50.0));
     let color = Color::rgb(1.0, 1.0, 1.0);
     commands.spawn((
         Player,
         Mesh2d(player),
         MeshMaterial2d(materials.add(color)),
-        Transform::from_xyz(
-            0.0,
-            0.0,
-            0.0,
-        ),
+        Transform::from_xyz(0.0, 0.0, 0.0),
     ));
     // FIXME(skend): dink around with text stuff here
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
