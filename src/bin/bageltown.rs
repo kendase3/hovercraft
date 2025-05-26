@@ -18,6 +18,8 @@ use bevy::{prelude::*, text::FontSmoothing};
 #[derive(Component)]
 struct Player;
 
+const X_EXTENT: f32 = 900.;
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
@@ -31,47 +33,42 @@ fn main() {
             ..default()
         }))
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (startup, spawn_player))
-        .add_systems(Update, move_player)
+        .add_systems(Startup, startup)
+        //.add_systems(Update, move_player)
         .run();
 }
 
-fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn(DirectionalLightBundle {
-        directional_light: DirectionalLight {
-            shadows_enabled: true,
-            illuminance: 50000.,
-            ..Default::default()
-        },
-        ..default()
-    });
-    let camera_bundle = Camera3dBundle {
-        transform: Transform::from_xyz(35., 35., 35.)
-            .looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
-        ..default()
-    };
-    commands.spawn(camera_bundle);
+fn startup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn(Camera2d);
+    let shapes = [meshes.add(Circle::new(50.0))];
+    let num_shapes = shapes.len();
+    for (i, shape) in shapes.into_iter().enumerate() {
+        let color = Color::hsl(360. * i as f32 / num_shapes as f32, 0.95, 0.7);
+        commands.spawn((
+            //Player,
+            Mesh2d(shape),
+            MeshMaterial2d(materials.add(color)),
+            Transform::from_xyz(
+                -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
+                0.0,
+                0.0,
+            ),
+        ));
+    }
     // FIXME(skend): dink around with text stuff here
-    let font = asset_server.load("fonts/DejaVuMonoSans.ttf");
+    let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
         font_size: 50.0,
         ..default()
     };
 }
-
-fn spawn_player(mut commands: Commands, asset_server: Res<AssetServer>) {
-    commands.spawn((
-        Player,
-        SceneBundle {
-            scene: bevy::prelude::SceneRoot(
-                asset_server.load("bagel.glb#Scene0"),
-            ),
-            ..default()
-        },
-    ));
-}
-
+/*
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -98,3 +95,4 @@ fn move_player(
         transform.translation += move_delta.extend(0.);
     }
 }
+*/
