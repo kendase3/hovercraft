@@ -19,6 +19,7 @@ use bevy::{prelude::*, text::FontSmoothing};
 struct Player;
 
 const X_EXTENT: f32 = 900.;
+const MOVE_PER_TICK: f32 = 40.;
 
 fn main() {
     App::new()
@@ -45,24 +46,18 @@ fn startup(
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(Camera2d);
-    let shapes = [
-        meshes.add(Circle::new(50.0)),
-        meshes.add(Rhombus::new(75.0, 100.0)),
-    ];
-    let num_shapes = shapes.len();
-    for (i, shape) in shapes.into_iter().enumerate() {
-        let color = Color::hsl(360. * i as f32 / num_shapes as f32, 0.95, 0.7);
-        commands.spawn((
-            Player,
-            Mesh2d(shape),
-            MeshMaterial2d(materials.add(color)),
-            Transform::from_xyz(
-                -X_EXTENT / 2. + i as f32 / (num_shapes - 1) as f32 * X_EXTENT,
-                0.0,
-                0.0,
-            ),
-        ));
-    }
+    let player = meshes.add(Rectangle::new(50.0, 50.0));
+    let color = Color::rgb(1.0, 1.0, 1.0);
+    commands.spawn((
+        Player,
+        Mesh2d(player),
+        MeshMaterial2d(materials.add(color)),
+        Transform::from_xyz(
+            0.0,
+            0.0,
+            0.0,
+        ),
+    ));
     // FIXME(skend): dink around with text stuff here
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -90,7 +85,7 @@ fn move_player(
         direction.x -= 1.;
     }
 
-    let move_speed = 7.;
+    let move_speed = MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
 
     for mut transform in &mut players {
