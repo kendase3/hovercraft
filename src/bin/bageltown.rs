@@ -45,7 +45,10 @@ fn startup(
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(Camera2d);
-    let shapes = [meshes.add(Circle::new(50.0))];
+    let shapes = [
+        meshes.add(Circle::new(50.0)),
+        meshes.add(Rhombus::new(75.0, 100.0)),
+    ];
     let num_shapes = shapes.len();
     for (i, shape) in shapes.into_iter().enumerate() {
         let color = Color::hsl(360. * i as f32 / num_shapes as f32, 0.95, 0.7);
