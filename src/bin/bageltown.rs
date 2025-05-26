@@ -54,7 +54,7 @@ fn startup(
         Bloom::NATURAL,
         Projection::from(OrthographicProjection {
             scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 100.,
+                viewport_height: 200.,
             },
             // This is the default value for scale for orthographic projections.
             // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
@@ -62,7 +62,7 @@ fn startup(
             ..OrthographicProjection::default_2d()
         }),
     ));
-    let player = meshes.add(Rectangle::new(50.0, 50.0));
+    let player = meshes.add(Circle::new(20.));
     let color = Color::srgb(0.0, 0.0, 0.0);
     commands.spawn((
         Player,
@@ -74,9 +74,18 @@ fn startup(
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
-        font_size: 50.0,
+        font_size: 30.0,
         ..default()
     };
+    commands.spawn((
+        Text2d::new("@"),
+        text_font
+            .clone()
+            .with_font_smoothing(FontSmoothing::AntiAliased),
+        TextLayout::new_with_justify(JustifyText::Center),
+        TextColor(Color::srgb(1., 0.0, 1.)),
+        Player,
+    ));
 }
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
