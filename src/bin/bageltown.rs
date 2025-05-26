@@ -34,7 +34,7 @@ fn main() {
         }))
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, startup)
-        //.add_systems(Update, move_player)
+        .add_systems(Update, move_player)
         .run();
 }
 
@@ -53,7 +53,7 @@ fn startup(
     for (i, shape) in shapes.into_iter().enumerate() {
         let color = Color::hsl(360. * i as f32 / num_shapes as f32, 0.95, 0.7);
         commands.spawn((
-            //Player,
+            Player,
             Mesh2d(shape),
             MeshMaterial2d(materials.add(color)),
             Transform::from_xyz(
@@ -71,7 +71,6 @@ fn startup(
         ..default()
     };
 }
-/*
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -98,4 +97,3 @@ fn move_player(
         transform.translation += move_delta.extend(0.);
     }
 }
-*/
