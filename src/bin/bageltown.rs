@@ -19,7 +19,6 @@ use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 #[derive(Component)]
 struct Player;
 
-const X_EXTENT: f32 = 900.;
 const MOVE_PER_TICK: f32 = 40.;
 
 fn main() {
@@ -54,8 +53,6 @@ fn startup(
         },
         Bloom::NATURAL,
         Projection::from(OrthographicProjection {
-            // We can set the scaling mode to FixedVertical to keep the viewport height constant as its aspect ratio changes.
-            // The viewport height is the height of the camera's view in world units when the scale is 1.
             scaling_mode: ScalingMode::FixedVertical {
                 viewport_height: 100.,
             },
@@ -66,7 +63,7 @@ fn startup(
         }),
     ));
     let player = meshes.add(Rectangle::new(50.0, 50.0));
-    let color = Color::rgb(1.0, 1.0, 1.0);
+    let color = Color::srgb(0.0, 0.0, 0.0);
     commands.spawn((
         Player,
         Mesh2d(player),
