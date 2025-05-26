@@ -86,6 +86,17 @@ fn startup(
         TextColor(Color::srgb(1., 0.0, 1.)),
         Player,
     ));
+    // hypothetical UI
+        // UI
+    commands.spawn((
+        Text::new("imagine this was a UI"),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(12.0),
+            left: Val::Px(12.0),
+            ..default()
+        },
+    ));
 }
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
