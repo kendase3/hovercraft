@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use bevy::render::camera::ScalingMode;
+use bevy::window::PresentMode;
 /// Currently more or less a mashup of existing tutorials, but one day!
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 
@@ -29,6 +30,7 @@ fn main() {
                 fit_canvas_to_parent: true,
                 // don't listen to keyboard shortcuts like F keys, ctrl+R
                 prevent_default_event_handling: false,
+                present_mode: PresentMode::AutoNoVsync,
                 ..default()
             }),
             ..default()
@@ -54,7 +56,7 @@ fn startup(
         Bloom::NATURAL,
         Projection::from(OrthographicProjection {
             scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 200.,
+                viewport_height: 100.,
             },
             // This is the default value for scale for orthographic projections.
             // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
@@ -62,7 +64,7 @@ fn startup(
             ..OrthographicProjection::default_2d()
         }),
     ));
-    let player = meshes.add(Circle::new(20.));
+    let player = meshes.add(Circle::new(10.));
     let color = Color::srgb(0.0, 0.0, 0.0);
     commands.spawn((
         Player,
@@ -74,7 +76,7 @@ fn startup(
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
-        font_size: 30.0,
+        font_size: 15.0,
         ..default()
     };
     commands.spawn((
@@ -87,7 +89,7 @@ fn startup(
         Player,
     ));
     // hypothetical UI
-        // UI
+    // UI
     commands.spawn((
         Text::new("imagine this was a UI"),
         Node {

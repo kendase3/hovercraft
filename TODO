@@ -8,3 +8,6 @@ our entities will be characters such as '@' rendered over a mesh2d background co
 
 --- ideas for iterative projects ---
 reverse pacman: you're the ghosts
+
+--- unsolved problems ---
+the world does not exist in units yet. it's easiest to read as a float if the 'room' is 100 units tall.
