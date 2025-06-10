@@ -40,7 +40,7 @@ fn main() {
         }))
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, startup)
-        .add_systems(Update, move_player)
+        .add_systems(Update, (move_player, move_bot))
         .run();
 }
 
@@ -146,4 +146,26 @@ fn move_player(
     for mut transform in &mut players {
         transform.translation += move_delta.extend(0.);
     }
+}
+
+fn move_bot(
+    mut bot: Query<&mut Transform, With<Bot>>,
+    mut player: Query<&mut Transform, With<Player>>,
+    time: Res<Time>,
+) {
+    let b = bot.single_mut();
+    let p = player.single_mut();
+    // find our position in x
+    let x_delta = b.translation.x - p.translation.x;
+    let y_delta = b.translation.y - p.translation.y;
+    if x_delta < 20.0 && y_delta < 20.0 {
+        println!("you're it!");
+    }
+    // find our position in y
+    // find bot position in x
+    // find bot position in y
+    // if delta of both is less than 20, we are tagged
+
+    //let move_speed = MOVE_PER_TICK;
+    //let move_delta = direction * move_speed * time.delta_secs();
 }
