@@ -20,6 +20,9 @@ use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 #[derive(Component)]
 struct Player;
 
+#[derive(Component)]
+struct Bot;
+
 const MOVE_PER_TICK: f32 = 40.;
 
 fn main() {
@@ -72,6 +75,13 @@ fn startup(
         MeshMaterial2d(materials.add(color)),
         Transform::from_xyz(0.0, 0.0, 0.0),
     ));
+    let bot = meshes.add(Circle::new(10.));
+    commands.spawn((
+        Bot,
+        Mesh2d(bot),
+        MeshMaterial2d(materials.add(color)),
+        Transform::from_xyz(50.0, 0.0, 0.0),
+    ));
     // FIXME(skend): dink around with text stuff here
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -88,6 +98,16 @@ fn startup(
         TextColor(Color::srgb(1., 0.0, 1.)),
         Transform::from_scale(Vec3::splat(0.2)),
         Player,
+    ));
+    commands.spawn((
+        Text2d::new("@"),
+        text_font
+            .clone()
+            .with_font_smoothing(FontSmoothing::AntiAliased),
+        TextLayout::new_with_justify(JustifyText::Center),
+        TextColor(Color::srgb(1., 0., 0.)),
+        Transform::from_xyz(50.0, 0.0, 0.0).with_scale(Vec3::splat(0.2)),
+        Bot,
     ));
     // hypothetical UI
     // UI
