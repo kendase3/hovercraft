@@ -76,7 +76,7 @@ fn startup(
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
-        font_size: 15.0,
+        font_size: 100.0,
         ..default()
     };
     commands.spawn((
@@ -86,6 +86,7 @@ fn startup(
             .with_font_smoothing(FontSmoothing::AntiAliased),
         TextLayout::new_with_justify(JustifyText::Center),
         TextColor(Color::srgb(1., 0.0, 1.)),
+        Transform::from_scale(Vec3::splat(0.2)),
         Player,
     ));
     // hypothetical UI
