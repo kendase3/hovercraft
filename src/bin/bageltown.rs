@@ -90,8 +90,8 @@ fn startup(
                     .clone()
                     .with_font_smoothing(FontSmoothing::AntiAliased),
                 TextLayout::new_with_justify(JustifyText::Center),
-                TextColor(Color::srgb(1., 0., 0.)),
-                Transform::from_xyz(50.0, 0., 0.).with_scale(Vec3::splat(0.2)),
+                TextColor(Color::srgb(1., 0., 1.)),
+                Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
             ));
         });
     let bot = meshes.add(Circle::new(10.));
@@ -111,7 +111,7 @@ fn startup(
                     .with_font_smoothing(FontSmoothing::AntiAliased),
                 TextLayout::new_with_justify(JustifyText::Center),
                 TextColor(Color::srgb(1., 0., 0.)),
-                Transform::from_xyz(50.0, 0.0, 0.0)
+                Transform::from_xyz(0.0, 0.0, 0.0)
                     .with_scale(Vec3::splat(0.2)),
             ));
         });
