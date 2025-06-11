@@ -55,7 +55,7 @@ fn main() {
         )
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, startup)
-        .add_systems(Update, (move_player, move_bot))
+        .add_systems(Update, (move_player, move_bot, update_proclamation))
         .run();
 }
 
