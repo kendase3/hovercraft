@@ -69,46 +69,52 @@ fn startup(
     ));
     let player = meshes.add(Circle::new(10.));
     let color = Color::srgb(0.0, 0.0, 0.0);
-    commands.spawn((
-        Player,
-        Mesh2d(player),
-        MeshMaterial2d(materials.add(color)),
-        Transform::from_xyz(0.0, 0.0, 0.0),
-    ));
-    let bot = meshes.add(Circle::new(10.));
-    commands.spawn((
-        Bot,
-        Mesh2d(bot),
-        MeshMaterial2d(materials.add(color)),
-        Transform::from_xyz(50.0, 0.0, 0.0),
-    ));
-    // FIXME(skend): dink around with text stuff here
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
         font_size: 100.0,
         ..default()
     };
-    commands.spawn((
-        Text2d::new("@"),
-        text_font
-            .clone()
-            .with_font_smoothing(FontSmoothing::AntiAliased),
-        TextLayout::new_with_justify(JustifyText::Center),
-        TextColor(Color::srgb(1., 0.0, 1.)),
-        Transform::from_scale(Vec3::splat(0.2)),
-        Player,
-    ));
-    commands.spawn((
-        Text2d::new("@"),
-        text_font
-            .clone()
-            .with_font_smoothing(FontSmoothing::AntiAliased),
-        TextLayout::new_with_justify(JustifyText::Center),
-        TextColor(Color::srgb(1., 0., 0.)),
-        Transform::from_xyz(50.0, 0.0, 0.0).with_scale(Vec3::splat(0.2)),
-        Bot,
-    ));
+    commands
+        .spawn((
+            Player,
+            Name::new("Protagonist"),
+            Mesh2d(player),
+            MeshMaterial2d(materials.add(color)),
+            Transform::from_xyz(0.0, 0.0, 0.0),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text2d::new("@"),
+                text_font
+                    .clone()
+                    .with_font_smoothing(FontSmoothing::AntiAliased),
+                TextLayout::new_with_justify(JustifyText::Center),
+                TextColor(Color::srgb(1., 0., 0.)),
+                Transform::from_xyz(50.0, 0., 0.).with_scale(Vec3::splat(0.2)),
+            ));
+        });
+    let bot = meshes.add(Circle::new(10.));
+    commands
+        .spawn((
+            Bot,
+            Name::new("Antagonist"),
+            Mesh2d(bot),
+            MeshMaterial2d(materials.add(color)),
+            Transform::from_xyz(50.0, 0.0, 0.0),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Text2d::new("@"),
+                text_font
+                    .clone()
+                    .with_font_smoothing(FontSmoothing::AntiAliased),
+                TextLayout::new_with_justify(JustifyText::Center),
+                TextColor(Color::srgb(1., 0., 0.)),
+                Transform::from_xyz(50.0, 0.0, 0.0)
+                    .with_scale(Vec3::splat(0.2)),
+            ));
+        });
     // hypothetical UI
     // UI
     commands.spawn((
@@ -150,9 +156,10 @@ fn move_player(
 
 fn move_bot(
     mut bot: Query<&mut Transform, With<Bot>>,
-    mut player: Query<&mut Transform, With<Player>>,
+    mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
 ) {
+    // FIXME(i currently have the background as a separate entity i guess
     let b = bot.single_mut();
     let p = player.single_mut();
     // find our position in x
