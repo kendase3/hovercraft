@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::window::PresentMode;
 /// Currently more or less a mashup of existing tutorials, but one day!
@@ -27,17 +28,24 @@ const MOVE_PER_TICK: f32 = 40.;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(Window {
-                // fill whole browser window
-                fit_canvas_to_parent: true,
-                // don't listen to keyboard shortcuts like F keys, ctrl+R
-                prevent_default_event_handling: false,
-                present_mode: PresentMode::AutoNoVsync,
-                ..default()
-            }),
-            ..default()
-        }))
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
+                    primary_window: Some(Window {
+                        // fill whole browser window
+                        fit_canvas_to_parent: true,
+                        // don't listen to keyboard shortcuts like F keys, ctrl+R
+                        prevent_default_event_handling: false,
+                        present_mode: PresentMode::AutoNoVsync,
+                        ..default()
+                    }),
+                    ..default()
+                })
+                .set(LogPlugin {
+                    level: bevy::log::Level::INFO,
+                    ..default()
+                }),
+        )
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, startup)
         .add_systems(Update, (move_player, move_bot))
@@ -166,7 +174,7 @@ fn move_bot(
     let x_delta = b.translation.x - p.translation.x;
     let y_delta = b.translation.y - p.translation.y;
     if x_delta < 20.0 && y_delta < 20.0 {
-        println!("you're it!");
+        info!("you're it!");
     }
     // find our position in y
     // find bot position in x
