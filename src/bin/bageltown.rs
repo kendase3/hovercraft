@@ -24,7 +24,9 @@ struct Player {
 }
 
 #[derive(Component)]
-struct Bot;
+struct Bot {
+    it: bool,
+}
 
 #[derive(Component)]
 struct Proclamation;
@@ -110,7 +112,7 @@ fn startup(
     let bot = meshes.add(Circle::new(10.));
     commands
         .spawn((
-            Bot,
+            Bot { it: true },
             Name::new("Antagonist"),
             Mesh2d(bot),
             MeshMaterial2d(materials.add(color)),
@@ -143,12 +145,17 @@ fn startup(
     ));
 }
 
-/*
+// if player is it, notify them
 fn update_proclamation(
-    mut proclamation: Query(<&mut Transform, With<Proclamation>>)) {
-
+    mut proclamation: Query<&mut Visibility, With<Proclamation>>,
+    mut player: Query<&Player, Without<Proclamation>>,
+) {
+    let mut proc = proclamation.single_mut();
+    let p = player.single();
+    if p.it {
+        *proc = Visibility::Visible;
+    }
 }
-*/
 
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
@@ -191,6 +198,7 @@ fn move_bot(
     if x_delta < 20.0 && y_delta < 20.0 {
         info!("you're it!");
         p.it = true;
+        b.it = false;
     }
     // find our position in y
     // find bot position in x
