@@ -19,10 +19,15 @@ use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 
 #[derive(Component)]
-struct Player;
+struct Player {
+    it: bool,
+}
 
 #[derive(Component)]
 struct Bot;
+
+#[derive(Component)]
+struct Proclamation;
 
 const MOVE_PER_TICK: f32 = 40.;
 
@@ -85,7 +90,7 @@ fn startup(
     };
     commands
         .spawn((
-            Player,
+            Player { it: false },
             Name::new("Protagonist"),
             Mesh2d(player),
             MeshMaterial2d(materials.add(color)),
@@ -126,15 +131,25 @@ fn startup(
     // hypothetical UI
     // UI
     commands.spawn((
-        Text::new("imagine this was a UI"),
+        Text::new("You're it!"),
+        Proclamation,
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(12.0),
             left: Val::Px(12.0),
             ..default()
         },
+        Visibility::Hidden,
     ));
 }
+
+/*
+fn update_proclamation(
+    mut proclamation: Query(<&mut Transform, With<Proclamation>>)) {
+
+}
+*/
+
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -163,18 +178,19 @@ fn move_player(
 }
 
 fn move_bot(
-    mut bot: Query<&mut Transform, With<Bot>>,
-    mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
+    mut bot: Query<(&mut Bot, &mut Transform)>,
+    mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
     time: Res<Time>,
 ) {
     // FIXME(i currently have the background as a separate entity i guess
-    let b = bot.single_mut();
-    let p = player.single_mut();
+    let (mut b, b_t) = bot.single_mut();
+    let (mut p, p_t) = player.single_mut();
     // find our position in x
-    let x_delta = b.translation.x - p.translation.x;
-    let y_delta = b.translation.y - p.translation.y;
+    let x_delta = b_t.translation.x - p_t.translation.x;
+    let y_delta = b_t.translation.y - p_t.translation.y;
     if x_delta < 20.0 && y_delta < 20.0 {
         info!("you're it!");
+        p.it = true;
     }
     // find our position in y
     // find bot position in x
