@@ -31,6 +31,17 @@ struct Bot {
 #[derive(Component)]
 struct Proclamation;
 
+#[derive(Component)]
+struct TagCooldownTimer {
+    timer: Timer,
+}
+
+// whether or not the cooldown is ready for a tag to happen
+#[derive(Component)]
+struct TagReady {
+    ready: bool,
+}
+
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 
@@ -56,7 +67,7 @@ fn main() {
         )
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, startup)
-        .add_systems(Update, (move_player, move_bot, update_proclamation))
+        .add_systems(Update, (move_player, move_bot, handle_tag))
         .run();
 }
 
@@ -66,6 +77,11 @@ fn startup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
+    commands.spawn(TagReady { ready: true });
+    // create a tag cooldown timer
+    commands.spawn(TagCooldownTimer {
+        timer: Timer::from_seconds(1.0, TimerMode::Once),
+    });
     commands.spawn((
         Camera2d,
         Camera {
@@ -145,15 +161,43 @@ fn startup(
     ));
 }
 
-// if player is it, notify them
-fn update_proclamation(
+// generally handle tagging state changes
+fn handle_tag(
+    mut commands: Commands,
     mut proclamation: Query<&mut Visibility, With<Proclamation>>,
-    mut player: Query<&Player, Without<Proclamation>>,
+    mut bot: Query<(&mut Bot, &mut Transform)>,
+    mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
+    mut tagready: Query<&mut TagReady>,
+    mut tagtimer: Query<&mut TagCooldownTimer>,
+    time: Res<Time>,
 ) {
+    let (mut b, mut b_t) = bot.single_mut();
+    let (mut p, p_t) = player.single_mut();
+    let mut tagr = tagready.single_mut();
+    let x_delta = (b_t.translation.x - p_t.translation.x).abs();
+    let y_delta = (b_t.translation.y - p_t.translation.y).abs();
+    // if there's a timer that's done, set tagready to ready
+    let mut timer = tagtimer.single_mut();
+    timer.timer.tick(time.delta());
+    if timer.timer.finished() {
+        tagr.ready = true;
+    }
+    if tagr.ready && x_delta < 20.0 && y_delta < 20.0 {
+        info!("you're it!");
+        p.it = !p.it;
+        b.it = !b.it;
+        // begin the cooldown period before we can tag again
+        tagr.ready = false;
+        // reset our cooldown timer
+        timer.timer.reset();
+    }
+
+    // update the top text
     let mut proc = proclamation.single_mut();
-    let p = player.single();
     if p.it {
         *proc = Visibility::Visible;
+    } else {
+        *proc = Visibility::Hidden;
     }
 }
 
@@ -193,11 +237,6 @@ fn move_bot(
     let (mut p, p_t) = player.single_mut();
     let x_delta = b_t.translation.x - p_t.translation.x;
     let y_delta = b_t.translation.y - p_t.translation.y;
-    if x_delta < 20.0 && y_delta < 20.0 {
-        info!("you're it!");
-        p.it = true;
-        b.it = false;
-    }
 
     let mut direction = Vec2::ZERO;
     let mut it_multiplier = 1.;
