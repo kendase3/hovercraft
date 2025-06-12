@@ -45,6 +45,9 @@ struct TagReady {
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
+const MAP_SIZE: u32 = 400;
+const GRID_SIZE: f32 = 1.;
+const SPACE_BETWEEN_LINES: u32 = 20;
 
 fn main() {
     App::new()
@@ -67,8 +70,11 @@ fn main() {
                 }),
         )
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, startup)
-        .add_systems(Update, (move_player, move_bot, handle_tag))
+        .add_systems(Startup, (draw_map, startup))
+        .add_systems(
+            Update,
+            (move_player, move_bot, handle_tag, camera_follow),
+        )
         .run();
 }
 
@@ -224,10 +230,13 @@ fn move_player(
 
     let move_speed = MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
+    let mut p = players.single_mut();
+    let old_pos = p.translation.xy();
+    let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
+    let new_pos = (old_pos + move_delta).clamp(-limit, limit);
 
-    for mut transform in &mut players {
-        transform.translation += move_delta.extend(0.);
-    }
+    p.translation.x = new_pos.x;
+    p.translation.y = new_pos.y;
 }
 
 fn move_bot(
@@ -260,5 +269,66 @@ fn move_bot(
 
     let move_speed = BOT_MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
-    b_t.translation += move_delta.extend(0.);
+    let old_pos = b_t.translation.xy();
+    let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
+    let new_pos = (old_pos + move_delta).clamp(-limit, limit);
+    b_t.translation.x = new_pos.x;
+    b_t.translation.y = new_pos.y;
+}
+
+// center the player
+fn camera_follow(
+    playerq: Query<(&Player, &Transform)>,
+    mut cameraq: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+) {
+    let p = playerq.single();
+    let pos = p.1.translation;
+    let mut c = cameraq.single_mut();
+    c.translation.x = pos.x;
+    c.translation.y = pos.y;
+}
+
+fn draw_map(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    // let's make horizontal lines first
+    for i in 0..=MAP_SIZE {
+        if i % SPACE_BETWEEN_LINES != 0 {
+            continue;
+        };
+        // first we make our line
+        let rect_width = MAP_SIZE as f32;
+        let rect_height = GRID_SIZE;
+        let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
+        let rect_color =
+            materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
+
+        commands.spawn((
+            Mesh2d(rect_mesh),
+            MeshMaterial2d(rect_color),
+            // we start at negative 1/2 map size, go up to positive 1/2 map size
+            Transform::from_xyz(0., i as f32 - MAP_SIZE as f32 / 2., 0.),
+        ));
+    }
+    // then vertical
+    for i in 0..=MAP_SIZE {
+        if i % SPACE_BETWEEN_LINES != 0 {
+            continue;
+        };
+        // first we make our line
+        let rect_width = GRID_SIZE;
+        let rect_height = MAP_SIZE as f32;
+        let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
+        let rect_color =
+            materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
+
+        commands.spawn((
+            Mesh2d(rect_mesh),
+            MeshMaterial2d(rect_color),
+            // we start at negative 1/2 map size, go up to positive 1/2 map size
+            Transform::from_xyz(i as f32 - MAP_SIZE as f32 / 2., 0., 0.),
+        ));
+    }
 }
