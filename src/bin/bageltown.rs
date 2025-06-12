@@ -44,6 +44,7 @@ struct TagReady {
 
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
+const PLAYER_RADIUS: f32 = 10.;
 
 fn main() {
     App::new()
@@ -99,7 +100,7 @@ fn startup(
             ..OrthographicProjection::default_2d()
         }),
     ));
-    let player = meshes.add(Circle::new(10.));
+    let player = meshes.add(Circle::new(PLAYER_RADIUS));
     let color = Color::srgb(0.0, 0.0, 0.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -181,7 +182,9 @@ fn handle_tag(
     if timer.timer.finished() {
         tagr.ready = true;
     }
-    if tagr.ready && x_delta < 20.0 && y_delta < 20.0 {
+    // FIXME(skend): let's do this properly
+    let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
+    if tagr.ready && distance < 2. * PLAYER_RADIUS {
         info!("you're it!");
         p.it = !p.it;
         b.it = !b.it;
