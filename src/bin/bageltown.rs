@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -163,7 +163,6 @@ fn startup(
 
 // generally handle tagging state changes
 fn handle_tag(
-    mut commands: Commands,
     mut proclamation: Query<&mut Visibility, With<Proclamation>>,
     mut bot: Query<(&mut Bot, &mut Transform)>,
     mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
@@ -171,7 +170,7 @@ fn handle_tag(
     mut tagtimer: Query<&mut TagCooldownTimer>,
     time: Res<Time>,
 ) {
-    let (mut b, mut b_t) = bot.single_mut();
+    let (mut b, b_t) = bot.single_mut();
     let (mut p, p_t) = player.single_mut();
     let mut tagr = tagready.single_mut();
     let x_delta = (b_t.translation.x - p_t.translation.x).abs();
@@ -233,8 +232,8 @@ fn move_bot(
     mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
     time: Res<Time>,
 ) {
-    let (mut b, mut b_t) = bot.single_mut();
-    let (mut p, p_t) = player.single_mut();
+    let (b, mut b_t) = bot.single_mut();
+    let (_, p_t) = player.single_mut();
     let x_delta = b_t.translation.x - p_t.translation.x;
     let y_delta = b_t.translation.y - p_t.translation.y;
 
@@ -254,7 +253,7 @@ fn move_bot(
         direction.y += 1.;
     }
     // if we're it, run towards player instead of away
-    direction = direction * it_multiplier;
+    direction *= it_multiplier;
 
     let move_speed = BOT_MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
