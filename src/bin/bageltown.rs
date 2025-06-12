@@ -32,6 +32,7 @@ struct Bot {
 struct Proclamation;
 
 const MOVE_PER_TICK: f32 = 40.;
+const BOT_MOVE_PER_TICK: f32 = 20.;
 
 fn main() {
     App::new()
@@ -130,8 +131,7 @@ fn startup(
                     .with_scale(Vec3::splat(0.2)),
             ));
         });
-    // hypothetical UI
-    // UI
+    // kind of like a notification at the top of the screen
     commands.spawn((
         Text::new("You're it!"),
         Proclamation,
@@ -189,10 +189,8 @@ fn move_bot(
     mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
     time: Res<Time>,
 ) {
-    // FIXME(i currently have the background as a separate entity i guess
-    let (mut b, b_t) = bot.single_mut();
+    let (mut b, mut b_t) = bot.single_mut();
     let (mut p, p_t) = player.single_mut();
-    // find our position in x
     let x_delta = b_t.translation.x - p_t.translation.x;
     let y_delta = b_t.translation.y - p_t.translation.y;
     if x_delta < 20.0 && y_delta < 20.0 {
@@ -200,11 +198,26 @@ fn move_bot(
         p.it = true;
         b.it = false;
     }
-    // find our position in y
-    // find bot position in x
-    // find bot position in y
-    // if delta of both is less than 20, we are tagged
 
-    //let move_speed = MOVE_PER_TICK;
-    //let move_delta = direction * move_speed * time.delta_secs();
+    let mut direction = Vec2::ZERO;
+    let mut it_multiplier = 1.;
+    if b.it {
+        it_multiplier = -1.;
+    }
+    if x_delta < 0. {
+        direction.x -= 1.;
+    } else if x_delta > 0. {
+        direction.x += 1.;
+    }
+    if y_delta < 0. {
+        direction.y -= 1.;
+    } else if y_delta > 0. {
+        direction.y += 1.;
+    }
+    // if we're it, run towards player instead of away
+    direction = direction * it_multiplier;
+
+    let move_speed = BOT_MOVE_PER_TICK;
+    let move_delta = direction * move_speed * time.delta_secs();
+    b_t.translation += move_delta.extend(0.);
 }
