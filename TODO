@@ -4,11 +4,13 @@ https://bevyengine.org/examples/math/custom-primitives/
 https://bevyengine.org/examples/2d-rendering/text2d/
 
 --- plan ---
-the camera should follow the player, and we should make a grid as in example. i would rather my grid be primitives though.
+i'm not satisfied with the camera following the player.
+i'm not satisfied with the way i am laying out the map; i don't even know its size
+i'm not satisfied with the movement abstraction; i want approach, orbit and targeting.
 
 --- ideas for iterative projects ---
-tag: there's a bot that wants to tag you, then just runs left once it's no longer it
-reverse pacman: you're the ghosts
+tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
+star control: an enemy bot is trying to destroy you. you each shoot bullets. one hit kills. may orbit, approach, or flee
 
 --- unsolved problems ---
 the world does not exist in units yet. it's easiest to read as a float if the 'room' is 100 units tall.

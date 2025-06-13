@@ -48,6 +48,7 @@ const PLAYER_RADIUS: f32 = 10.;
 const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
+const CAMERA_DEFAULT_SIZE: f32 = 100.;
 
 fn main() {
     App::new()
@@ -98,7 +99,7 @@ fn startup(
         Bloom::NATURAL,
         Projection::from(OrthographicProjection {
             scaling_mode: ScalingMode::FixedVertical {
-                viewport_height: 100.,
+                viewport_height: CAMERA_DEFAULT_SIZE,
             },
             // This is the default value for scale for orthographic projections.
             // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
@@ -188,7 +189,6 @@ fn handle_tag(
     if timer.timer.finished() {
         tagr.ready = true;
     }
-    // FIXME(skend): let's do this properly
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
     if tagr.ready && distance < 2. * PLAYER_RADIUS {
         info!("you're it!");
@@ -276,16 +276,30 @@ fn move_bot(
     b_t.translation.y = new_pos.y;
 }
 
-// center the player
 fn camera_follow(
     playerq: Query<(&Player, &Transform)>,
-    mut cameraq: Query<&mut Transform, (With<Camera>, Without<Player>)>,
+    botq: Query<(&Bot, &Transform), Without<Player>>,
+    mut cameraq: Query<
+        &mut Transform,
+        (With<Camera>, Without<Player>, Without<Bot>),
+    >,
 ) {
     let p = playerq.single();
-    let pos = p.1.translation;
+    let b = botq.single();
+    let ppos = p.1.translation;
+    let bpos = b.1.translation;
+    let camera_x = (ppos.x + bpos.x) / 2.;
+    let camera_y = (ppos.y + bpos.y) / 2.;
     let mut c = cameraq.single_mut();
-    c.translation.x = pos.x;
-    c.translation.y = pos.y;
+    c.translation.x = camera_x;
+    c.translation.y = camera_y;
+    // see CAMERA_DEFAULT_SIZE for usual camera zoom level
+    let radius =
+        ((ppos.x - bpos.x).powf(2.) + (ppos.y - bpos.y).powf(2.)).sqrt();
+    if radius > CAMERA_DEFAULT_SIZE {
+        let zoom_factor = radius / CAMERA_DEFAULT_SIZE;
+        c.scale = Vec3::splat(zoom_factor);
+    }
 }
 
 fn draw_map(
