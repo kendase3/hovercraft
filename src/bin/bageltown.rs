@@ -142,7 +142,7 @@ fn startup(
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
-    let bot_target = meshes.add(Rectangle::new(PLAYER_RADIUS, PLAYER_RADIUS));
+    let bot_target = meshes.add(Rectangle::new(PLAYER_RADIUS * 2., PLAYER_RADIUS * 2.));
     commands
         .spawn((
             Bot { it: true },
