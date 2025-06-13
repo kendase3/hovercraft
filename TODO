@@ -7,6 +7,7 @@ https://bevyengine.org/examples/2d-rendering/text2d/
 i'm not satisfied with the movement abstraction; i want approach, orbit and targeting.
 a good first step would be to introduce the idea of acceleration, velocity, facing, and turn time (rotational velocity)
 how is targeting going to work? it seems like we could use entity names to fetch the target of a unit.
+look at custom primitives link above to see how to make a targeting square like what i want
 
 --- ideas for iterative projects ---
 tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
