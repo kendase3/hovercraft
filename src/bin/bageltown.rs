@@ -14,9 +14,13 @@
 
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
+use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
 use bevy::window::PresentMode;
-/// Currently more or less a mashup of existing tutorials, but one day!
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
+use bevy::{
+    reflect::TypePath,
+    render::render_resource::{AsBindGroup, ShaderRef},
+};
 
 #[derive(Component)]
 struct Player {
@@ -42,6 +46,28 @@ struct TagReady {
     ready: bool,
 }
 
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct TargetMaterial {
+    #[uniform(0)] // same
+    border_width: f32,
+}
+
+impl Material2d for TargetMaterial {
+    //fn vertex_shader() -> ShaderRef {
+    //    "shaders/target.wgsl".into()
+    //}
+    fn fragment_shader() -> ShaderRef {
+        "shaders/target.wgsl".into()
+    }
+    // required for transparency
+    fn alpha_mode(&self) -> AlphaMode2d {
+        AlphaMode2d::Blend
+        // Mask sets a cutoff for transparency. Alpha values below are fully transparent,
+        // alpha values above are fully opaque.
+        //AlphaMode2d::Mask(0.5)
+    }
+}
+
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
@@ -49,6 +75,8 @@ const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
+// no idea what units this is using, apparently in-game ones, not 0-1
+const TARGET_WIDTH: f32 = 2.;
 
 fn main() {
     App::new()
@@ -68,13 +96,24 @@ fn main() {
                 .set(LogPlugin {
                     level: bevy::log::Level::INFO,
                     ..default()
-                }),
+                })
+                //.set(AssetPlugin {
+                //    file_path: "assets".to_string(),
+                //    ..default()
+                //})
         )
+        .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (draw_map, startup))
         .add_systems(
             Update,
-            (move_player, move_bot, handle_tag, camera_follow),
+            (
+                move_player,
+                move_bot,
+                handle_tag,
+                camera_follow,
+                handle_target,
+            ),
         )
         .run();
 }
@@ -83,6 +122,7 @@ fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials2: ResMut<Assets<TargetMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -134,7 +174,11 @@ fn startup(
                 Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
             ));
         });
-    let bot = meshes.add(Circle::new(10.));
+    let bot = meshes.add(Circle::new(PLAYER_RADIUS));
+    let bot_target = meshes.add(Mesh::from(Rectangle::new(
+        PLAYER_RADIUS * 2.,
+        PLAYER_RADIUS * 2.,
+    )));
     commands
         .spawn((
             Bot { it: true },
@@ -153,6 +197,16 @@ fn startup(
                 TextColor(Color::srgb(1., 0., 0.)),
                 Transform::from_xyz(0.0, 0.0, 0.0)
                     .with_scale(Vec3::splat(0.2)),
+            ));
+            parent.spawn((
+                Mesh2d(bot_target),
+                Name::new("Bot Target"),
+                Visibility::Visible,
+                MeshMaterial2d(materials2.add(TargetMaterial {
+                    border_width: TARGET_WIDTH,
+                })),
+                // slightly higher z axis
+                Transform::from_xyz(0.0, 0.0, 0.1),
             ));
         });
     // kind of like a notification at the top of the screen
@@ -346,3 +400,8 @@ fn draw_map(
         ));
     }
 }
+
+// TODO(skend): tab targeting
+// we'll pre-make the targets on all the targetable
+// entities, then just toggle visible
+fn handle_target() {}

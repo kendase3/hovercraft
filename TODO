@@ -1,12 +1,16 @@
-https://bevyengine.org/examples/2d-rendering/mesh2d/
-https://bevyengine.org/examples/math/render-primitives/
 https://bevyengine.org/examples/math/custom-primitives/
-https://bevyengine.org/examples/2d-rendering/text2d/
+and others nearby
 
 --- plan ---
-i'm not satisfied with the camera following the player.
-i'm not satisfied with the way i am laying out the map; i don't even know its size
+it seems like i should just use the bevy example folder for my version; i've been looking at shader_material_2d.rs
+
+https://bevy.org/examples/2d-rendering/mesh2d-alpha-mode/
+^ seems like this might be an easier way to do what i want
+working on rendering a target: use https://bevy.org/examples/shaders/shader-material-2d/
 i'm not satisfied with the movement abstraction; i want approach, orbit and targeting.
+a good first step would be to introduce the idea of acceleration, velocity, facing, and turn time (rotational velocity)
+how is targeting going to work? it seems like we could use entity names to fetch the target of a unit.
+look at custom primitives link above to see how to make a targeting square like what i want
 
 --- ideas for iterative projects ---
 tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
