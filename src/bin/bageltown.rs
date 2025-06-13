@@ -45,6 +45,7 @@ struct TagReady {
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
+const TARGET_INNER_OFFSET: f32 = 1.;
 const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
