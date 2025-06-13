@@ -15,8 +15,8 @@
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::window::PresentMode;
-/// Currently more or less a mashup of existing tutorials, but one day!
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
+use bevy::render::mesh::PrimitiveTopology;
 
 #[derive(Component)]
 struct Player {
@@ -50,6 +50,7 @@ const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
+const TARGET_WIDTH: f32 = 2.;
 
 fn main() {
     App::new()
@@ -143,7 +144,7 @@ fn startup(
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
-    let bot_target = meshes.add(Rectangle::new(PLAYER_RADIUS * 2., PLAYER_RADIUS * 2.));
+    let bot_target = meshes.add(Annulus::new(PLAYER_RADIUS, PLAYER_RADIUS + TARGET_WIDTH));
     commands
         .spawn((
             Bot { it: true },
