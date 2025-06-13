@@ -74,7 +74,13 @@ fn main() {
         .add_systems(Startup, (draw_map, startup))
         .add_systems(
             Update,
-            (move_player, move_bot, handle_tag, camera_follow),
+            (
+                move_player,
+                move_bot,
+                handle_tag,
+                camera_follow,
+                handle_target,
+            ),
         )
         .run();
 }
@@ -109,6 +115,7 @@ fn startup(
     ));
     let player = meshes.add(Circle::new(PLAYER_RADIUS));
     let color = Color::srgb(0.0, 0.0, 0.0);
+    let target_color = Color::srgb(1.0, 0.0, 0.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -134,7 +141,8 @@ fn startup(
                 Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
             ));
         });
-    let bot = meshes.add(Circle::new(10.));
+    let bot = meshes.add(Circle::new(PLAYER_RADIUS));
+    let bot_target = meshes.add(Rectangle::new(PLAYER_RADIUS, PLAYER_RADIUS));
     commands
         .spawn((
             Bot { it: true },
@@ -153,6 +161,15 @@ fn startup(
                 TextColor(Color::srgb(1., 0., 0.)),
                 Transform::from_xyz(0.0, 0.0, 0.0)
                     .with_scale(Vec3::splat(0.2)),
+            ));
+            parent.spawn((
+                Mesh2d(bot_target),
+                Name::new("Bot Target"),
+                //Visibility::Hidden,
+                Visibility::Visible,
+                MeshMaterial2d(materials.add(target_color)),
+                // slightly higher z axis
+                Transform::from_xyz(0.0, 0.0, 0.1),
             ));
         });
     // kind of like a notification at the top of the screen
@@ -345,4 +362,12 @@ fn draw_map(
             Transform::from_xyz(i as f32 - MAP_SIZE as f32 / 2., 0., 0.),
         ));
     }
+}
+
+// TODO(skend): tab targeting
+// for now just render a target around the bot
+// maybe there's always a target around each targetable entity
+// but it's just toggled to hidden
+fn handle_target() {
+    // so the bot has a certain radius already.
 }
