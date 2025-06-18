@@ -4,6 +4,7 @@ https://bevyengine.org/examples/math/custom-primitives/
 https://bevyengine.org/examples/2d-rendering/text2d/
 
 --- plan ---
+working on rendering a target: use https://bevy.org/examples/shaders/shader-material-2d/
 i'm not satisfied with the movement abstraction; i want approach, orbit and targeting.
 a good first step would be to introduce the idea of acceleration, velocity, facing, and turn time (rotational velocity)
 how is targeting going to work? it seems like we could use entity names to fetch the target of a unit.
