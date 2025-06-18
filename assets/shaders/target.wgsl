@@ -1,13 +1,17 @@
 #import bevy_pbr::mesh_view_bindings
 #import bevy_pbr::mesh_bindings
 #import bevy_render::view_transform::VERT_POS_TO_CLIP
-
 #import bevy_pbr::pbr_bindings
 #import bevy_pbr::pbr_functions
 #import bevy_pbr::pbr_types
 #import bevy_pbr::lighting
 #import bevy_pbr::shadows
 #import bevy_pbr::utils
+#import bevy_pbr::fog
+#import bevy_pbr::shadows
+#import bevy_pbr::pbr_ambient
+#import bevy_pbr::clustered_forward
+// from https://github.com/bevyengine/bevy/discussions/8498
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
