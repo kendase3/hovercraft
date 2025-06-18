@@ -199,8 +199,8 @@ fn startup(
                 Name::new("Bot Target"),
                 Visibility::Visible,
                 MeshMaterial2d(materials2.add(TargetMaterial {
-                    color_opaque: Color::srgb(1.0, 0.0, 0.0).into(),
-                    color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.2).into(),
+                    color_opaque: Color::srgba(1.0, 0.0, 0.0, 1.0).into(),
+                    color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.0).into(),
                     border_width: TARGET_WIDTH,
                 })),
                 // slightly higher z axis
