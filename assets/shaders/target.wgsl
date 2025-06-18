@@ -1,5 +1,13 @@
 #import bevy_pbr::mesh_view_bindings
+#import bevy_pbr::mesh_bindings
 #import bevy_render::view_transform::VERT_POS_TO_CLIP
+
+#import bevy_pbr::pbr_bindings
+#import bevy_pbr::pbr_functions
+#import bevy_pbr::pbr_types
+#import bevy_pbr::lighting
+#import bevy_pbr::shadows
+#import bevy_pbr::utils
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
@@ -21,18 +29,14 @@ struct TargetMaterial {
 @group(2) @binding(0)
 var<uniform> material: TargetMaterial;
 
-@group(0) @binding(0)
-var<uniform> view: bevy_pbr::ViewUniform;
-
-@group(2) @binding(0)
-var<uniform> mesh: bevy_pbr::MeshUniform;
-
 // vertex shader
 @vertex
 fn vertex(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let world_position = mesh.transform * vec4(in.position, 1.0);
-    out.clip_position = view.transform * world_position; //passthrough
+    //out.world_position = world_from_model * vec4(in.position, 1.0);
+    //out.world_normal = normalize(world_from_model * vec4<f32>(in.normal), 0.0);
+    //out.position = view.view_proj * world_position; //passthrough
+    out.clip_position = view.view_proj * world_from_model * vec4(in.position, 1.0);
     out.uv = in.uv; //passthrough
     return out;
 }
