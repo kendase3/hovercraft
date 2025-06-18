@@ -25,6 +25,9 @@ struct TargetMaterial {
     border_width: f32,
 };
 
+var<uniform> view: bevy_pbr::ViewUniform;
+var<uniform> mesh: bevy_pbr::MeshUniform;
+
 // bevy's material uniforms?
 @group(2) @binding(0)
 var<uniform> material: TargetMaterial;

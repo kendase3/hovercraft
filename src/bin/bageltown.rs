@@ -96,7 +96,12 @@ fn main() {
                 .set(LogPlugin {
                     level: bevy::log::Level::INFO,
                     ..default()
-                }),
+                })
+                .set(AssetPlugin {
+                    file_path: "assets".to_string(),
+                    ..default()
+                })
+                ,
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
