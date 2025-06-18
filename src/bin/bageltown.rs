@@ -14,13 +14,13 @@
 
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
+use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use bevy::sprite::{Material2d, Material2dPlugin, AlphaMode2d};
 
 #[derive(Component)]
 struct Player {
@@ -72,12 +72,11 @@ impl Material2d for TargetMaterial {
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
-const TARGET_INNER_OFFSET: f32 = 1.;
 const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
-const TARGET_WIDTH: f32 = 2.;
+const TARGET_WIDTH: f32 = 5.;
 
 fn main() {
     App::new()
@@ -146,7 +145,6 @@ fn startup(
     ));
     let player = meshes.add(Circle::new(PLAYER_RADIUS));
     let color = Color::srgb(0.0, 0.0, 0.0);
-    let target_color = Color::srgb(1.0, 0.0, 0.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -173,9 +171,10 @@ fn startup(
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
-    //let bot_target = meshes.add(Annulus::new(PLAYER_RADIUS, PLAYER_RADIUS + TARGET_WIDTH));
-    let bot_target =
-        meshes.add(Mesh::from(Rectangle::new(PLAYER_RADIUS, PLAYER_RADIUS)));
+    let bot_target = meshes.add(Mesh::from(Rectangle::new(
+        PLAYER_RADIUS * 2.,
+        PLAYER_RADIUS * 2.,
+    )));
     commands
         .spawn((
             Bot { it: true },
@@ -198,9 +197,7 @@ fn startup(
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
-                //Visibility::Hidden,
                 Visibility::Visible,
-                //MeshMaterial2d(materials.add(target_color)),
                 MeshMaterial2d(materials2.add(TargetMaterial {
                     color_opaque: Color::srgb(1.0, 0.0, 0.0).into(),
                     color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.2).into(),
@@ -403,9 +400,6 @@ fn draw_map(
 }
 
 // TODO(skend): tab targeting
-// for now just render a target around the bot
-// maybe there's always a target around each targetable entity
-// but it's just toggled to hidden
-fn handle_target() {
-    // so the bot has a certain radius already.
-}
+// we'll pre-make the targets on all the targetable
+// entities, then just toggle visible
+fn handle_target() {}
