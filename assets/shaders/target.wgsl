@@ -1,5 +1,5 @@
-#import bevy_pbr::mesh_view_bindings // Provides mesh_transform, view_transform, view
-#import bevy_render::view_transform::VERT_POS_TO_CLIP // This specifically provides `view_transform`
+#import bevy_pbr::mesh_view_bindings
+#import bevy_render::view_transform::VERT_POS_TO_CLIP
 
 struct VertexInput {
     @location(0) position: vec3<f32>,
@@ -21,12 +21,18 @@ struct TargetMaterial {
 @group(2) @binding(0)
 var<uniform> material: TargetMaterial;
 
+@group(0) @binding(0)
+var<uniform> view: bevy_pbr::ViewUniform;
+
+@group(2) @binding(0)
+var<uniform> mesh: bevy_pbr::MeshUniform;
+
 // vertex shader
 @vertex
 fn vertex(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    let world_position = mesh_transform * vec4(in.position, 1.0);
-    out.clip_position = view_transform * world_position; //passthrough 
+    let world_position = mesh.transform * vec4(in.position, 1.0);
+    out.clip_position = view.transform * world_position; //passthrough
     out.uv = in.uv; //passthrough
     return out;
 }
