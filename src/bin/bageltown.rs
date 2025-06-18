@@ -16,8 +16,11 @@ use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
-use bevy::render::mesh::PrimitiveTopology;
-use bevy::{reflect::TypePath, render::render_resource::{AsBindGroup, ShaderRef}};
+use bevy::{
+    reflect::TypePath,
+    render::render_resource::{AsBindGroup, ShaderRef},
+};
+use bevy::sprite::{Material2d, Material2dPlugin, AlphaMode2d};
 
 #[derive(Component)]
 struct Player {
@@ -46,14 +49,14 @@ struct TagReady {
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 struct TargetMaterial {
     #[uniform(0)] // binding(0) in shader
-    color_opaque: Color,
+    color_opaque: LinearRgba,
     #[uniform(0)] // binding(0) in shader
-    color_transparent: Color,
+    color_transparent: LinearRgba,
     #[uniform(0)] // same
     border_width: f32,
 }
 
-impl Material for TargetMaterial {
+impl Material2d for TargetMaterial {
     fn fragment_shader() -> ShaderRef {
         "shaders/target.wgsl".into()
     }
@@ -61,8 +64,8 @@ impl Material for TargetMaterial {
         "shaders/target.wgsl".into()
     }
     // required for transparency
-    fn alpha_mode(&self) -> AlphaMode {
-        AlphaMode::Blend
+    fn alpha_mode(&self) -> AlphaMode2d {
+        AlphaMode2d::Blend
     }
 }
 
@@ -96,6 +99,7 @@ fn main() {
                     ..default()
                 }),
         )
+        .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (draw_map, startup))
         .add_systems(
@@ -115,6 +119,7 @@ fn startup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials2: ResMut<Assets<TargetMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -169,7 +174,8 @@ fn startup(
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
     //let bot_target = meshes.add(Annulus::new(PLAYER_RADIUS, PLAYER_RADIUS + TARGET_WIDTH));
-    let bot_target = meshes.add(Mesh::from(Rectangle::new(PLAYER_RADIUS, PLAYER_RADIUS)));
+    let bot_target =
+        meshes.add(Mesh::from(Rectangle::new(PLAYER_RADIUS, PLAYER_RADIUS)));
     commands
         .spawn((
             Bot { it: true },
@@ -195,11 +201,11 @@ fn startup(
                 //Visibility::Hidden,
                 Visibility::Visible,
                 //MeshMaterial2d(materials.add(target_color)),
-                MeshMaterial2d(materials.add(TargetMaterial { 
-                    color_opaque: Color::srgb(1.0, 0.0, 0.0),
-                    color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.2),
-                    border_width: TARGET_WIDTH}),
-                ),
+                MeshMaterial2d(materials2.add(TargetMaterial {
+                    color_opaque: Color::srgb(1.0, 0.0, 0.0).into(),
+                    color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.2).into(),
+                    border_width: TARGET_WIDTH,
+                })),
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
