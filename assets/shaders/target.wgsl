@@ -12,7 +12,7 @@ struct TargetMaterial {
     color_opaque: vec4<f32>,
     color_transparent: vec4<f32>,
     border_width: f32,
-}
+};
 
 // bevy's material uniforms?
 @group(2) @binding(0)
