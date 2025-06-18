@@ -4,6 +4,8 @@ https://bevyengine.org/examples/math/custom-primitives/
 https://bevyengine.org/examples/2d-rendering/text2d/
 
 --- plan ---
+https://bevy.org/examples/2d-rendering/mesh2d-alpha-mode/
+^ seems like this might be an easier way to do what i want
 working on rendering a target: use https://bevy.org/examples/shaders/shader-material-2d/
 i'm not satisfied with the movement abstraction; i want approach, orbit and targeting.
 a good first step would be to introduce the idea of acceleration, velocity, facing, and turn time (rotational velocity)
