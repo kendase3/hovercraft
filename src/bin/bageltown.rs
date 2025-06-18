@@ -17,6 +17,7 @@ use bevy::render::camera::ScalingMode;
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 use bevy::render::mesh::PrimitiveTopology;
+use bevy::{reflect::TypePath, render::render_resource::{AsBindGroup, ShaderRef}};
 
 #[derive(Component)]
 struct Player {
@@ -40,6 +41,29 @@ struct TagCooldownTimer {
 #[derive(Component)]
 struct TagReady {
     ready: bool,
+}
+
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+struct TargetMaterial {
+    #[uniform(0)] // binding(0) in shader
+    color_opaque: Color,
+    #[uniform(0)] // binding(0) in shader
+    color_transparent: Color,
+    #[uniform(0)] // same
+    border_width: f32,
+}
+
+impl Material for TargetMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/target.wgsl".into()
+    }
+    fn vertex_shader() -> ShaderRef {
+        "shaders/target.wgsl".into()
+    }
+    // required for transparency
+    fn alpha_mode(&self) -> AlphaMode {
+        AlphaMode::Blend
+    }
 }
 
 const MOVE_PER_TICK: f32 = 40.;
@@ -144,7 +168,8 @@ fn startup(
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
-    let bot_target = meshes.add(Annulus::new(PLAYER_RADIUS, PLAYER_RADIUS + TARGET_WIDTH));
+    //let bot_target = meshes.add(Annulus::new(PLAYER_RADIUS, PLAYER_RADIUS + TARGET_WIDTH));
+    let bot_target = meshes.add(Mesh::from(Rectangle::new(PLAYER_RADIUS, PLAYER_RADIUS)));
     commands
         .spawn((
             Bot { it: true },
@@ -169,7 +194,12 @@ fn startup(
                 Name::new("Bot Target"),
                 //Visibility::Hidden,
                 Visibility::Visible,
-                MeshMaterial2d(materials.add(target_color)),
+                //MeshMaterial2d(materials.add(target_color)),
+                MeshMaterial2d(materials.add(TargetMaterial { 
+                    color_opaque: Color::srgb(1.0, 0.0, 0.0),
+                    color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.2),
+                    border_width: TARGET_WIDTH}),
+                ),
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
