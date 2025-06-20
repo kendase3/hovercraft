@@ -75,8 +75,8 @@ const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
-// note that this is on a scale 0-1.
-const TARGET_WIDTH: f32 = 0.2;
+// no idea what units this is using, apparently in-game ones, not 0-1
+const TARGET_WIDTH: f32 = 2.;
 
 fn main() {
     App::new()
