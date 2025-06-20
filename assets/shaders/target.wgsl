@@ -58,6 +58,7 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     if min_dist < material.border_width {
         // return red opaque border
         //return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+        return vec4<f32>(0.0, 0.0, 1.0, 0.5);
     } else {
         // return gooey transparent center
         //return vec4<f32>(1.0, 1.0, 1.0, 0.0);
