@@ -48,9 +48,14 @@ struct TagReady {
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
+    #[uniform(0)] // same
+    border_width: f32,
 }
 
 impl Material2d for TargetMaterial {
+    fn vertex_shader() -> ShaderRef {
+        "shaders/target.wgsl".into()
+    }
     fn fragment_shader() -> ShaderRef {
         "shaders/target.wgsl".into()
     }
@@ -198,7 +203,7 @@ fn startup(
                 Name::new("Bot Target"),
                 Visibility::Visible,
                 MeshMaterial2d(materials2.add(TargetMaterial {
-                    // FIXME(skend): make the opaque color blue and transparent
+                    border_width: TARGET_WIDTH,
                 })),
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
