@@ -64,9 +64,11 @@ fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
     let dist_y_top = 1.0 - uv.y;
     // closest to outside edge for this spot
     let min_dist = min(min(dist_x_left, dist_x_right), min(dist_y_bottom, dist_y_top));
-    if min_dist < material.border_width {
-        return material.color_opaque;
-    } else {
-        return material.color_transparent;
-    }
+    //if min_dist < material.border_width {
+    //    return material.color_opaque;
+    //} else {
+    //    return material.color_transparent;
+    //}
+    // FIXME(skend): temporarily just always make it transparent
+    return material.color_transparent;
 }

@@ -66,6 +66,11 @@ impl Material2d for TargetMaterial {
     // required for transparency
     fn alpha_mode(&self) -> AlphaMode2d {
         AlphaMode2d::Blend
+        // Mask sets a cutoff for transparency. Alpha values below are fully transparent,
+        // alpha values above are fully opaque.
+        //AlphaMode2d::Mask(0.5)
+        // original format:
+        // alpha_mode: AlphaMode::Mask(0.5),
     }
 }
 
