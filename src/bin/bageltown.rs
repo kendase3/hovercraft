@@ -76,7 +76,8 @@ const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
-const TARGET_WIDTH: f32 = 5.;
+// note that this is on a scale 0-1.
+const TARGET_WIDTH: f32 = 0.2;
 
 fn main() {
     App::new()
@@ -204,7 +205,8 @@ fn startup(
                 Visibility::Visible,
                 MeshMaterial2d(materials2.add(TargetMaterial {
                     color_opaque: Color::srgba(1.0, 0.0, 0.0, 1.0).into(),
-                    color_transparent: Color::srgba(0.0, 0.0, 0.0, 0.0).into(),
+                    // if i make this opaque will i see it?
+                    color_transparent: Color::srgba(1.0, 1.0, 1.0, 1.0).into(),
                     border_width: TARGET_WIDTH,
                 })),
                 // slightly higher z axis
