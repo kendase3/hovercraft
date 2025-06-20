@@ -7,12 +7,6 @@ struct TargetMaterial {
 @group(0) @binding(0)
 var<uniform> material: TargetMaterial;
 
-struct Vertex {
-    @builtin(instance_index) instance_index: u32,
-    @location(0) position: vec3<f32>,
-    @location(1) uv: vec2<f32>,
-};
-
 //fragment shader
 @fragment
 fn fragment(in: VertexOutput) -> @location(0) vec4<f32> {
