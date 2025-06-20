@@ -47,20 +47,11 @@ struct TagReady {
 }
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-struct TargetMaterial {
-    #[uniform(0)] // binding(0) in shader
-    color_opaque: LinearRgba,
-    #[uniform(0)] // binding(0) in shader
-    color_transparent: LinearRgba,
-    #[uniform(0)] // same
-    border_width: f32,
+pub struct TargetMaterial {
 }
 
 impl Material2d for TargetMaterial {
     fn fragment_shader() -> ShaderRef {
-        "shaders/target.wgsl".into()
-    }
-    fn vertex_shader() -> ShaderRef {
         "shaders/target.wgsl".into()
     }
     // required for transparency
@@ -69,8 +60,6 @@ impl Material2d for TargetMaterial {
         // Mask sets a cutoff for transparency. Alpha values below are fully transparent,
         // alpha values above are fully opaque.
         //AlphaMode2d::Mask(0.5)
-        // original format:
-        // alpha_mode: AlphaMode::Mask(0.5),
     }
 }
 
@@ -209,10 +198,7 @@ fn startup(
                 Name::new("Bot Target"),
                 Visibility::Visible,
                 MeshMaterial2d(materials2.add(TargetMaterial {
-                    color_opaque: Color::srgba(1.0, 0.0, 0.0, 1.0).into(),
-                    // if i make this opaque will i see it?
-                    color_transparent: Color::srgba(1.0, 1.0, 1.0, 1.0).into(),
-                    border_width: TARGET_WIDTH,
+                    // FIXME(skend): make the opaque color blue and transparent
                 })),
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
