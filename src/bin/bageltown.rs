@@ -53,9 +53,9 @@ pub struct TargetMaterial {
 }
 
 impl Material2d for TargetMaterial {
-    fn vertex_shader() -> ShaderRef {
-        "shaders/target.wgsl".into()
-    }
+    //fn vertex_shader() -> ShaderRef {
+    //    "shaders/target.wgsl".into()
+    //}
     fn fragment_shader() -> ShaderRef {
         "shaders/target.wgsl".into()
     }
