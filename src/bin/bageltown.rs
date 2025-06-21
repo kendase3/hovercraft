@@ -411,13 +411,13 @@ fn draw_map(
 // entities, then just toggle visible
 fn handle_target(
     //mut botq: Query<(&Target, &Transform)>
-    //mut botq: Query<(&Handle<Mesh>), With<Target>>,
-    //mut botq: Query<(Entity, &Handle<Mesh>, &Transform)>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    keys: Res<ButtonInput<KeyCode>>,
+    mut botq: Query<&mut Visibility, With<Target>>,
     ) {
-   //let mut b = botq.single_mut(); 
-   //for mesh in meshes {
-
-   //}
-   //let mut b_t = b.1;
+   let mut b = botq.single_mut(); 
+   if *b == Visibility::Visible {
+        *b = Visibility::Hidden;
+   } else {
+        *b = Visibility::Visible;
+   }
 }
