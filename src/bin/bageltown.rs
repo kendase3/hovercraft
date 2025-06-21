@@ -24,8 +24,7 @@ use bevy::{
 use hovercraft;
 
 const MOVE_PER_TICK: f32 = 40.;
-//const BOT_MOVE_PER_TICK: f32 = 20.;
-const BOT_MOVE_PER_TICK: f32 = 1.;
+const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
 const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
@@ -312,7 +311,8 @@ fn move_bot(
     let move_vector = dest - b_t.translation.xy();
 
     let move_speed = BOT_MOVE_PER_TICK;
-    let move_delta = move_vector * move_speed * time.delta_secs();
+    // make sure to normalize the vector so the speed is correct
+    let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
     let old_pos = b_t.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
