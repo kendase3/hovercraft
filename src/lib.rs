@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::f32::consts::PI;
 
 // the fewer of these, the farther away along the perimeter we aim
 // the less perfect circle it will be but the less often we have
@@ -20,11 +21,18 @@ fn cartesean_to_polar(exterior: Vec2, center: Vec2) -> Polar {
     let radians = delta_vector.y.atan2(delta_vector.x);
     let distance = delta_vector.length();
 
-    Polar { r: distance, theta: radians }
+    Polar {
+        r: distance,
+        theta: radians,
+    }
 }
 
 fn polar_to_cartesean(polar: Polar) -> Vec2 {
-    Vec2 { x: 0.0, y: 0.0 }
+    // note that this is polar from the reference point, not the upper-left corner
+    Vec2 {
+        x: polar.r * polar.theta.cos(),
+        y: polar.r * polar.theta.sin(),
+    }
 }
 
 // the first thing to learn is how this function is supposed to access the information
