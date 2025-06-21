@@ -406,9 +406,8 @@ fn draw_map(
     }
 }
 
-// TODO(skend): tab targeting
-// we'll pre-make the targets on all the targetable
-// entities, then just toggle visible
+// FIXME(skend): use tab though
+// also need a cooldown of like .5 seconds to stop multi-press
 fn handle_target(
     //mut botq: Query<(&Target, &Transform)>
     keys: Res<ButtonInput<KeyCode>>,
