@@ -415,6 +415,9 @@ fn handle_target(
     mut botq: Query<&mut Visibility, With<Target>>,
     ) {
    let mut b = botq.single_mut(); 
+   if !keys.any_pressed([KeyCode::KeyT]) {
+        return;
+   }
    if *b == Visibility::Visible {
         *b = Visibility::Hidden;
    } else {
