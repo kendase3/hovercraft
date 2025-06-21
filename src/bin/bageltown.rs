@@ -21,7 +21,6 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use hovercraft;
 
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
@@ -68,18 +67,12 @@ pub struct TargetMaterial {
 }
 
 impl Material2d for TargetMaterial {
-    //fn vertex_shader() -> ShaderRef {
-    //    "shaders/target.wgsl".into()
-    //}
     fn fragment_shader() -> ShaderRef {
         "shaders/target.wgsl".into()
     }
     // required for transparency
     fn alpha_mode(&self) -> AlphaMode2d {
         AlphaMode2d::Blend
-        // Mask sets a cutoff for transparency. Alpha values below are fully transparent,
-        // alpha values above are fully opaque.
-        //AlphaMode2d::Mask(0.5)
     }
 }
 
@@ -91,6 +84,8 @@ fn main() {
                     primary_window: Some(Window {
                         // fill whole browser window
                         fit_canvas_to_parent: true,
+                        // FIXME(skend): tab still does stuff sadly
+                        // there's a javascript hack or i can wait for them to fix it
                         // don't listen to keyboard shortcuts like F keys, ctrl+R
                         prevent_default_event_handling: false,
                         present_mode: PresentMode::AutoNoVsync,
@@ -304,10 +299,12 @@ fn move_bot(
     let p_t = player.single_mut();
 
     // receive an x/y coordinate we're currently flying to
-    let dest =
-        hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), ORBIT_DISTANCE);
+    let dest = hovercraft::orbit(
+        b_t.translation.xy(),
+        p_t.translation.xy(),
+        ORBIT_DISTANCE,
+    );
     // delta is now between us and our orbit destination
-    // TODO(skend): i think i can just get a vector from us to them and then move that way
     let move_vector = dest - b_t.translation.xy();
 
     let move_speed = BOT_MOVE_PER_TICK;
@@ -321,17 +318,15 @@ fn move_bot(
 }
 
 fn camera_follow(
-    playerq: Query<(&Player, &Transform)>,
-    botq: Query<(&Bot, &Transform), Without<Player>>,
+    playerq: Query<&Transform, With<Player>>,
+    botq: Query<&Transform, (With<Bot>, Without<Player>)>,
     mut cameraq: Query<
         &mut Transform,
         (With<Camera>, Without<Player>, Without<Bot>),
     >,
 ) {
-    let p = playerq.single();
-    let b = botq.single();
-    let ppos = p.1.translation;
-    let bpos = b.1.translation;
+    let ppos = playerq.single().translation;
+    let bpos = botq.single().translation;
     let camera_x = (ppos.x + bpos.x) / 2.;
     let camera_y = (ppos.y + bpos.y) / 2.;
     let mut c = cameraq.single_mut();
@@ -394,12 +389,10 @@ fn draw_map(
 // FIXME(skend): use tab though
 // also need a cooldown of like .5 seconds to stop multi-press
 fn handle_target(
-    //mut botq: Query<(&Target, &Transform)>
     keys: Res<ButtonInput<KeyCode>>,
     mut botq: Query<&mut Visibility, With<Target>>,
 ) {
     let mut b = botq.single_mut();
-    //if !keys.any_pressed([KeyCode::Tab]) {
     if !keys.any_pressed([KeyCode::KeyT]) {
         return;
     }
