@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use hovercraft::*;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
@@ -328,6 +329,8 @@ fn move_bot(
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
+
+    do_nothing();
 }
 
 fn camera_follow(
