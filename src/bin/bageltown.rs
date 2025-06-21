@@ -296,14 +296,13 @@ fn move_player(
 }
 
 fn move_bot(
-    mut bot: Query<(&mut Bot, &mut Transform)>,
-    mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
+    mut bot: Query<&mut Transform, With<Bot>>,
+    mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
 ) {
-    let (b, mut b_t) = bot.single_mut();
-    let (_, p_t) = player.single_mut();
+    let mut b_t = bot.single_mut();
+    let p_t = player.single_mut();
 
-    let mut direction = Vec2::ZERO;
     // receive an x/y coordinate we're currently flying to
     let dest =
         hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), ORBIT_DISTANCE);
