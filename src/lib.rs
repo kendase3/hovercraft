@@ -23,8 +23,8 @@ fn cartesean_to_polar(exterior: Vec2, center: Vec2) -> Polar {
     Polar { r: distance, theta: radians }
 }
 
-fn polar_to_cartesean() {
-
+fn polar_to_cartesean(polar: Polar) -> Vec2 {
+    Vec2 { x: 0.0, y: 0.0 }
 }
 
 // the first thing to learn is how this function is supposed to access the information

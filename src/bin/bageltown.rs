@@ -37,6 +37,9 @@ struct Bot {
 struct Proclamation;
 
 #[derive(Component)]
+struct Target;
+
+#[derive(Component)]
 struct TagCooldownTimer {
     timer: Timer,
 }
@@ -198,6 +201,7 @@ fn startup(
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
+                Target,
                 Visibility::Visible,
                 MeshMaterial2d(materials2.add(TargetMaterial {
                     border_width: TARGET_WIDTH,
@@ -405,4 +409,15 @@ fn draw_map(
 // TODO(skend): tab targeting
 // we'll pre-make the targets on all the targetable
 // entities, then just toggle visible
-fn handle_target() {}
+fn handle_target(
+    //mut botq: Query<(&Target, &Transform)>
+    //mut botq: Query<(&Handle<Mesh>), With<Target>>,
+    //mut botq: Query<(Entity, &Handle<Mesh>, &Transform)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    ) {
+   //let mut b = botq.single_mut(); 
+   //for mesh in meshes {
+
+   //}
+   //let mut b_t = b.1;
+}
