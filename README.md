@@ -58,4 +58,6 @@ I'm still iterating on even basic, outer things for this game. Currently, one mu
 
 ### Janky Features
 
-`cargo run --bin mappenstance  --target x86_64-unknown-linux-gnu` will run a given binary natively rather than on web
+`cargo run` will run on a local port you can visit in your browser
+
+`cargo run --target x86_64-unknown-linux-gnu` will run a given binary natively rather than on web
