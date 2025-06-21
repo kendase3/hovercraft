@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use hovercraft;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
@@ -22,6 +21,7 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+use hovercraft;
 
 #[derive(Component)]
 struct Player {
@@ -97,11 +97,7 @@ fn main() {
                 .set(LogPlugin {
                     level: bevy::log::Level::INFO,
                     ..default()
-                })
-                //.set(AssetPlugin {
-                //    file_path: "assets".to_string(),
-                //    ..default()
-                //})
+                }),
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
@@ -330,7 +326,9 @@ fn move_bot(
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
 
-    hovercraft::do_nothing();
+    // receive an x/y coordinate we're currently flying to
+    let dest =
+        hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), 20.0);
 }
 
 fn camera_follow(
