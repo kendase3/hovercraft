@@ -76,6 +76,22 @@ impl Material2d for TargetMaterial {
     }
 }
 
+// rather than perpetually compute the destination, we'll cache it and only check a few times a
+// second
+#[derive(Resource, Default)]
+struct OrbitCache {
+    destination: Vec2,
+}
+
+#[derive(Resource)]
+struct OrbitTimer(Timer);
+
+impl FromWorld for OrbitTimer {
+    fn from_world(_: &mut World) -> Self {
+        OrbitTimer(Timer::from_seconds(1.0, TimerMode::Repeating))
+    }
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -111,6 +127,8 @@ fn main() {
                 handle_target,
             ),
         )
+        .init_resource::<OrbitTimer>()
+        .init_resource::<OrbitCache>()
         .run();
 }
 
@@ -294,16 +312,24 @@ fn move_bot(
     mut bot: Query<&mut Transform, With<Bot>>,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
+    mut orbit_timer: ResMut<OrbitTimer>,
+    mut orbit_cache: ResMut<OrbitCache>,
 ) {
+    // receive an x/y coordinate we're currently flying to
     let mut b_t = bot.single_mut();
     let p_t = player.single_mut();
 
-    // receive an x/y coordinate we're currently flying to
-    let dest = hovercraft::orbit(
-        b_t.translation.xy(),
-        p_t.translation.xy(),
-        ORBIT_DISTANCE,
-    );
+    orbit_timer.0.tick(time.delta());
+    // only update destination if it's time
+    if orbit_timer.0.finished() {
+        orbit_cache.destination = hovercraft::orbit(
+            b_t.translation.xy(),
+            p_t.translation.xy(),
+            ORBIT_DISTANCE,
+        );
+    }
+    let dest = orbit_cache.destination;
+
     // delta is now between us and our orbit destination
     let move_vector = dest - b_t.translation.xy();
 
