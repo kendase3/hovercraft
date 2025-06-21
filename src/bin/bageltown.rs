@@ -21,6 +21,18 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+use hovercraft;
+
+const MOVE_PER_TICK: f32 = 40.;
+const BOT_MOVE_PER_TICK: f32 = 20.;
+const PLAYER_RADIUS: f32 = 10.;
+const MAP_SIZE: u32 = 400;
+const GRID_SIZE: f32 = 1.;
+const SPACE_BETWEEN_LINES: u32 = 20;
+const CAMERA_DEFAULT_SIZE: f32 = 100.;
+// no idea what units this is using, apparently in-game ones, not 0-1
+const TARGET_WIDTH: f32 = 2.;
+const ORBIT_DISTANCE: f32 = 50.;
 
 #[derive(Component)]
 struct Player {
@@ -34,6 +46,9 @@ struct Bot {
 
 #[derive(Component)]
 struct Proclamation;
+
+#[derive(Component)]
+struct Target;
 
 #[derive(Component)]
 struct TagCooldownTimer {
@@ -68,16 +83,6 @@ impl Material2d for TargetMaterial {
     }
 }
 
-const MOVE_PER_TICK: f32 = 40.;
-const BOT_MOVE_PER_TICK: f32 = 20.;
-const PLAYER_RADIUS: f32 = 10.;
-const MAP_SIZE: u32 = 400;
-const GRID_SIZE: f32 = 1.;
-const SPACE_BETWEEN_LINES: u32 = 20;
-const CAMERA_DEFAULT_SIZE: f32 = 100.;
-// no idea what units this is using, apparently in-game ones, not 0-1
-const TARGET_WIDTH: f32 = 2.;
-
 fn main() {
     App::new()
         .add_plugins(
@@ -96,11 +101,7 @@ fn main() {
                 .set(LogPlugin {
                     level: bevy::log::Level::INFO,
                     ..default()
-                })
-                //.set(AssetPlugin {
-                //    file_path: "assets".to_string(),
-                //    ..default()
-                //})
+                }),
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
@@ -201,6 +202,7 @@ fn startup(
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
+                Target,
                 Visibility::Visible,
                 MeshMaterial2d(materials2.add(TargetMaterial {
                     border_width: TARGET_WIDTH,
@@ -294,35 +296,23 @@ fn move_player(
 }
 
 fn move_bot(
-    mut bot: Query<(&mut Bot, &mut Transform)>,
-    mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
+    mut bot: Query<&mut Transform, With<Bot>>,
+    mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
 ) {
-    let (b, mut b_t) = bot.single_mut();
-    let (_, p_t) = player.single_mut();
-    let x_delta = b_t.translation.x - p_t.translation.x;
-    let y_delta = b_t.translation.y - p_t.translation.y;
+    let mut b_t = bot.single_mut();
+    let p_t = player.single_mut();
 
-    let mut direction = Vec2::ZERO;
-    let mut it_multiplier = 1.;
-    if b.it {
-        it_multiplier = -1.;
-    }
-    if x_delta < 0. {
-        direction.x -= 1.;
-    } else if x_delta > 0. {
-        direction.x += 1.;
-    }
-    if y_delta < 0. {
-        direction.y -= 1.;
-    } else if y_delta > 0. {
-        direction.y += 1.;
-    }
-    // if we're it, run towards player instead of away
-    direction *= it_multiplier;
+    // receive an x/y coordinate we're currently flying to
+    let dest =
+        hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), ORBIT_DISTANCE);
+    // delta is now between us and our orbit destination
+    // TODO(skend): i think i can just get a vector from us to them and then move that way
+    let move_vector = dest - b_t.translation.xy();
 
     let move_speed = BOT_MOVE_PER_TICK;
-    let move_delta = direction * move_speed * time.delta_secs();
+    // make sure to normalize the vector so the speed is correct
+    let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
     let old_pos = b_t.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
@@ -401,7 +391,21 @@ fn draw_map(
     }
 }
 
-// TODO(skend): tab targeting
-// we'll pre-make the targets on all the targetable
-// entities, then just toggle visible
-fn handle_target() {}
+// FIXME(skend): use tab though
+// also need a cooldown of like .5 seconds to stop multi-press
+fn handle_target(
+    //mut botq: Query<(&Target, &Transform)>
+    keys: Res<ButtonInput<KeyCode>>,
+    mut botq: Query<&mut Visibility, With<Target>>,
+) {
+    let mut b = botq.single_mut();
+    //if !keys.any_pressed([KeyCode::Tab]) {
+    if !keys.any_pressed([KeyCode::KeyT]) {
+        return;
+    }
+    if *b == Visibility::Visible {
+        *b = Visibility::Hidden;
+    } else {
+        *b = Visibility::Visible;
+    }
+}
