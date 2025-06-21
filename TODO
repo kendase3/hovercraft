@@ -18,3 +18,7 @@ star control: an enemy bot is trying to destroy you. you each shoot bullets. one
 
 --- unsolved problems ---
 the world does not exist in units yet. it's easiest to read as a float if the 'room' is 100 units tall.
+
+--- goodies ---
+#[cfg(not(target_arch = "wasm32"))]
+^ can make native and webasm versions work at once
