@@ -60,4 +60,4 @@ Note that this game is currently just a lil' demo. But game coming soon!
 
 `cargo run` will run on a local port you can visit in your browser
 
-`cargo run --target x86_64-unknown-linux-gnu` will run a given binary natively rather than on web
+`cargo run --target x86_64-unknown-linux-gnu` is not supported yet, but will run natively rather than on web
