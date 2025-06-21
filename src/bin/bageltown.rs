@@ -23,6 +23,17 @@ use bevy::{
 };
 use hovercraft;
 
+const MOVE_PER_TICK: f32 = 40.;
+const BOT_MOVE_PER_TICK: f32 = 20.;
+const PLAYER_RADIUS: f32 = 10.;
+const MAP_SIZE: u32 = 400;
+const GRID_SIZE: f32 = 1.;
+const SPACE_BETWEEN_LINES: u32 = 20;
+const CAMERA_DEFAULT_SIZE: f32 = 100.;
+// no idea what units this is using, apparently in-game ones, not 0-1
+const TARGET_WIDTH: f32 = 2.;
+const ORBIT_DISTANCE: f32 = 50.;
+
 #[derive(Component)]
 struct Player {
     it: bool,
@@ -71,16 +82,6 @@ impl Material2d for TargetMaterial {
         //AlphaMode2d::Mask(0.5)
     }
 }
-
-const MOVE_PER_TICK: f32 = 40.;
-const BOT_MOVE_PER_TICK: f32 = 20.;
-const PLAYER_RADIUS: f32 = 10.;
-const MAP_SIZE: u32 = 400;
-const GRID_SIZE: f32 = 1.;
-const SPACE_BETWEEN_LINES: u32 = 20;
-const CAMERA_DEFAULT_SIZE: f32 = 100.;
-// no idea what units this is using, apparently in-game ones, not 0-1
-const TARGET_WIDTH: f32 = 2.;
 
 fn main() {
     App::new()
@@ -301,14 +302,18 @@ fn move_bot(
 ) {
     let (b, mut b_t) = bot.single_mut();
     let (_, p_t) = player.single_mut();
-    let x_delta = b_t.translation.x - p_t.translation.x;
-    let y_delta = b_t.translation.y - p_t.translation.y;
 
     let mut direction = Vec2::ZERO;
     let mut it_multiplier = 1.;
     if b.it {
         it_multiplier = -1.;
     }
+    // receive an x/y coordinate we're currently flying to
+    let dest =
+        hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), ORBIT_DISTANCE);
+    // delta is now between us and our orbit destination
+    let x_delta = b_t.translation.x - dest.x;
+    let y_delta = b_t.translation.y - dest.y;
     if x_delta < 0. {
         direction.x -= 1.;
     } else if x_delta > 0. {
@@ -330,9 +335,6 @@ fn move_bot(
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
 
-    // receive an x/y coordinate we're currently flying to
-    let dest =
-        hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), 20.0);
 }
 
 fn camera_follow(
