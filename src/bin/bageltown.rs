@@ -304,37 +304,20 @@ fn move_bot(
     let (_, p_t) = player.single_mut();
 
     let mut direction = Vec2::ZERO;
-    let mut it_multiplier = 1.;
-    if b.it {
-        it_multiplier = -1.;
-    }
     // receive an x/y coordinate we're currently flying to
     let dest =
         hovercraft::orbit(b_t.translation.xy(), p_t.translation.xy(), ORBIT_DISTANCE);
     // delta is now between us and our orbit destination
-    let x_delta = b_t.translation.x - dest.x;
-    let y_delta = b_t.translation.y - dest.y;
-    if x_delta < 0. {
-        direction.x -= 1.;
-    } else if x_delta > 0. {
-        direction.x += 1.;
-    }
-    if y_delta < 0. {
-        direction.y -= 1.;
-    } else if y_delta > 0. {
-        direction.y += 1.;
-    }
-    // if we're it, run towards player instead of away
-    direction *= it_multiplier;
+    // TODO(skend): i think i can just get a vector from us to them and then move that way
+    let move_vector = dest - b_t.translation.xy();
 
     let move_speed = BOT_MOVE_PER_TICK;
-    let move_delta = direction * move_speed * time.delta_secs();
+    let move_delta = move_vector * move_speed * time.delta_secs();
     let old_pos = b_t.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
-
 }
 
 fn camera_follow(
