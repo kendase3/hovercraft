@@ -32,6 +32,7 @@ const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
 const ORBIT_DISTANCE: f32 = 50.;
+const BOT_LAZINESS: f32 = 0.3;
 
 #[derive(Component)]
 struct Player {
@@ -338,9 +339,17 @@ fn move_bot(
     let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
     let old_pos = b_t.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
+    // hopefully a fix for the weird wiggle
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
+    let move_distance = (old_pos - new_pos).abs().length();
+    // FIXME(skend): this does not actually fix my wiggle problem like i thought it would
+    if (old_pos - new_pos).abs().length() < BOT_LAZINESS {
+        info!("{} is less than {}", move_distance, BOT_LAZINESS);
+        return;
+    } else {
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
+    }
 }
 
 fn camera_follow(
