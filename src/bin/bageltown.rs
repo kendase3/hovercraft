@@ -343,7 +343,7 @@ fn move_bot(
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
     let move_distance = (old_pos - new_pos).abs().length();
     // FIXME(skend): this does not actually fix my wiggle problem like i thought it would
-    if (old_pos - new_pos).abs().length() < BOT_LAZINESS {
+    if (old_pos - new_pos).length().abs() < BOT_LAZINESS {
         info!("{} is less than {}", move_distance, BOT_LAZINESS);
         return;
     } else {
