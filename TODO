@@ -22,3 +22,6 @@ the world does not exist in units yet. it's easiest to read as a float if the 'r
 --- goodies ---
 #[cfg(not(target_arch = "wasm32"))]
 ^ can make native and webasm versions work at once
+
+--- notes on getting files out of the steam flatpak's blender ---
+my "home" dir is ~/.var/app/com.valvesoftware.Steam

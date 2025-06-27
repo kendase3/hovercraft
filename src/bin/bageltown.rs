@@ -143,7 +143,6 @@ fn startup(
             ..OrthographicProjection::default_2d()
         }),
     ));
-    let player = meshes.add(Circle::new(PLAYER_RADIUS));
     let color = Color::srgb(0.0, 0.0, 0.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -155,9 +154,12 @@ fn startup(
         .spawn((
             Player { it: false },
             Name::new("Protagonist"),
-            Mesh2d(player),
-            MeshMaterial2d(materials.add(color)),
-            Transform::from_xyz(0.0, 0.0, 0.0),
+            SceneBundle {
+        scene: SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("gnat.glb"))),
+                        //Transform::from_xyz(0.0, 0.0, 0.0),
+                         ..SceneBundle::default()
+             },
+
         ))
         .with_children(|parent| {
             parent.spawn((
