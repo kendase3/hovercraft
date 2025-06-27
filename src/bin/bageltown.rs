@@ -19,8 +19,11 @@ use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 use bevy::{
     reflect::TypePath,
+    render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+
+use std::f32::consts::PI;
 
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
@@ -36,6 +39,7 @@ const ORBIT_DISTANCE: f32 = 50.;
 #[derive(Component)]
 struct Player {
     it: bool,
+    facing: f32,
 }
 
 #[derive(Component)]
@@ -45,6 +49,9 @@ struct Bot {
 
 #[derive(Component)]
 struct Proclamation;
+
+#[derive(Component)]
+struct Facing;
 
 #[derive(Component)]
 struct Target;
@@ -116,11 +123,12 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, startup))
+        .add_systems(Startup, (draw_map, setup))
         .add_systems(
             Update,
             (
                 move_player,
+                face_all,
                 move_bot,
                 handle_tag,
                 camera_follow,
@@ -132,7 +140,7 @@ fn main() {
         .run();
 }
 
-fn startup(
+fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -144,10 +152,53 @@ fn startup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
+    // FIXME(skend): this light only covers an extremely small area at the center of the map
+    //commands.spawn(PointLight {
+    //    shadows_enabled: true,
+    //    intensity: 2000000.0, // this is dramatic but not crazy
+    //    range: MAP_SIZE as f32, // should basically be as big as the map
+    //    ..default()
+    //});
+    commands.spawn((
+        DirectionalLight {
+            shadows_enabled: true,
+            illuminance: 100_000.0,
+            color: Color::srgb(1.0, 0.9, 0.9),
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 20.0)
+            .with_rotation(Quat::from_rotation_x(-PI / 2.)),
+    ));
+    commands.spawn((
+        Camera3d::default(),
+        Camera {
+            hdr: true, // HDR is required for the bloom effect
+            order: 0,
+            ..default()
+        },
+        // 6 was in transmission.rs bevy example
+        Exposure { ev100: 10.0 },
+        Transform {
+            // raise the light above the world so it hits the top faces the viewer sees
+            translation: Vec3::new(0., 0., 20.),
+            ..default()
+        },
+        //Bloom::NATURAL,
+        Projection::from(OrthographicProjection {
+            scaling_mode: ScalingMode::FixedVertical {
+                viewport_height: CAMERA_DEFAULT_SIZE,
+            },
+            scale: 1.,
+            near: -1000.0,
+            far: 1000.0,
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
     commands.spawn((
         Camera2d,
         Camera {
             hdr: true, // HDR is required for the bloom effect
+            order: 1,
             ..default()
         },
         Bloom::NATURAL,
@@ -155,14 +206,23 @@ fn startup(
             scaling_mode: ScalingMode::FixedVertical {
                 viewport_height: CAMERA_DEFAULT_SIZE,
             },
-            // This is the default value for scale for orthographic projections.
-            // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
             scale: 1.,
             ..OrthographicProjection::default_2d()
         }),
     ));
-    let player = meshes.add(Circle::new(PLAYER_RADIUS));
-    let color = Color::srgb(0.0, 0.0, 0.0);
+    // load some meshes, colors and fonts used by the player and bot
+    // TODO(skend): organize / split this up
+    // sin and cos same for 45 case
+    let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
+    let player_facing_triangle = meshes.add(Triangle2d::new(
+        Vec2::X * PLAYER_RADIUS,
+        Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
+        Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
+    ));
+    let bot_color = Color::srgb(0.0, 0.0, 0.0);
+    let player_color = Color::srgb(0.0, 0.0, 0.0);
+    let triangle_color = Color::srgb(0.0, 1.0, 1.0);
+    let player_circle = meshes.add(Circle::new(PLAYER_RADIUS));
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -171,13 +231,35 @@ fn startup(
     };
     commands
         .spawn((
-            Player { it: false },
+            Player {
+                it: false,
+                facing: 0.0,
+            },
             Name::new("Protagonist"),
-            Mesh2d(player),
-            MeshMaterial2d(materials.add(color)),
-            Transform::from_xyz(0.0, 0.0, 0.0),
+            Mesh2d(player_circle),
+            MeshMaterial2d(materials.add(player_color)),
+            Visibility::Hidden,
         ))
         .with_children(|parent| {
+            parent.spawn((
+                SceneRoot(asset_server.load(
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
+                )),
+                Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    // blender has a different idea of up from bevy so this adjusts
+                    // FIXME(skend): just make them face the right way for bevy in blender
+                    // FIXME(skend): now that i have rotation information coming
+                    // from the facing function, it's more important that this
+                    // just be correct out of blender
+                    // then i could delete this whole transform arg
+                    //rotation: Quat::from_rotation_x(PI / 2.0),
+                    rotation: Quat::default(),
+                    scale: Vec3::new(1.0, 1.0, 1.0),
+                },
+                Visibility::Visible,
+                Facing,
+            ));
             parent.spawn((
                 Text2d::new("@"),
                 text_font
@@ -186,6 +268,18 @@ fn startup(
                 TextLayout::new_with_justify(JustifyText::Center),
                 TextColor(Color::srgb(1., 0., 1.)),
                 Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
+                Visibility::Visible,
+            ));
+            parent.spawn((
+                Facing,
+                Mesh2d(player_facing_triangle),
+                MeshMaterial2d(materials.add(triangle_color)),
+                Visibility::Visible,
+                Transform {
+                    translation: Vec3::new(PLAYER_RADIUS * 0.8, 0.0, 0.0),
+                    rotation: default(),
+                    scale: Vec3::new(0.2, 0.2, 1.0),
+                },
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
@@ -198,7 +292,7 @@ fn startup(
             Bot { it: true },
             Name::new("Antagonist"),
             Mesh2d(bot),
-            MeshMaterial2d(materials.add(color)),
+            MeshMaterial2d(materials.add(bot_color)),
             Transform::from_xyz(50.0, 0.0, 0.0),
         ))
         .with_children(|parent| {
@@ -247,17 +341,20 @@ fn handle_tag(
     mut tagtimer: Query<&mut TagCooldownTimer>,
     time: Res<Time>,
 ) {
-    let (mut b, b_t) = bot.single_mut();
-    let (mut p, p_t) = player.single_mut();
-    let mut tagr = tagready.single_mut();
-    let x_delta = (b_t.translation.x - p_t.translation.x).abs();
-    let y_delta = (b_t.translation.y - p_t.translation.y).abs();
-    // if there's a timer that's done, set tagready to ready
     let mut timer = tagtimer.single_mut();
+    let mut tagr = tagready.single_mut();
     timer.timer.tick(time.delta());
     if timer.timer.finished() {
         tagr.ready = true;
+    } else {
+        // reduce work this func does when timer not ready
+        return;
     }
+    let (mut b, b_t) = bot.single_mut();
+    let (mut p, p_t) = player.single_mut();
+    let x_delta = (b_t.translation.x - p_t.translation.x).abs();
+    let y_delta = (b_t.translation.y - p_t.translation.y).abs();
+    // if there's a timer that's done, set tagready to ready
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
     if tagr.ready && distance < 2. * PLAYER_RADIUS {
         info!("you're it!");
@@ -278,8 +375,22 @@ fn handle_tag(
     }
 }
 
+// anything with facing should face the way it is currently facing
+// FIXME(skend): it occurs to me that the children are not themselves
+// players, nor would you want them to be
+fn face_all(
+    mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
+    player_query: Query<&Player>,
+) {
+    for (mut facer, parent) in &mut facers_query {
+        if let Ok(player) = player_query.get(parent.get()) {
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+        }
+    }
+}
+
 fn move_player(
-    mut players: Query<&mut Transform, With<Player>>,
+    mut players: Query<(&mut Transform, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -299,13 +410,21 @@ fn move_player(
 
     let move_speed = MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
-    let mut p = players.single_mut();
-    let old_pos = p.translation.xy();
+    let (mut player_transform, mut play) = players.single_mut();
+
+    // well this is an angle, and direction is a coordpair
+    let n_direction = direction.normalize(); // likely unnecessary
+
+    if direction != Vec2::ZERO {
+        play.facing = n_direction.y.atan2(n_direction.x);
+    }
+
+    let old_pos = player_transform.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
 
-    p.translation.x = new_pos.x;
-    p.translation.y = new_pos.y;
+    player_transform.translation.x = new_pos.x;
+    player_transform.translation.y = new_pos.y;
 }
 
 fn move_bot(
@@ -355,15 +474,16 @@ fn camera_follow(
     let bpos = botq.single().translation;
     let camera_x = (ppos.x + bpos.x) / 2.;
     let camera_y = (ppos.y + bpos.y) / 2.;
-    let mut c = cameraq.single_mut();
-    c.translation.x = camera_x;
-    c.translation.y = camera_y;
-    // see CAMERA_DEFAULT_SIZE for usual camera zoom level
-    let radius =
-        ((ppos.x - bpos.x).powf(2.) + (ppos.y - bpos.y).powf(2.)).sqrt();
-    if radius > CAMERA_DEFAULT_SIZE {
-        let zoom_factor = radius / CAMERA_DEFAULT_SIZE;
-        c.scale = Vec3::splat(zoom_factor);
+    for mut c in &mut cameraq {
+        c.translation.x = camera_x;
+        c.translation.y = camera_y;
+        // see CAMERA_DEFAULT_SIZE for usual camera zoom level
+        let radius =
+            ((ppos.x - bpos.x).powf(2.) + (ppos.y - bpos.y).powf(2.)).sqrt();
+        if radius > CAMERA_DEFAULT_SIZE {
+            let zoom_factor = radius / CAMERA_DEFAULT_SIZE;
+            c.scale = Vec3::splat(zoom_factor);
+        }
     }
 }
 
