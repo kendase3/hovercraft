@@ -154,12 +154,17 @@ fn startup(
         .spawn((
             Player { it: false },
             Name::new("Protagonist"),
-            SceneBundle {
-        scene: SceneRoot(asset_server.load(GltfAssetLabel::Scene(0).from_asset("gnat.glb"))),
-                        //Transform::from_xyz(0.0, 0.0, 0.0),
-                         ..SceneBundle::default()
-             },
-
+            // FIXME(skend): does not render; maybe i need to world.load_asset()
+            SceneRoot(
+                asset_server
+                    .load(GltfAssetLabel::Scene(0).from_asset("gnat.glb")),
+            ),
+            Transform {
+                translation: Vec3::new(0., 0., 0.),
+                rotation: Quat::IDENTITY,
+                scale: Vec3::new(1.0, 1.0, 1.0),
+            },
+            //SceneNumber(1),
         ))
         .with_children(|parent| {
             parent.spawn((
