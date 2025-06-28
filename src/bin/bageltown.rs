@@ -37,6 +37,7 @@ const ORBIT_DISTANCE: f32 = 50.;
 #[derive(Component)]
 struct Player {
     it: bool,
+    facing: f32,
 }
 
 #[derive(Component)]
@@ -191,7 +192,10 @@ fn setup(
     };
     commands
         .spawn((
-            Player { it: false },
+            Player {
+                it: false,
+                facing: 0.0,
+            },
             Name::new("Protagonist"),
             Mesh2d(player_circle),
             MeshMaterial2d(materials.add(player_color)),
@@ -329,9 +333,7 @@ fn handle_tag(
 }
 
 fn move_player(
-    mut players: Query<(&mut Transform, &mut Children), With<Player>>,
-    mut children: Query<&Name>,
-    mut facing_list: Query<(), With<Facing>>,
+    mut players: Query<(&mut Transform, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -351,19 +353,18 @@ fn move_player(
 
     let move_speed = MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
-    let mut playerpair = players.single_mut();
-    // handle facing logic
+    let (mut player_transform, mut play) = players.single_mut();
 
-    for child in playerpair.1.iter() {
-        //    if
-    }
+    // well this is an angle, and direction is a coordpair
+    let n_direction = direction.normalize(); // likely unnecessary
+    play.facing = n_direction.y.atan2(n_direction.x);
 
-    let old_pos = playerpair.0.translation.xy();
+    let old_pos = player_transform.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
 
-    playerpair.0.translation.x = new_pos.x;
-    playerpair.0.translation.y = new_pos.y;
+    player_transform.translation.x = new_pos.x;
+    player_transform.translation.y = new_pos.y;
 }
 
 fn move_bot(
