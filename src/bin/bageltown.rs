@@ -170,14 +170,16 @@ fn startup(
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
     // sin and cos same for 45 case
-    let fortyfivepoint = 2. * PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
+    let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::Y * 2. * PLAYER_RADIUS,
+        Vec2::Y * PLAYER_RADIUS,
         Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
         Vec2::new(fortyfivepoint, -1. * fortyfivepoint),
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
+    let player_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
+    let player_circle = meshes.add(Circle::new(PLAYER_RADIUS));
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -188,14 +190,9 @@ fn startup(
         .spawn((
             Player { it: false },
             Name::new("Protagonist"),
-            Text2d::new("@"),
-            text_font
-                .clone()
-                .with_font_smoothing(FontSmoothing::AntiAliased),
-            TextLayout::new_with_justify(JustifyText::Center),
-            TextColor(Color::srgb(1., 0., 1.)),
-            // FIXME(skend): i am scaling down all of the children
-            Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
+            Mesh2d(player_circle),
+            MeshMaterial2d(materials.add(player_color)),
+            Visibility::Hidden,
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -211,10 +208,22 @@ fn startup(
                     // then i would not need to convert
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
+                Visibility::Visible,
+            ));
+            parent.spawn((
+                Text2d::new("@"),
+                text_font
+                    .clone()
+                    .with_font_smoothing(FontSmoothing::AntiAliased),
+                TextLayout::new_with_justify(JustifyText::Center),
+                TextColor(Color::srgb(1., 0., 1.)),
+                Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
+                Visibility::Visible,
             ));
             parent.spawn((
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
+                Visibility::Visible,
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
