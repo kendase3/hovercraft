@@ -126,11 +126,10 @@ fn startup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
-    // Essential for seeing 3D objects: A Light Source!
     commands.spawn(PointLight {
-        shadows_enabled: true, // Enable shadows for more realistic lighting
-        intensity: 1_500_000.0, // Adjust intensity as needed (can be very large!)
-        range: 1000.0,          // How far the light reaches
+        shadows_enabled: true,
+        intensity: 2000000.0, // this is dramatic but not crazy
+        range: MAP_SIZE as f32, // should basically be as big as the map
         ..default()
     });
     commands.spawn((
@@ -149,9 +148,27 @@ fn startup(
             // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
             // FIXME(skend): temp
             scale: 1.,
-            near: -10000.0,
-            far: 10000.0,
-            //..OrthographicProjection::default_3d()
+            near: -1000.0,
+            far: 1000.0,
+            ..OrthographicProjection::default_2d()
+        }),
+    ));
+    commands.spawn((
+        Camera2d,
+        Camera {
+            hdr: true, // HDR is required for the bloom effect
+            order: 1,
+            ..default()
+        },
+        Bloom::NATURAL,
+        Projection::from(OrthographicProjection {
+            scaling_mode: ScalingMode::FixedVertical {
+                viewport_height: CAMERA_DEFAULT_SIZE,
+            },
+            // This is the default value for scale for orthographic projections.
+            // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
+            // FIXME(skend): temp
+            scale: 1.,
             ..OrthographicProjection::default_2d()
         }),
     ));
@@ -166,7 +183,6 @@ fn startup(
         .spawn((
             Player { it: false },
             Name::new("Protagonist"),
-            // FIXME(skend): does not render; maybe i need to world.load_asset()
             SceneRoot(
                 asset_server.load(
                     GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
@@ -175,9 +191,8 @@ fn startup(
             Transform {
                 translation: Vec3::new(0., 0., 0.),
                 rotation: Quat::IDENTITY,
-                scale: Vec3::new(10.0, 10.0, 10.0),
+                scale: Vec3::new(1.0, 1.0, 1.0),
             },
-            //SceneNumber(1),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -349,15 +364,17 @@ fn camera_follow(
     let bpos = botq.single().translation;
     let camera_x = (ppos.x + bpos.x) / 2.;
     let camera_y = (ppos.y + bpos.y) / 2.;
-    let mut c = cameraq.single_mut();
-    c.translation.x = camera_x;
-    c.translation.y = camera_y;
-    // see CAMERA_DEFAULT_SIZE for usual camera zoom level
-    let radius =
-        ((ppos.x - bpos.x).powf(2.) + (ppos.y - bpos.y).powf(2.)).sqrt();
-    if radius > CAMERA_DEFAULT_SIZE {
-        let zoom_factor = radius / CAMERA_DEFAULT_SIZE;
-        c.scale = Vec3::splat(zoom_factor);
+    //let mut c = cameraq.single_mut();
+    for mut c in &mut cameraq {
+        c.translation.x = camera_x;
+        c.translation.y = camera_y;
+        // see CAMERA_DEFAULT_SIZE for usual camera zoom level
+        let radius =
+            ((ppos.x - bpos.x).powf(2.) + (ppos.y - bpos.y).powf(2.)).sqrt();
+        if radius > CAMERA_DEFAULT_SIZE {
+            let zoom_factor = radius / CAMERA_DEFAULT_SIZE;
+            c.scale = Vec3::splat(zoom_factor);
+        }
     }
 }
 
