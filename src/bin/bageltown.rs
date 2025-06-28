@@ -232,7 +232,7 @@ fn setup(
                     translation: Vec3::new(PLAYER_RADIUS * 0.8, 0.0, 0.0),
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
-                }
+                },
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
@@ -331,6 +331,7 @@ fn handle_tag(
 fn move_player(
     mut players: Query<(&mut Transform, &mut Children), With<Player>>,
     mut children: Query<&Name>,
+    mut facing_list: Query<(), With<Facing>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -352,14 +353,17 @@ fn move_player(
     let move_delta = direction * move_speed * time.delta_secs();
     let mut playerpair = players.single_mut();
     // handle facing logic
-    
-    let mut p = playerpair.0;
-    let old_pos = p.translation.xy();
+
+    for child in playerpair.1.iter() {
+        //    if
+    }
+
+    let old_pos = playerpair.0.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
 
-    p.translation.x = new_pos.x;
-    p.translation.y = new_pos.y;
+    playerpair.0.translation.x = new_pos.x;
+    playerpair.0.translation.y = new_pos.y;
 }
 
 fn move_bot(
