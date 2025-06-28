@@ -157,7 +157,7 @@ fn startup(
             // FIXME(skend): does not render; maybe i need to world.load_asset()
             SceneRoot(
                 asset_server
-                    .load(GltfAssetLabel::Scene(0).from_asset("gnat.glb")),
+                    .load(GltfAssetLabel::Scene(0).from_asset("models/gnat.glb")),
             ),
             Transform {
                 translation: Vec3::new(0., 0., 0.),
