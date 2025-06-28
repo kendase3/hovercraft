@@ -21,6 +21,7 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+use std::f32::consts::PI;
 
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
@@ -183,14 +184,12 @@ fn startup(
         .spawn((
             Player { it: false },
             Name::new("Protagonist"),
-            SceneRoot(
-                asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
-                ),
-            ),
+            SceneRoot(asset_server.load(
+                GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
+            )),
             Transform {
                 translation: Vec3::new(0., 0., 0.),
-                rotation: Quat::IDENTITY,
+                rotation: Quat::from_rotation_x(-PI / 2.0),
                 scale: Vec3::new(1.0, 1.0, 1.0),
             },
         ))
