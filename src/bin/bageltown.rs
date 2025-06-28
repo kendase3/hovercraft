@@ -126,8 +126,15 @@ fn startup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
+    // Essential for seeing 3D objects: A Light Source!
+    commands.spawn(PointLight {
+        shadows_enabled: true, // Enable shadows for more realistic lighting
+        intensity: 1_500_000.0, // Adjust intensity as needed (can be very large!)
+        range: 1000.0,          // How far the light reaches
+        ..default()
+    });
     commands.spawn((
-        Camera2d,
+        Camera3d::default(),
         Camera {
             hdr: true, // HDR is required for the bloom effect
             ..default()
@@ -139,7 +146,11 @@ fn startup(
             },
             // This is the default value for scale for orthographic projections.
             // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
+            // FIXME(skend): temp
             scale: 1.,
+            near: -10000.0,
+            far: 10000.0,
+            //..OrthographicProjection::default_3d()
             ..OrthographicProjection::default_2d()
         }),
     ));
@@ -156,13 +167,14 @@ fn startup(
             Name::new("Protagonist"),
             // FIXME(skend): does not render; maybe i need to world.load_asset()
             SceneRoot(
-                asset_server
-                    .load(GltfAssetLabel::Scene(0).from_asset("models/gnat.glb")),
+                asset_server.load(
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat.glb"),
+                ),
             ),
             Transform {
                 translation: Vec3::new(0., 0., 0.),
                 rotation: Quat::IDENTITY,
-                scale: Vec3::new(1.0, 1.0, 1.0),
+                scale: Vec3::new(10.0, 10.0, 10.0),
             },
             //SceneNumber(1),
         ))
