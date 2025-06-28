@@ -110,6 +110,7 @@ fn main() {
             Update,
             (
                 move_player,
+                face_all,
                 move_bot,
                 handle_tag,
                 camera_follow,
@@ -329,6 +330,13 @@ fn handle_tag(
         *proc = Visibility::Visible;
     } else {
         *proc = Visibility::Hidden;
+    }
+}
+
+// anything with facing should face the way it is currently facing
+fn face_all(mut qfacers: Query<(&mut Transform, &Player), With<Facing>>) {
+    for (mut facer, player) in &mut qfacers {
+        facer.rotation = Quat::from_axis_angle(Vec3::X, player.facing);
     }
 }
 
