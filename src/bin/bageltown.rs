@@ -137,6 +137,7 @@ fn startup(
         Camera3d::default(),
         Camera {
             hdr: true, // HDR is required for the bloom effect
+            order: 0,
             ..default()
         },
         Bloom::NATURAL,
