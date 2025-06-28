@@ -194,6 +194,7 @@ fn startup(
                 .with_font_smoothing(FontSmoothing::AntiAliased),
             TextLayout::new_with_justify(JustifyText::Center),
             TextColor(Color::srgb(1., 0., 1.)),
+            // FIXME(skend): i am scaling down all of the children
             Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
         ))
         .with_children(|parent| {
