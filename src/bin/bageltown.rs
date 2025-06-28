@@ -178,26 +178,27 @@ fn startup(
         .spawn((
             Player { it: false },
             Name::new("Protagonist"),
-            SceneRoot(asset_server.load(
-                GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
-            )),
-            Transform {
-                translation: Vec3::new(0., 0., 0.),
-                // FIXME(skend): ah i see: i only want this rotation to apply to the
-                // 3d portion. as such, it should be the child rather than vice versa
-                rotation: Quat::from_rotation_x(-PI / 2.0),
-                scale: Vec3::new(1.0, 1.0, 1.0),
-            },
+            Text2d::new("@"),
+            text_font
+                .clone()
+                .with_font_smoothing(FontSmoothing::AntiAliased),
+            TextLayout::new_with_justify(JustifyText::Center),
+            TextColor(Color::srgb(1., 0., 1.)),
+            Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text2d::new("@"),
-                text_font
-                    .clone()
-                    .with_font_smoothing(FontSmoothing::AntiAliased),
-                TextLayout::new_with_justify(JustifyText::Center),
-                TextColor(Color::srgb(1., 0., 1.)),
-                Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
+                SceneRoot(asset_server.load(
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
+                )),
+                Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    // blender has a different idea of up from bevy so this adjusts
+                    rotation: Quat::from_rotation_x(-PI / 2.0),
+                    // FIXME(skend): just make the model the right size in meters
+                    // then i would not need to convert
+                    scale: Vec3::new(10.0, 10.0, 10.0),
+                },
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
