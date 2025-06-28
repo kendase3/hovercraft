@@ -170,11 +170,11 @@ fn startup(
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
     // sin and cos same for 45 case
-    let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
+    let fortyfivepoint = 2. * PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::Y * PLAYER_RADIUS,
-        Vec2::new(-1.0 * fortyfivepoint, -1.0 * fortyfivepoint),
-        Vec2::new(fortyfivepoint, fortyfivepoint),
+        Vec2::Y * 2. * PLAYER_RADIUS,
+        Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
+        Vec2::new(fortyfivepoint, -1. * fortyfivepoint),
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
