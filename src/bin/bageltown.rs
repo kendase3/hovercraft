@@ -189,7 +189,7 @@ fn startup(
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat4.glb"),
                 )),
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
