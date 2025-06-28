@@ -208,7 +208,7 @@ fn startup(
                     rotation: Quat::from_rotation_x(PI / 2.0),
                     // FIXME(skend): just make the model the right size in meters
                     // then i would not need to convert
-                    scale: Vec3::new(10.0, 10.0, 10.0),
+                    scale: Vec3::new(1.0, 1.0, 1.0),
                 },
             ));
             parent.spawn((
