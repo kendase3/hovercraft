@@ -172,9 +172,9 @@ fn startup(
     // sin and cos same for 45 case
     let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::Y * PLAYER_RADIUS,
+        Vec2::X * PLAYER_RADIUS,
         Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
-        Vec2::new(fortyfivepoint, -1. * fortyfivepoint),
+        Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let player_color = Color::srgb(0.0, 0.0, 0.0);
@@ -223,7 +223,12 @@ fn startup(
             parent.spawn((
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
-                Visibility::Hidden,
+                Visibility::Visible,
+                Transform {
+                    translation: Vec3::new(PLAYER_RADIUS * 0.8, 0.0, 0.0),
+                    rotation: default(),
+                    scale: Vec3::new(0.2, 0.2, 1.0),
+                }
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
