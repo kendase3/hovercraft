@@ -223,7 +223,7 @@ fn startup(
             parent.spawn((
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
-                Visibility::Visible,
+                Visibility::Hidden,
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
