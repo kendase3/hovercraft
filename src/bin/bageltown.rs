@@ -145,9 +145,6 @@ fn startup(
             scaling_mode: ScalingMode::FixedVertical {
                 viewport_height: CAMERA_DEFAULT_SIZE,
             },
-            // This is the default value for scale for orthographic projections.
-            // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
-            // FIXME(skend): temp
             scale: 1.,
             near: -1000.0,
             far: 1000.0,
@@ -166,9 +163,6 @@ fn startup(
             scaling_mode: ScalingMode::FixedVertical {
                 viewport_height: CAMERA_DEFAULT_SIZE,
             },
-            // This is the default value for scale for orthographic projections.
-            // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
-            // FIXME(skend): temp
             scale: 1.,
             ..OrthographicProjection::default_2d()
         }),
@@ -189,6 +183,8 @@ fn startup(
             )),
             Transform {
                 translation: Vec3::new(0., 0., 0.),
+                // FIXME(skend): ah i see: i only want this rotation to apply to the
+                // 3d portion. as such, it should be the child rather than vice versa
                 rotation: Quat::from_rotation_x(-PI / 2.0),
                 scale: Vec3::new(1.0, 1.0, 1.0),
             },
