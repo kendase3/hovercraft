@@ -167,7 +167,17 @@ fn startup(
             ..OrthographicProjection::default_2d()
         }),
     ));
-    let color = Color::srgb(0.0, 0.0, 0.0);
+    // load some meshes, colors and fonts used by the player and bot
+    // TODO(skend): organize / split this up
+    // sin and cos same for 45 case
+    let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
+    let player_facing_triangle = meshes.add(Triangle2d::new(
+        Vec2::Y * PLAYER_RADIUS,
+        Vec2::new(-1.0 * fortyfivepoint, -1.0 * fortyfivepoint),
+        Vec2::new(fortyfivepoint, fortyfivepoint),
+    ));
+    let bot_color = Color::srgb(0.0, 0.0, 0.0);
+    let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -194,11 +204,16 @@ fn startup(
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
                     // blender has a different idea of up from bevy so this adjusts
+                    // FIXME(skend): just make them face the right way for bevy in blender
                     rotation: Quat::from_rotation_x(PI / 2.0),
                     // FIXME(skend): just make the model the right size in meters
                     // then i would not need to convert
                     scale: Vec3::new(10.0, 10.0, 10.0),
                 },
+            ));
+            parent.spawn((
+                Mesh2d(player_facing_triangle),
+                MeshMaterial2d(materials.add(triangle_color)),
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
@@ -211,7 +226,7 @@ fn startup(
             Bot { it: true },
             Name::new("Antagonist"),
             Mesh2d(bot),
-            MeshMaterial2d(materials.add(color)),
+            MeshMaterial2d(materials.add(bot_color)),
             Transform::from_xyz(50.0, 0.0, 0.0),
         ))
         .with_children(|parent| {
