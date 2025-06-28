@@ -48,6 +48,9 @@ struct Bot {
 struct Proclamation;
 
 #[derive(Component)]
+struct Facing;
+
+#[derive(Component)]
 struct Target;
 
 #[derive(Component)]
@@ -101,7 +104,7 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, startup))
+        .add_systems(Startup, (draw_map, setup))
         .add_systems(
             Update,
             (
@@ -115,7 +118,7 @@ fn main() {
         .run();
 }
 
-fn startup(
+fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -221,6 +224,7 @@ fn startup(
                 Visibility::Visible,
             ));
             parent.spawn((
+                Facing,
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
@@ -290,17 +294,20 @@ fn handle_tag(
     mut tagtimer: Query<&mut TagCooldownTimer>,
     time: Res<Time>,
 ) {
-    let (mut b, b_t) = bot.single_mut();
-    let (mut p, p_t) = player.single_mut();
-    let mut tagr = tagready.single_mut();
-    let x_delta = (b_t.translation.x - p_t.translation.x).abs();
-    let y_delta = (b_t.translation.y - p_t.translation.y).abs();
-    // if there's a timer that's done, set tagready to ready
     let mut timer = tagtimer.single_mut();
+    let mut tagr = tagready.single_mut();
     timer.timer.tick(time.delta());
     if timer.timer.finished() {
         tagr.ready = true;
+    } else {
+        // reduce work this func does when timer not ready
+        return;
     }
+    let (mut b, b_t) = bot.single_mut();
+    let (mut p, p_t) = player.single_mut();
+    let x_delta = (b_t.translation.x - p_t.translation.x).abs();
+    let y_delta = (b_t.translation.y - p_t.translation.y).abs();
+    // if there's a timer that's done, set tagready to ready
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
     if tagr.ready && distance < 2. * PLAYER_RADIUS {
         info!("you're it!");
@@ -322,7 +329,8 @@ fn handle_tag(
 }
 
 fn move_player(
-    mut players: Query<&mut Transform, With<Player>>,
+    mut players: Query<(&mut Transform, &mut Children), With<Player>>,
+    mut children: Query<&Name>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -342,7 +350,10 @@ fn move_player(
 
     let move_speed = MOVE_PER_TICK;
     let move_delta = direction * move_speed * time.delta_secs();
-    let mut p = players.single_mut();
+    let mut playerpair = players.single_mut();
+    // handle facing logic
+    
+    let mut p = playerpair.0;
     let old_pos = p.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
