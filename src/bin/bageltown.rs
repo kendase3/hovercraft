@@ -194,7 +194,7 @@ fn startup(
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
                     // blender has a different idea of up from bevy so this adjusts
-                    rotation: Quat::from_rotation_x(-PI / 2.0),
+                    rotation: Quat::from_rotation_x(PI / 2.0),
                     // FIXME(skend): just make the model the right size in meters
                     // then i would not need to convert
                     scale: Vec3::new(10.0, 10.0, 10.0),
