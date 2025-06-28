@@ -148,9 +148,8 @@ fn startup(
             // To zoom in and out, change this value, rather than `ScalingMode` or the camera's position.
             // FIXME(skend): temp
             scale: 1.,
-            near: -10000.0,
-            far: 10000.0,
-            //..OrthographicProjection::default_3d()
+            near: -1000.0,
+            far: 1000.0,
             ..OrthographicProjection::default_2d()
         }),
     ));
