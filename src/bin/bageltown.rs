@@ -20,6 +20,7 @@ use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
+    render::camera::Exposure,
 };
 
 const MOVE_PER_TICK: f32 = 40.;
@@ -132,12 +133,13 @@ fn setup(
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
     // FIXME(skend): this light only covers an extremely small area at the center of the map
-    commands.spawn(PointLight {
-        shadows_enabled: true,
-        intensity: 2000000.0, // this is dramatic but not crazy
-        range: MAP_SIZE as f32, // should basically be as big as the map
-        ..default()
-    });
+    //commands.spawn(PointLight {
+    //    shadows_enabled: true,
+    //    intensity: 2000000.0, // this is dramatic but not crazy
+    //    range: MAP_SIZE as f32, // should basically be as big as the map
+    //    ..default()
+    //});
+    commands.spawn(DirectionalLight::default());
     commands.spawn((
         Camera3d::default(),
         Camera {
@@ -145,7 +147,14 @@ fn setup(
             order: 0,
             ..default()
         },
-        Bloom::NATURAL,
+        // 6 was in transmission.rs bevy example
+        Exposure { ev100: 10.0 },
+        Transform {
+            // raise the light above the world so it hits the top faces the viewer sees
+            translation: Vec3::new(0., 0., 20.),
+            ..default()
+        },
+        //Bloom::NATURAL,
         Projection::from(OrthographicProjection {
             scaling_mode: ScalingMode::FixedVertical {
                 viewport_height: CAMERA_DEFAULT_SIZE,
