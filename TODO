@@ -2,8 +2,9 @@ https://bevyengine.org/examples/math/custom-primitives/
 and others nearby
 
 --- plan ---
-it seems like i should just use the bevy example folder for my version; i've been looking at shader_material_2d.rs
+i am currently trying to get the 2d and 3d camera to behave nicely together, so that when i make cool-looking spaceships i can see them clearly. i am also trying to orient them properly. my next step will be to have a crude 1v1 instagib battle with the bot. then i will slowly add content to that.
 
+--- references ---
 https://bevy.org/examples/2d-rendering/mesh2d-alpha-mode/
 ^ seems like this might be an easier way to do what i want
 working on rendering a target: use https://bevy.org/examples/shaders/shader-material-2d/
@@ -16,8 +17,8 @@ look at custom primitives link above to see how to make a targeting square like 
 tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
 star control: an enemy bot is trying to destroy you. you each shoot bullets. one hit kills. may orbit, approach, or flee
 
---- unsolved problems ---
-the world does not exist in units yet. it's easiest to read as a float if the 'room' is 100 units tall.
+--- units ---
+the units of the world are meters. if things are not the right scale for that to be reasonable, i messed up
 
 --- goodies ---
 #[cfg(not(target_arch = "wasm32"))]
@@ -25,3 +26,6 @@ the world does not exist in units yet. it's easiest to read as a float if the 'r
 
 --- notes on getting files out of the steam flatpak's blender ---
 my "home" dir is ~/.var/app/com.valvesoftware.Steam
+
+--- notes on making models in bevy that render the right way in this project ---
+i haven't found the right way yet, but i will denote here once i know how
