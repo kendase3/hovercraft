@@ -342,7 +342,7 @@ fn face_all(
 ) {
     for (mut facer, parent) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
-            facer.rotation = Quat::from_axis_angle(Vec3::X, player.facing);
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
         }
     }
 }
