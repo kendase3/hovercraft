@@ -19,8 +19,8 @@ use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
 use bevy::{
     reflect::TypePath,
-    render::render_resource::{AsBindGroup, ShaderRef},
     render::camera::Exposure,
+    render::render_resource::{AsBindGroup, ShaderRef},
 };
 
 const MOVE_PER_TICK: f32 = 40.;
@@ -139,7 +139,10 @@ fn setup(
     //    range: MAP_SIZE as f32, // should basically be as big as the map
     //    ..default()
     //});
-    commands.spawn(DirectionalLight::default());
+    commands.spawn(DirectionalLight {
+        shadows_enabled: true,
+        ..default()
+    });
     commands.spawn((
         Camera3d::default(),
         Camera {
