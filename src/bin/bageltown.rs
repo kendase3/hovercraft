@@ -131,6 +131,7 @@ fn setup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
+    // FIXME(skend): this light only covers an extremely small area at the center of the map
     commands.spawn(PointLight {
         shadows_enabled: true,
         intensity: 2000000.0, // this is dramatic but not crazy
@@ -427,7 +428,6 @@ fn camera_follow(
     let bpos = botq.single().translation;
     let camera_x = (ppos.x + bpos.x) / 2.;
     let camera_y = (ppos.y + bpos.y) / 2.;
-    //let mut c = cameraq.single_mut();
     for mut c in &mut cameraq {
         c.translation.x = camera_x;
         c.translation.y = camera_y;
