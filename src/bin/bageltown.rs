@@ -21,7 +21,6 @@ use bevy::{
     reflect::TypePath,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use std::f32::consts::PI;
 
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
@@ -205,15 +204,18 @@ fn setup(
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat4.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/righty.glb"),
                 )),
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
                     // blender has a different idea of up from bevy so this adjusts
                     // FIXME(skend): just make them face the right way for bevy in blender
-                    rotation: Quat::from_rotation_x(PI / 2.0),
-                    // FIXME(skend): just make the model the right size in meters
-                    // then i would not need to convert
+                    // FIXME(skend): now that i have rotation information coming
+                    // from the facing function, it's more important that this
+                    // just be correct out of blender
+                    // then i could delete this whole transform arg
+                    //rotation: Quat::from_rotation_x(PI / 2.0),
+                    rotation: Quat::default(),
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
                 Visibility::Visible,
