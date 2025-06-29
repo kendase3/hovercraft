@@ -334,9 +334,16 @@ fn handle_tag(
 }
 
 // anything with facing should face the way it is currently facing
-fn face_all(mut qfacers: Query<(&mut Transform, &Player), With<Facing>>) {
-    for (mut facer, player) in &mut qfacers {
-        facer.rotation = Quat::from_axis_angle(Vec3::X, player.facing);
+// FIXME(skend): it occurs to me that the children are not themselves
+// players, nor would you want them to be
+fn face_all(
+    mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
+    player_query: Query<&Player>,
+) {
+    for (mut facer, parent) in &mut facers_query {
+        if let Ok(player) = player_query.get(parent.get()) {
+            facer.rotation = Quat::from_axis_angle(Vec3::X, player.facing);
+        }
     }
 }
 
