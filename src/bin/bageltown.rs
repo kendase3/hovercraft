@@ -204,7 +204,7 @@ fn setup(
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/righty.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
                 )),
                 Transform {
                     translation: Vec3::new(0., 0., 0.),

@@ -29,3 +29,8 @@ my "home" dir is ~/.var/app/com.valvesoftware.Steam
 
 --- notes on making models in bevy that render the right way in this project ---
 i haven't found the right way yet, but i will denote here once i know how
+
+how to configure models in blender:
+model facing x+
+top facing z+
++Y up unchecked
