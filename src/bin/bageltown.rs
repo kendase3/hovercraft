@@ -372,7 +372,10 @@ fn move_player(
 
     // well this is an angle, and direction is a coordpair
     let n_direction = direction.normalize(); // likely unnecessary
-    play.facing = n_direction.y.atan2(n_direction.x);
+
+    if direction != Vec2::ZERO {
+        play.facing = n_direction.y.atan2(n_direction.x);
+    }
 
     let old_pos = player_transform.translation.xy();
     let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
