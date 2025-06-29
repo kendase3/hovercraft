@@ -217,6 +217,7 @@ fn setup(
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
                 Visibility::Visible,
+                Facing,
             ));
             parent.spawn((
                 Text2d::new("@"),
