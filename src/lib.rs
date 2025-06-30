@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use bevy::prelude::*;
+use bevy::time::Fixed;
 use std::f32::consts::PI;
 
 // the fewer of these, the farther away along the perimeter we aim
@@ -80,4 +81,32 @@ pub fn orbit(
     };
     // then we'll convert that to cartesean
     polar_to_cartesean_plus_point(dest_polar, target_location)
+}
+
+// notably for now we're only using X and Y
+#[derive(Component, Debug)]
+pub struct Velocity(pub Vec3);
+
+#[derive(Component, Debug)]
+pub struct Acceleration(pub Vec3);
+
+pub fn apply_acceleration(
+    mut query: Query<(&mut Velocity, &Acceleration)>,
+    fixed_time: Res<Time<Fixed>>,
+) {
+    let dt = fixed_time.delta_secs();
+
+    for (mut vel, accel) in &mut query {
+        vel.0 += accel.0 * dt;
+    }
+}
+
+pub fn apply_velocity(
+    mut query: Query<(&mut Transform, &Velocity)>,
+    fixed_time: Res<Time<Fixed>>,
+) {
+    let dt = fixed_time.delta_secs();
+    for (mut transform, vel) in &mut query {
+        transform.translation += vel.0 * dt;
+    }
 }

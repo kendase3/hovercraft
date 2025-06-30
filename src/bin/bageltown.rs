@@ -36,6 +36,7 @@ const CAMERA_DEFAULT_SIZE: f32 = 100.;
 const TARGET_WIDTH: f32 = 2.;
 const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
+const MAX_FRAMERATE: f32 = 60.;
 
 #[derive(Component)]
 struct Player {
@@ -141,6 +142,11 @@ fn main() {
         )
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
+        // FIXME(skend): surely i should name these
+        // won't i have dozens of fixed time events eventually?
+        .insert_resource(Time::<Fixed>::from_seconds(
+            (1.0 / MAX_FRAMERATE).into(),
+        ))
         .run();
 }
 
