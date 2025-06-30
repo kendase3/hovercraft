@@ -141,6 +141,8 @@ fn setup(
     //});
     commands.spawn(DirectionalLight {
         shadows_enabled: true,
+        illuminance: 100_000.0,
+        color: Color::srgb(1.0, 0.9, 0.9),
         ..default()
     });
     commands.spawn((
