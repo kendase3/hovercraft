@@ -22,13 +22,11 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-
+use hovercraft::{Acceleration, Velocity};
 use std::f32::consts::PI;
 
-const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
-const MAP_SIZE: u32 = 400;
 const GRID_SIZE: f32 = 1.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
@@ -36,6 +34,7 @@ const CAMERA_DEFAULT_SIZE: f32 = 100.;
 const TARGET_WIDTH: f32 = 2.;
 const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
+const MAX_FRAMERATE: f32 = 60.;
 
 #[derive(Component)]
 struct Player {
@@ -141,6 +140,16 @@ fn main() {
         )
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
+        .add_systems(
+            FixedUpdate,
+            (hovercraft::apply_acceleration, hovercraft::apply_velocity)
+                .chain(),
+        )
+        // FIXME(skend): surely i should name these
+        // won't i have dozens of fixed time events eventually?
+        .insert_resource(Time::<Fixed>::from_seconds(
+            (1.0 / MAX_FRAMERATE).into(),
+        ))
         .run();
 }
 
@@ -239,6 +248,8 @@ fn setup(
                 it: false,
                 facing: 0.0,
             },
+            hovercraft::Velocity(Vec3::new(0., 0., 0.)),
+            hovercraft::Acceleration(Vec3::new(0., 0., 0.)),
             Name::new("Protagonist"),
             Mesh2d(player_circle),
             MeshMaterial2d(materials.add(player_color)),
@@ -251,13 +262,6 @@ fn setup(
                 )),
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
-                    // blender has a different idea of up from bevy so this adjusts
-                    // FIXME(skend): just make them face the right way for bevy in blender
-                    // FIXME(skend): now that i have rotation information coming
-                    // from the facing function, it's more important that this
-                    // just be correct out of blender
-                    // then i could delete this whole transform arg
-                    //rotation: Quat::from_rotation_x(PI / 2.0),
                     rotation: Quat::default(),
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
@@ -379,9 +383,6 @@ fn handle_tag(
     }
 }
 
-// anything with facing should face the way it is currently facing
-// FIXME(skend): it occurs to me that the children are not themselves
-// players, nor would you want them to be
 fn face_all(
     mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
     player_query: Query<&Player>,
@@ -394,41 +395,38 @@ fn face_all(
 }
 
 fn move_player(
-    mut players: Query<(&mut Transform, &mut Player)>,
+    mut players: Query<(&mut Acceleration, &Velocity, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
-    let mut direction = Vec2::ZERO;
+    let mut direction = Vec3::ZERO;
     if keys.any_pressed([KeyCode::KeyW]) {
-        direction.y += 1.;
+        direction.y += 1.0;
     }
     if keys.any_pressed([KeyCode::KeyS]) {
-        direction.y -= 1.;
+        direction.y -= 1.0;
     }
     if keys.any_pressed([KeyCode::KeyD]) {
-        direction.x += 1.;
+        direction.x += 1.0;
     }
     if keys.any_pressed([KeyCode::KeyA]) {
-        direction.x -= 1.;
+        direction.x -= 1.0;
     }
 
-    let move_speed = MOVE_PER_TICK;
-    let move_delta = direction * move_speed * time.delta_secs();
-    let (mut player_transform, mut play) = players.single_mut();
+    let (mut accel, velocity, mut play) = players.single_mut();
+    let n_direction;
+    if direction != Vec3::ZERO {
+        n_direction = direction.normalize(); // likely unnecessary
+    } else {
+        n_direction = Vec3::ZERO;
+    }
+    // the new acceleration value is based on what player is up to
+    accel.0 = n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
 
-    // well this is an angle, and direction is a coordpair
-    let n_direction = direction.normalize(); // likely unnecessary
-
-    if direction != Vec2::ZERO {
+    // the ship faces whatever input the player last entered
+    if direction != Vec3::ZERO {
         play.facing = n_direction.y.atan2(n_direction.x);
     }
-
-    let old_pos = player_transform.translation.xy();
-    let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
-    let new_pos = (old_pos + move_delta).clamp(-limit, limit);
-
-    player_transform.translation.x = new_pos.x;
-    player_transform.translation.y = new_pos.y;
 }
 
 fn move_bot(
@@ -460,7 +458,7 @@ fn move_bot(
     // make sure to normalize the vector so the speed is correct
     let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
     let old_pos = b_t.translation.xy();
-    let limit = Vec2::splat(MAP_SIZE as f32 / 2.);
+    let limit = Vec2::splat(hovercraft::MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
@@ -497,12 +495,12 @@ fn draw_map(
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     // let's make horizontal lines first
-    for i in 0..=MAP_SIZE {
+    for i in 0..=hovercraft::MAP_SIZE {
         if i % SPACE_BETWEEN_LINES != 0 {
             continue;
         };
         // first we make our line
-        let rect_width = MAP_SIZE as f32;
+        let rect_width = hovercraft::MAP_SIZE as f32;
         let rect_height = GRID_SIZE;
         let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
         let rect_color =
@@ -512,17 +510,21 @@ fn draw_map(
             Mesh2d(rect_mesh),
             MeshMaterial2d(rect_color),
             // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(0., i as f32 - MAP_SIZE as f32 / 2., 0.),
+            Transform::from_xyz(
+                0.,
+                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
+                0.,
+            ),
         ));
     }
     // then vertical
-    for i in 0..=MAP_SIZE {
+    for i in 0..=hovercraft::MAP_SIZE {
         if i % SPACE_BETWEEN_LINES != 0 {
             continue;
         };
         // first we make our line
         let rect_width = GRID_SIZE;
-        let rect_height = MAP_SIZE as f32;
+        let rect_height = hovercraft::MAP_SIZE as f32;
         let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
         let rect_color =
             materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
@@ -531,7 +533,11 @@ fn draw_map(
             Mesh2d(rect_mesh),
             MeshMaterial2d(rect_color),
             // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(i as f32 - MAP_SIZE as f32 / 2., 0., 0.),
+            Transform::from_xyz(
+                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
+                0.,
+                0.,
+            ),
         ));
     }
 }

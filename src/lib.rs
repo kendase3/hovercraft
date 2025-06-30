@@ -13,7 +13,12 @@
 // limitations under the License.
 
 use bevy::prelude::*;
+use bevy::time::Fixed;
 use std::f32::consts::PI;
+
+pub const MAP_SIZE: u32 = 400;
+pub const PLAYER_ACCEL_RATE: f32 = 1000.;
+pub const MAX_VELOCITY: f32 = 40.;
 
 // the fewer of these, the farther away along the perimeter we aim
 // the less perfect circle it will be but the less often we have
@@ -80,4 +85,41 @@ pub fn orbit(
     };
     // then we'll convert that to cartesean
     polar_to_cartesean_plus_point(dest_polar, target_location)
+}
+
+// notably for now we're only using X and Y
+#[derive(Component, Debug, Default)]
+pub struct Velocity(pub Vec3);
+
+#[derive(Component, Debug, Default)]
+pub struct Acceleration(pub Vec3);
+
+// FIXME(skend): acceleration is NaN the very first time
+// with this func commented out, everything works as expected
+pub fn apply_acceleration(
+    mut query: Query<(&mut Velocity, &Acceleration)>,
+    fixed_time: Res<Time<Fixed>>,
+) {
+    let dt = fixed_time.delta_secs();
+
+    for (mut vel, accel) in &mut query {
+        vel.0 += accel.0 * dt;
+    }
+}
+
+pub fn apply_velocity(
+    mut query: Query<(&mut Transform, &Velocity)>,
+    fixed_time: Res<Time<Fixed>>,
+) {
+    let dt = fixed_time.delta_secs();
+    for (mut transform, vel) in &mut query {
+        let mut actual_vel = vel.0;
+        if vel.0.length() > MAX_VELOCITY {
+           actual_vel = vel.0.normalize();
+           actual_vel = actual_vel * MAX_VELOCITY;
+        }
+        transform.translation += actual_vel * dt;
+        let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
+        transform.translation = transform.translation.clamp(-limit, limit);
+    }
 }

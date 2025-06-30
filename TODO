@@ -2,9 +2,8 @@ https://bevyengine.org/examples/math/custom-primitives/
 and others nearby
 
 --- plan ---
-my 3d camera and lighting is now officially C- level. i can move onto the next mechanic. do i want to give up on the idea of manually driving a ship? i think in either case i need the idea of acceleration and a difference between what way you want the ship to be going and what way the ship is currently going in the moment. in other words, there will be a delay as the ship follows your orders. manual piloting, even though i have a simple version of it now, will i think be a stretch goal to give players another way of playing. the "default" way to play will be to issue orders like a captain. players can equip modules to allow their ships to be manually-piloted. with that in mind the immediate plan is:
-- add acceleration to current controls. the ship will have a max acceleration and a max velocity.
 - add two orbit distances the player can toggle between with 1 and 2 keys.
+- remove idea of manually controlling ship for now
 
 --- references ---
 https://bevy.org/examples/2d-rendering/mesh2d-alpha-mode/
@@ -14,6 +13,9 @@ i'm not satisfied with the movement abstraction; i want approach, orbit and targ
 a good first step would be to introduce the idea of acceleration, velocity, facing, and turn time (rotational velocity)
 how is targeting going to work? it seems like we could use entity names to fetch the target of a unit.
 look at custom primitives link above to see how to make a targeting square like what i want
+
+example for FixedUpdate:
+i think some of my systems now with the custom timers could instead use fixedupdate? do some research as to which is better
 
 --- ideas for iterative projects ---
 tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
