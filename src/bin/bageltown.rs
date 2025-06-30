@@ -149,7 +149,7 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 20.0)
-            .with_rotation(Quat::from_rotation_x(PI / 2.)),
+            .with_rotation(Quat::from_rotation_x(-PI / 2.)),
     ));
     commands.spawn((
         Camera3d::default(),
