@@ -142,6 +142,7 @@ fn main() {
         )
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
+        .add_systems(FixedUpdate, (hovercraft::apply_acceleration, hovercraft::apply_velocity).chain())
         // FIXME(skend): surely i should name these
         // won't i have dozens of fixed time events eventually?
         .insert_resource(Time::<Fixed>::from_seconds(
