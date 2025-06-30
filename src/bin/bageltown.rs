@@ -35,6 +35,7 @@ const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
 const ORBIT_DISTANCE: f32 = 50.;
+const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 
 #[derive(Component)]
 struct Player {
@@ -95,7 +96,10 @@ struct OrbitTimer(Timer);
 
 impl FromWorld for OrbitTimer {
     fn from_world(_: &mut World) -> Self {
-        OrbitTimer(Timer::from_seconds(1.0, TimerMode::Repeating))
+        OrbitTimer(Timer::from_seconds(
+            ORBIT_CALC_INTERVAL,
+            TimerMode::Repeating,
+        ))
     }
 }
 
