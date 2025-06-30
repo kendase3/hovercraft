@@ -23,6 +23,8 @@ use bevy::{
     render::render_resource::{AsBindGroup, ShaderRef},
 };
 
+use std::f32::consts::PI;
+
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
@@ -139,12 +141,16 @@ fn setup(
     //    range: MAP_SIZE as f32, // should basically be as big as the map
     //    ..default()
     //});
-    commands.spawn(DirectionalLight {
-        shadows_enabled: true,
-        illuminance: 100_000.0,
-        color: Color::srgb(1.0, 0.9, 0.9),
-        ..default()
-    });
+    commands.spawn((
+        DirectionalLight {
+            shadows_enabled: true,
+            illuminance: 100_000.0,
+            color: Color::srgb(1.0, 0.9, 0.9),
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 20.0)
+            .with_rotation(Quat::from_rotation_x(-PI / 4.)),
+    ));
     commands.spawn((
         Camera3d::default(),
         Camera {
