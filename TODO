@@ -15,6 +15,31 @@ a good first step would be to introduce the idea of acceleration, velocity, faci
 how is targeting going to work? it seems like we could use entity names to fetch the target of a unit.
 look at custom primitives link above to see how to make a targeting square like what i want
 
+example for FixedUpdate:
+i think some of my systems now with the custom timers could instead use fixedupdate? do some research as to which is better
+```
+// 1. Define custom components for Velocity and Acceleration
+// These are simple wrappers around Vec3, marked with #[derive(Component)]
+// Debug is useful for inspecting values during development.
+#[derive(Component, Debug)]
+pub struct Velocity(pub Vec3);
+
+#[derive(Component, Debug)]
+pub struct Acceleration(pub Vec3);
+
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_systems(Startup, setup)
+        // Add physics-related systems to the FixedUpdate schedule.
+        // Chaining them ensures they run in order: acceleration first, then velocity.
+        .add_systems(FixedUpdate, (apply_acceleration, apply_velocity).chain())
+        // Configure the FixedUpdate schedule to run at a consistent rate (e.g., 60 times per second)
+        .insert_resource(Time::<Fixed>::from_seconds(1.0 / 60.0))
+        .run();
+}
+```
+
 --- ideas for iterative projects ---
 tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
 star control: an enemy bot is trying to destroy you. you each shoot bullets. one hit kills. may orbit, approach, or flee
