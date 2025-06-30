@@ -84,7 +84,7 @@ pub fn orbit(
 }
 
 // notably for now we're only using X and Y
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Default)]
 pub struct Velocity(pub Vec3);
 
 #[derive(Component, Debug)]

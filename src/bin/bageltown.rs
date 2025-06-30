@@ -246,6 +246,7 @@ fn setup(
                 it: false,
                 facing: 0.0,
             },
+            hovercraft::Velocity::default(),
             Name::new("Protagonist"),
             Mesh2d(player_circle),
             MeshMaterial2d(materials.add(player_color)),
