@@ -22,8 +22,8 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use std::f32::consts::PI;
 use hovercraft::{Acceleration, Velocity};
+use std::f32::consts::PI;
 
 const MOVE_PER_TICK: f32 = 40.;
 const BOT_MOVE_PER_TICK: f32 = 20.;
@@ -141,7 +141,11 @@ fn main() {
         )
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
-        .add_systems(FixedUpdate, (hovercraft::apply_acceleration, hovercraft::apply_velocity).chain())
+        .add_systems(
+            FixedUpdate,
+            (hovercraft::apply_acceleration, hovercraft::apply_velocity)
+                .chain(),
+        )
         // FIXME(skend): surely i should name these
         // won't i have dozens of fixed time events eventually?
         .insert_resource(Time::<Fixed>::from_seconds(
@@ -408,23 +412,22 @@ fn move_player(
 ) {
     let mut direction = Vec3::ZERO;
     if keys.any_pressed([KeyCode::KeyW]) {
-        direction.y += 0.1;
+        direction.y += 1.0;
     }
     if keys.any_pressed([KeyCode::KeyS]) {
-        direction.y -= 0.1;
+        direction.y -= 1.0;
     }
     if keys.any_pressed([KeyCode::KeyD]) {
-        direction.x += 0.1;
+        direction.x += 1.0;
     }
     if keys.any_pressed([KeyCode::KeyA]) {
-        direction.x -= 0.1;
+        direction.x -= 1.0;
     }
 
-    let mut goodies = players.single_mut();
-    goodies.0.0 = goodies.0.0 + direction * time.delta_secs();
-    let (mut player_transform, velocity, mut play) = players.single_mut();
-
+    let (mut accel, velocity, mut play) = players.single_mut();
     let n_direction = direction.normalize(); // likely unnecessary
+    // the new acceleration value is based on what player is up to
+    accel.0 = n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
@@ -513,7 +516,11 @@ fn draw_map(
             Mesh2d(rect_mesh),
             MeshMaterial2d(rect_color),
             // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(0., i as f32 - hovercraft::MAP_SIZE as f32 / 2., 0.),
+            Transform::from_xyz(
+                0.,
+                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
+                0.,
+            ),
         ));
     }
     // then vertical
@@ -532,7 +539,11 @@ fn draw_map(
             Mesh2d(rect_mesh),
             MeshMaterial2d(rect_color),
             // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(i as f32 - hovercraft::MAP_SIZE as f32 / 2., 0., 0.),
+            Transform::from_xyz(
+                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
+                0.,
+                0.,
+            ),
         ));
     }
 }
