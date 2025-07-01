@@ -16,6 +16,8 @@ use bevy::prelude::*;
 use bevy::time::Fixed;
 use std::f32::consts::PI;
 
+pub const MAP_SIZE: u32 = 400;
+
 // the fewer of these, the farther away along the perimeter we aim
 // the less perfect circle it will be but the less often we have
 // to compute
@@ -87,7 +89,7 @@ pub fn orbit(
 #[derive(Component, Debug, Default)]
 pub struct Velocity(pub Vec3);
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Default)]
 pub struct Acceleration(pub Vec3);
 
 pub fn apply_acceleration(
@@ -107,6 +109,9 @@ pub fn apply_velocity(
 ) {
     let dt = fixed_time.delta_secs();
     for (mut transform, vel) in &mut query {
+        let old_pos = transform.translation;
         transform.translation += vel.0 * dt;
+        let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
+        transform.translation = transform.translation.clamp(-limit, limit);
     }
 }
