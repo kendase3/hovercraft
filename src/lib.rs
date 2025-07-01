@@ -17,7 +17,7 @@ use bevy::time::Fixed;
 use std::f32::consts::PI;
 
 pub const MAP_SIZE: u32 = 400;
-pub const PLAYER_ACCEL_RATE: f32 = 5.;
+pub const PLAYER_ACCEL_RATE: f32 = 50.;
 pub const MAX_VELOCITY: f32 = 20.;
 
 // the fewer of these, the farther away along the perimeter we aim
@@ -104,10 +104,6 @@ pub fn apply_acceleration(
 
     for (mut vel, accel) in &mut query {
         vel.0 += accel.0 * dt;
-        warn!(
-            "velocity = {} because acceleration = {} and dt = {}",
-            vel.0, accel.0, dt
-        );
     }
 }
 
@@ -127,9 +123,5 @@ pub fn apply_velocity(
         transform.translation += actual_vel * dt;
         let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
         transform.translation = transform.translation.clamp(-limit, limit);
-        warn!(
-            "position = {} because velocity = {}",
-            transform.translation, actual_vel
-        );
     }
 }

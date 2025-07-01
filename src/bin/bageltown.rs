@@ -422,8 +422,7 @@ fn move_player(
         n_direction = Vec3::ZERO;
     }
     // the new acceleration value is based on what player is up to
-    // FIXME(skend): is this line the problem?
-    accel.0 = n_direction; //n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
+    accel.0 = n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
