@@ -102,6 +102,10 @@ pub fn apply_acceleration(
 
     for (mut vel, accel) in &mut query {
         vel.0 += accel.0 * dt;
+        warn!(
+            "velocity = {} because acceleration = {}",
+            vel.0, accel.0 
+        );
     }
 }
 
