@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
@@ -22,19 +23,20 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use hovercraft::{Acceleration, Velocity};
+use hovercraft::Acceleration;
+use rand::Rng;
 use std::f32::consts::PI;
 
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
-const GRID_SIZE: f32 = 1.;
-const SPACE_BETWEEN_LINES: u32 = 20;
+const GRID_SIZE: f32 = 20.;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
 const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 const MAX_FRAMERATE: f32 = 60.;
+const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 
 #[derive(Component)]
 struct Player {
@@ -60,6 +62,10 @@ struct Target;
 struct TagCooldownTimer {
     timer: Timer,
 }
+
+// a planetary body like a planet, asteroid field, a location you can warp to
+#[derive(Component)]
+struct Warp;
 
 // whether or not the cooldown is ready for a tag to happen
 #[derive(Component)]
@@ -166,12 +172,6 @@ fn setup(
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
     // FIXME(skend): this light only covers an extremely small area at the center of the map
-    //commands.spawn(PointLight {
-    //    shadows_enabled: true,
-    //    intensity: 2000000.0, // this is dramatic but not crazy
-    //    range: MAP_SIZE as f32, // should basically be as big as the map
-    //    ..default()
-    //});
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
@@ -180,8 +180,20 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 20.0)
-            .with_rotation(Quat::from_rotation_x(-PI / 2.)),
+            //.with_rotation(Quat::from_rotation_x(0.25 * -PI / 2.)),
+            .with_rotation(Quat::from_rotation_x(0.3 * -PI / 2.)),
+        // first arg: target, second arg: up
+        //.looking_at(Vec3::ZERO, Vec3::Z),
     ));
+    /*
+    commands.spawn((
+        PointLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+    */
     commands.spawn((
         Camera3d::default(),
         Camera {
@@ -204,7 +216,7 @@ fn setup(
             scale: 1.,
             near: -1000.0,
             far: 1000.0,
-            ..OrthographicProjection::default_2d()
+            ..OrthographicProjection::default_3d()
         }),
     ));
     commands.spawn((
@@ -235,6 +247,7 @@ fn setup(
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let player_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
+    let planet_color = Color::srgb(0.0, 1.0, 0.0);
     let player_circle = meshes.add(Circle::new(PLAYER_RADIUS));
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -260,6 +273,7 @@ fn setup(
                 SceneRoot(asset_server.load(
                     GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
                 )),
+                // NB(skend): notably does nothing
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
                     rotation: Quat::default(),
@@ -295,6 +309,7 @@ fn setup(
         PLAYER_RADIUS * 2.,
         PLAYER_RADIUS * 2.,
     )));
+    let planet1 = meshes.add(Circle::new(PLAYER_RADIUS * 2.));
     commands
         .spawn((
             Bot { it: true },
@@ -328,7 +343,7 @@ fn setup(
         });
     // kind of like a notification at the top of the screen
     commands.spawn((
-        Text::new("You're it!"),
+        Text::new("You're gaming!"),
         Proclamation,
         Node {
             position_type: PositionType::Absolute,
@@ -337,6 +352,13 @@ fn setup(
             ..default()
         },
         Visibility::Hidden,
+    ));
+    commands.spawn((
+        Warp,
+        Name::new("Planet1"),
+        Mesh2d(planet1),
+        MeshMaterial2d(materials.add(planet_color)),
+        Transform::from_xyz(PLANET_COORDS.0, PLANET_COORDS.1, PLANET_COORDS.2),
     ));
 }
 
@@ -395,7 +417,7 @@ fn face_all(
 }
 
 fn move_player(
-    mut players: Query<(&mut Acceleration, &Velocity, &mut Player)>,
+    mut players: Query<(&mut Acceleration, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -413,7 +435,7 @@ fn move_player(
         direction.x -= 1.0;
     }
 
-    let (mut accel, velocity, mut play) = players.single_mut();
+    let (mut accel, mut play) = players.single_mut();
     let n_direction;
     if direction != Vec3::ZERO {
         n_direction = direction.normalize(); // likely unnecessary
@@ -489,56 +511,66 @@ fn camera_follow(
     }
 }
 
+fn get_random_color() -> LinearRgba {
+    let mut rng = rand::thread_rng();
+    let rand_red = rng.gen_range(0.0..=0.5) as f32;
+    let rand_green = rng.gen_range(0.0..=0.5) as f32;
+    let rand_blue = rng.gen_range(0.0..=0.5) as f32;
+    LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
+}
+
+// TODO(skend): the map should have texture, and maybe a fun fog effect
 fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // let's make horizontal lines first
-    for i in 0..=hovercraft::MAP_SIZE {
-        if i % SPACE_BETWEEN_LINES != 0 {
-            continue;
-        };
-        // first we make our line
-        let rect_width = hovercraft::MAP_SIZE as f32;
-        let rect_height = GRID_SIZE;
-        let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
-        let rect_color =
-            materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
-
-        commands.spawn((
-            Mesh2d(rect_mesh),
-            MeshMaterial2d(rect_color),
-            // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(
-                0.,
-                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
-                0.,
-            ),
-        ));
-    }
-    // then vertical
-    for i in 0..=hovercraft::MAP_SIZE {
-        if i % SPACE_BETWEEN_LINES != 0 {
-            continue;
-        };
-        // first we make our line
-        let rect_width = GRID_SIZE;
-        let rect_height = hovercraft::MAP_SIZE as f32;
-        let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
-        let rect_color =
-            materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
-
-        commands.spawn((
-            Mesh2d(rect_mesh),
-            MeshMaterial2d(rect_color),
-            // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(
-                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
-                0.,
-                0.,
-            ),
-        ));
+    // we have MAP_SIZE for both width and depth
+    for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+        + ((0.5 * GRID_SIZE as f32) as i32))
+        ..=(hovercraft::MAP_SIZE as i32 / 2))
+        .step_by(GRID_SIZE as usize)
+    {
+        for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+            + ((0.5 * GRID_SIZE as f32) as i32))
+            ..=(hovercraft::MAP_SIZE as i32 / 2))
+            .step_by(GRID_SIZE as usize)
+        {
+            let center = Vec3::new(x as f32, y as f32, 0.0);
+            let mut matl = |color| {
+                materials.add(StandardMaterial {
+                    base_color: color,
+                    //perceptual_roughness: 1.0,
+                    //metallic: 1.0,
+                    //emissive: PURPLE.into(),
+                    ..default()
+                })
+            };
+            let mut plane = Mesh::from(
+                Plane3d {
+                    normal: Dir3::Z,
+                    half_size: Vec2::new(
+                        GRID_SIZE as f32 / 2.,
+                        GRID_SIZE as f32 / 2.,
+                    ),
+                    ..default()
+                }
+                .mesh(),
+            );
+            let vertex_colors: Vec<[f32; 4]> = vec![
+                get_random_color().to_f32_array(),
+                get_random_color().to_f32_array(),
+                get_random_color().to_f32_array(),
+                get_random_color().to_f32_array(),
+            ];
+            plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+            commands.spawn((
+                Mesh3d(meshes.add(plane)),
+                MeshMaterial3d(matl(Color::from(PURPLE))),
+                //MeshMaterial3d(matl(Color::WHITE)),
+                Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
+            ));
+        }
     }
 }
 
