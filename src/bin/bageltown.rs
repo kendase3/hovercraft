@@ -415,9 +415,15 @@ fn move_player(
     }
 
     let (mut accel, velocity, mut play) = players.single_mut();
-    let n_direction = direction.normalize(); // likely unnecessary
+    let n_direction;
+    if direction != Vec3::ZERO {
+        n_direction = direction.normalize(); // likely unnecessary
+    } else {
+        n_direction = Vec3::ZERO;
+    }
     // the new acceleration value is based on what player is up to
-    accel.0 = n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
+    // FIXME(skend): is this line the problem?
+    accel.0 = n_direction; //n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
