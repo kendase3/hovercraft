@@ -94,6 +94,8 @@ pub struct Velocity(pub Vec3);
 #[derive(Component, Debug, Default)]
 pub struct Acceleration(pub Vec3);
 
+// FIXME(skend): acceleration is NaN the very first time
+// with this func commented out, everything works as expected
 pub fn apply_acceleration(
     mut query: Query<(&mut Velocity, &Acceleration)>,
     fixed_time: Res<Time<Fixed>>,
@@ -103,8 +105,8 @@ pub fn apply_acceleration(
     for (mut vel, accel) in &mut query {
         vel.0 += accel.0 * dt;
         warn!(
-            "velocity = {} because acceleration = {}",
-            vel.0, accel.0 
+            "velocity = {} because acceleration = {} and dt = {}",
+            vel.0, accel.0, dt
         );
     }
 }

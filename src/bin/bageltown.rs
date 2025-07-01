@@ -263,13 +263,6 @@ fn setup(
                 )),
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
-                    // blender has a different idea of up from bevy so this adjusts
-                    // FIXME(skend): just make them face the right way for bevy in blender
-                    // FIXME(skend): now that i have rotation information coming
-                    // from the facing function, it's more important that this
-                    // just be correct out of blender
-                    // then i could delete this whole transform arg
-                    //rotation: Quat::from_rotation_x(PI / 2.0),
                     rotation: Quat::default(),
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
@@ -391,9 +384,6 @@ fn handle_tag(
     }
 }
 
-// anything with facing should face the way it is currently facing
-// FIXME(skend): it occurs to me that the children are not themselves
-// players, nor would you want them to be
 fn face_all(
     mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
     player_query: Query<&Player>,
