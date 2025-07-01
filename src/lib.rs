@@ -115,8 +115,8 @@ pub fn apply_velocity(
     for (mut transform, vel) in &mut query {
         let mut actual_vel = vel.0;
         if vel.0.length() > MAX_VELOCITY {
-           actual_vel = vel.0.normalize();
-           actual_vel = actual_vel * MAX_VELOCITY;
+            actual_vel = vel.0.normalize();
+            actual_vel = actual_vel * MAX_VELOCITY;
         }
         transform.translation += actual_vel * dt;
         let limit = Vec3::splat(MAP_SIZE as f32 / 2.);

@@ -22,7 +22,7 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use hovercraft::{Acceleration, Velocity};
+use hovercraft::Acceleration;
 use std::f32::consts::PI;
 
 const BOT_MOVE_PER_TICK: f32 = 20.;
@@ -395,7 +395,7 @@ fn face_all(
 }
 
 fn move_player(
-    mut players: Query<(&mut Acceleration, &Velocity, &mut Player)>,
+    mut players: Query<(&mut Acceleration, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -413,7 +413,7 @@ fn move_player(
         direction.x -= 1.0;
     }
 
-    let (mut accel, velocity, mut play) = players.single_mut();
+    let (mut accel, mut play) = players.single_mut();
     let n_direction;
     if direction != Vec3::ZERO {
         n_direction = direction.normalize(); // likely unnecessary
