@@ -2,8 +2,26 @@ https://bevyengine.org/examples/math/custom-primitives/
 and others nearby
 
 --- plan ---
+- add planets
+- unify player and bot movement around the idea of a destination
+- introduce the idea of having two players and two bots
 - add two orbit distances the player can toggle between with 1 and 2 keys.
 - remove idea of manually controlling ship for now
+- remove tag danglers
+- increase scale of map
+- remove grid and replace with a 3d procgen terrain underneath
+- add instagib rail cannon
+- add destruction animation
+- add webifier module
+- add idea of space weather? space wind? remember we're not actually in space. setting tbd
+- i had some ideas for module sizes that would be easy to read and distinct from mwo: newt(tiny), mid(avg), and terror(huge)
+- add actual mechanics around rotational velocity and other requirements to land a hit
+- add UI elements to determine orbital velocity status
+- make chance to hit pretty low for starters, it's instagib afterall.
+- charging the main gun should take battery(batt), giving up other systems like fast movement, target scrambling, limiting the enemy's movement, etc.
+- the pacing of allocating resources to the various systems should feel impactful even with just one gun
+- the second "gun" i add could be boarding. after an enemy has fired, you know it will take time to recharge so it's safe to board them
+- boarding would require the modeling of ropes and some small physics: the ropes should slacken/tighten to pull the other ship the same way as the bound ship. is that too much work for too little payoff? we'll have to see how hard it is to model rope slackness. my guess is it shouldn't be too bad.
 
 --- references ---
 https://bevy.org/examples/2d-rendering/mesh2d-alpha-mode/
