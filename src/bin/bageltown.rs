@@ -523,7 +523,9 @@ fn draw_map(
             ..default()
         })
     };
-    let mut plane: Mesh = Plane3d::default().into();
+    let mut preplane = Plane3d::default();
+    preplane.normal = Dir3::Z;
+    let mut plane: Mesh = preplane.into();
     let uv_size = 4000.0;
     let uvs = vec![[uv_size, 0.0], [0.0, 0.0], [0.0, uv_size], [uv_size; 2]];
     plane.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
@@ -533,8 +535,6 @@ fn draw_map(
         //MeshMaterial3d(matl(Color::srgb(1., 1., 1.))),
         MeshMaterial3d(matl(Color::WHITE)),
         Transform::from_xyz(0.0, 0.0, -1.0)
-            // FIXME(skend): what if my texture is upside down?
-            .with_rotation(Quat::from_rotation_x(PI / 2.))
             .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
     ));
 }
