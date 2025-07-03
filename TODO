@@ -3,6 +3,8 @@ and others nearby
 
 --- plan ---
 
+i need to decide whether this is something i can make a decent improvement of my boring background by doing, or if i should just leave it some matte color and move on
+
 in the motion blur bevy demo, the ground has a cool texture on it. do i need shadows=true?
 
 consider adding `noise = "0.9.0"` to cargo toml for terrain generation
