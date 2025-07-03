@@ -35,6 +35,7 @@ const TARGET_WIDTH: f32 = 2.;
 const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 const MAX_FRAMERATE: f32 = 60.;
+const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 
 #[derive(Component)]
 struct Player {
@@ -235,6 +236,7 @@ fn setup(
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let player_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
+    let planet_color = Color::srgb(0.0, 1.0, 0.0);
     let player_circle = meshes.add(Circle::new(PLAYER_RADIUS));
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -295,6 +297,7 @@ fn setup(
         PLAYER_RADIUS * 2.,
         PLAYER_RADIUS * 2.,
     )));
+    let planet1 = meshes.add(Circle::new(PLAYER_RADIUS * 2.));
     commands
         .spawn((
             Bot { it: true },
@@ -337,6 +340,12 @@ fn setup(
             ..default()
         },
         Visibility::Hidden,
+    ));
+    commands.spawn((
+        Name::new("Planet1"),
+        Mesh2d(planet1),
+        MeshMaterial2d(materials.add(planet_color)),
+        Transform::from_xyz(PLANET_COORDS.0, PLANET_COORDS.1, PLANET_COORDS.2),
     ));
 }
 
@@ -394,6 +403,8 @@ fn face_all(
     }
 }
 
+// FIXME(skend): this now needs to know what entity the player has targeted
+// in the case that nothing is targeted, we just float the way we were going
 fn move_player(
     mut players: Query<(&mut Acceleration, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
