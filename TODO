@@ -2,6 +2,8 @@ https://bevyengine.org/examples/math/custom-primitives/
 and others nearby
 
 --- plan ---
+as we press T we cycle targets. pressing space approaches that target. that exercises the "get to destination" code that will then be shared by the bot. pressing O orbits that target at 100m. that will also exercise the "get to destination" code and we'll use the orbit code to get the destination. the only unique code will be how the bot selects a behavior (TODO) and how we do (with keyboard input).
+
 - add planets
 - unify player and bot movement around the idea of a destination
 - introduce the idea of having two players and two bots
@@ -22,6 +24,7 @@ and others nearby
 - the pacing of allocating resources to the various systems should feel impactful even with just one gun
 - the second "gun" i add could be boarding. after an enemy has fired, you know it will take time to recharge so it's safe to board them
 - boarding would require the modeling of ropes and some small physics: the ropes should slacken/tighten to pull the other ship the same way as the bound ship. is that too much work for too little payoff? we'll have to see how hard it is to model rope slackness. my guess is it shouldn't be too bad.
+- i read about chunking and it seems like that would be a great fit for my abstraction. i could break each system into a grid of chunks, and just render the 9 chunks around the player. then i would just need to make sure no effects in the game occur more than a chunk's diameter away. for starters, consider a system that's 100km by 100km. we can have it be mostly empty and that's fine. because the chunks are 1km blocks. so no weapon can fire over 1km; no jammer can jam over 1km etc. then we render the 3kmx3km zone around the player as 3x3 chunks. our max render amount is 3km^2, even though our system is 100km^2. then we can warp/travel around a big system and have hidden goodies everywhere but still get good performance. each system would be a completely separate server, but one server could handle these chunks i think.
 
 --- references ---
 https://bevy.org/examples/2d-rendering/mesh2d-alpha-mode/
