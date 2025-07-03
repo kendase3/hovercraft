@@ -508,54 +508,26 @@ fn camera_follow(
 fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // let's make horizontal lines first
-    for i in 0..=hovercraft::MAP_SIZE {
-        if i % SPACE_BETWEEN_LINES != 0 {
-            continue;
-        };
-        // first we make our line
-        let rect_width = hovercraft::MAP_SIZE as f32;
-        let rect_height = GRID_SIZE;
-        let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
-        let rect_color =
-            materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
-
-        commands.spawn((
-            Mesh2d(rect_mesh),
-            MeshMaterial2d(rect_color),
-            // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(
-                0.,
-                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
-                0.,
-            ),
-        ));
-    }
-    // then vertical
-    for i in 0..=hovercraft::MAP_SIZE {
-        if i % SPACE_BETWEEN_LINES != 0 {
-            continue;
-        };
-        // first we make our line
-        let rect_width = GRID_SIZE;
-        let rect_height = hovercraft::MAP_SIZE as f32;
-        let rect_mesh = meshes.add(Rectangle::new(rect_width, rect_height));
-        let rect_color =
-            materials.add(ColorMaterial::from(Color::srgb(0., 0., 0.)));
-
-        commands.spawn((
-            Mesh2d(rect_mesh),
-            MeshMaterial2d(rect_color),
-            // we start at negative 1/2 map size, go up to positive 1/2 map size
-            Transform::from_xyz(
-                i as f32 - hovercraft::MAP_SIZE as f32 / 2.,
-                0.,
-                0.,
-            ),
-        ));
-    }
+    let mut matl = |color| {
+        materials.add(StandardMaterial {
+            base_color: color,
+            ..default()
+        })
+    };
+    //let mut plane: Mesh = Plane3d { size: (100., 100.), ..default()}.into();
+    let mut plane: Mesh = Plane3d::default().into();
+    let uv_size = 4000.0;
+    let uvs = vec![[uv_size, 0.0], [0.0, 0.0], [0.0, uv_size], [uv_size; 2]];
+    plane.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    commands.spawn((
+        Mesh3d(meshes.add(plane)),
+        MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
+        Transform::from_xyz(0.0, 0.0, -1.0)
+            .with_rotation(Quat::from_rotation_x(PI / 2.))
+            .with_scale(Vec3::splat(100.)),
+    ));
 }
 
 // FIXME(skend): use tab though

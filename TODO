@@ -2,6 +2,10 @@ https://bevyengine.org/examples/math/custom-primitives/
 and others nearby
 
 --- plan ---
+
+consider adding `noise = "0.9.0"` to cargo toml for terrain generation
+though i think random would be fine for now
+
 are all targets travel points? are all travel points targets? do i want to navigate via target controls? warp via target controls? not sure yet
 
 as we press T we cycle targets. pressing space approaches that target. that exercises the "get to destination" code that will then be shared by the bot. pressing O orbits that target at 100m. that will also exercise the "get to destination" code and we'll use the orbit code to get the destination. the only unique code will be how the bot selects a behavior (TODO) and how we do (with keyboard input).
