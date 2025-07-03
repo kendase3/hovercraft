@@ -516,7 +516,6 @@ fn draw_map(
             ..default()
         })
     };
-    //let mut plane: Mesh = Plane3d { size: (100., 100.), ..default()}.into();
     let mut plane: Mesh = Plane3d::default().into();
     let uv_size = 4000.0;
     let uvs = vec![[uv_size, 0.0], [0.0, 0.0], [0.0, uv_size], [uv_size; 2]];
@@ -526,7 +525,7 @@ fn draw_map(
         MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
         Transform::from_xyz(0.0, 0.0, -1.0)
             .with_rotation(Quat::from_rotation_x(PI / 2.))
-            .with_scale(Vec3::splat(100.)),
+            .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
     ));
 }
 

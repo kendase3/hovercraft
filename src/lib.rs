@@ -107,12 +107,13 @@ pub fn apply_acceleration(
     }
 }
 
+// weirdly this one also sets velocity to zero if at edge
 pub fn apply_velocity(
-    mut query: Query<(&mut Transform, &Velocity)>,
+    mut query: Query<(&mut Transform, &mut Velocity)>,
     fixed_time: Res<Time<Fixed>>,
 ) {
     let dt = fixed_time.delta_secs();
-    for (mut transform, vel) in &mut query {
+    for (mut transform, mut vel) in &mut query {
         let mut actual_vel = vel.0;
         if vel.0.length() > MAX_VELOCITY {
             actual_vel = vel.0.normalize();
@@ -121,5 +122,18 @@ pub fn apply_velocity(
         transform.translation += actual_vel * dt;
         let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
         transform.translation = transform.translation.clamp(-limit, limit);
+        if is_at_map_edge(transform.translation) {
+            vel.0 = Vec3::ZERO;
+        }
+    }
+}
+
+fn is_at_map_edge(cur_location: Vec3) -> bool {
+    let abs_location = cur_location.abs();
+    let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
+    if abs_location.x == limit.x || abs_location.y == limit.y {
+        true
+    } else {
+        false
     }
 }
