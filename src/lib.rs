@@ -122,18 +122,19 @@ pub fn apply_velocity(
         transform.translation += actual_vel * dt;
         let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
         transform.translation = transform.translation.clamp(-limit, limit);
-        if is_at_map_edge(transform.translation) {
-            vel.0 = Vec3::ZERO;
-        }
+        vel.0 = update_vel_if_edge(transform.translation, vel.0);
     }
 }
 
-fn is_at_map_edge(cur_location: Vec3) -> bool {
+fn update_vel_if_edge(cur_location: Vec3, cur_vel: Vec3) -> Vec3 {
+    let mut ret = cur_vel;
     let abs_location = cur_location.abs();
     let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
-    if abs_location.x == limit.x || abs_location.y == limit.y {
-        true
-    } else {
-        false
+    if abs_location.x == limit.x {
+        ret.x = 0.;
     }
+    if abs_location.y == limit.y {
+        ret.y = 0.;
+    }
+    ret
 }
