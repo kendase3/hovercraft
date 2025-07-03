@@ -530,8 +530,10 @@ fn draw_map(
     commands.spawn((
         Mesh3d(meshes.add(plane)),
         //MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
-        MeshMaterial3d(matl(Color::srgb(1., 1., 1.))),
+        //MeshMaterial3d(matl(Color::srgb(1., 1., 1.))),
+        MeshMaterial3d(matl(Color::WHITE)),
         Transform::from_xyz(0.0, 0.0, -1.0)
+            // FIXME(skend): what if my texture is upside down?
             .with_rotation(Quat::from_rotation_x(PI / 2.))
             .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
     ));

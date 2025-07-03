@@ -3,6 +3,8 @@ and others nearby
 
 --- plan ---
 
+in the motion blur bevy demo, the ground has a cool texture on it. do i need shadows=true?
+
 consider adding `noise = "0.9.0"` to cargo toml for terrain generation
 though i think random would be fine for now
 
