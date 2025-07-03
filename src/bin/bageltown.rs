@@ -62,6 +62,10 @@ struct TagCooldownTimer {
     timer: Timer,
 }
 
+// a planetary body like a planet, asteroid field, a location you can warp to
+#[derive(Component)]
+struct Warp;
+
 // whether or not the cooldown is ready for a tag to happen
 #[derive(Component)]
 struct TagReady {
@@ -342,6 +346,7 @@ fn setup(
         Visibility::Hidden,
     ));
     commands.spawn((
+        Warp,
         Name::new("Planet1"),
         Mesh2d(planet1),
         MeshMaterial2d(materials.add(planet_color)),
