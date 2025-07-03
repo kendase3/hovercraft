@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bevy::image::{
+    ImageAddressMode, ImageFilterMode, ImageSampler, ImageSamplerDescriptor,
+};
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
@@ -505,29 +508,73 @@ fn camera_follow(
     }
 }
 
+// TODO(skend): the map should have texture, and maybe a fun fog effect
 fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut images: ResMut<Assets<Image>>,
 ) {
     let mut matl = |color| {
         materials.add(StandardMaterial {
             base_color: color,
+            perceptual_roughness: 1.0,
+            base_color_texture: Some(images.add(uv_debug_texture())),
             ..default()
         })
     };
     let mut plane: Mesh = Plane3d::default().into();
-    //let uv_size = 4000.0;
-    //let uvs = vec![[uv_size, 0.0], [0.0, 0.0], [0.0, uv_size], [uv_size; 2]];
-    //plane.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    let uv_size = 4000.0;
+    let uvs = vec![[uv_size, 0.0], [0.0, 0.0], [0.0, uv_size], [uv_size; 2]];
+    plane.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
     commands.spawn((
         Mesh3d(meshes.add(plane)),
-        MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
+        //MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
+        MeshMaterial3d(matl(Color::srgb(1., 1., 1.))),
         Transform::from_xyz(0.0, 0.0, -1.0)
             .with_rotation(Quat::from_rotation_x(PI / 2.))
             .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
     ));
 }
+
+// from bevy examples
+fn uv_debug_texture() -> Image {
+    use bevy::render::{render_asset::RenderAssetUsages, render_resource::*};
+    const TEXTURE_SIZE: usize = 7;
+
+    let mut palette = [
+        164, 164, 164, 255, 168, 168, 168, 255, 153, 153, 153, 255, 139, 139,
+        139, 255, 153, 153, 153, 255, 177, 177, 177, 255, 159, 159, 159, 255,
+    ];
+
+    let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
+    for y in 0..TEXTURE_SIZE {
+        let offset = TEXTURE_SIZE * y * 4;
+        texture_data[offset..(offset + TEXTURE_SIZE * 4)]
+            .copy_from_slice(&palette);
+        palette.rotate_right(12);
+    }
+
+    let mut img = Image::new_fill(
+        Extent3d {
+            width: TEXTURE_SIZE as u32,
+            height: TEXTURE_SIZE as u32,
+            depth_or_array_layers: 1,
+        },
+        TextureDimension::D2,
+        &texture_data,
+        TextureFormat::Rgba8UnormSrgb,
+        RenderAssetUsages::RENDER_WORLD,
+    );
+    img.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
+        address_mode_u: ImageAddressMode::Repeat,
+        address_mode_v: ImageAddressMode::MirrorRepeat,
+        mag_filter: ImageFilterMode::Nearest,
+        ..ImageSamplerDescriptor::linear()
+    });
+    img
+}
+// end from bevy examples
 
 // FIXME(skend): use tab though
 // also need a cooldown of like .5 seconds to stop multi-press
