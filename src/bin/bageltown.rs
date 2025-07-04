@@ -132,7 +132,7 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, setup))
+        .add_systems(Startup, (draw_map, setup, init_ui))
         .add_systems(
             Update,
             (
@@ -159,6 +159,10 @@ fn main() {
         .run();
 }
 
+fn init_ui() {
+
+}
+
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -171,7 +175,6 @@ fn setup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
-    // FIXME(skend): this light only covers an extremely small area at the center of the map
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
@@ -512,10 +515,10 @@ fn camera_follow(
 }
 
 fn get_random_color() -> LinearRgba {
-    let mut rng = rand::thread_rng();
-    let rand_red = rng.gen_range(0.0..=0.5) as f32;
-    let rand_green = rng.gen_range(0.0..=0.5) as f32;
-    let rand_blue = rng.gen_range(0.0..=0.5) as f32;
+    let mut rng = rand::rng();
+    let rand_red = rng.random_range(0.0..=0.5) as f32;
+    let rand_green = rng.random_range(0.0..=0.5) as f32;
+    let rand_blue = rng.random_range(0.0..=0.5) as f32;
     LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
 }
 
