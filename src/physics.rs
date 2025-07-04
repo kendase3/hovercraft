@@ -17,7 +17,8 @@ use bevy::time::Fixed;
 use std::f32::consts::PI;
 
 pub const MAP_SIZE: u32 = 1_000;
-pub const PLAYER_ACCEL_RATE: f32 = 1000.;
+pub const PLAYER_ACCEL_RATE: f32 = 1_000.;
+pub const BOT_ACCEL_RATE: f32 = 4_000.;
 pub const PLAYER_MAX_VELOCITY: f32 = 40.;
 pub const BOT_MAX_VELOCITY: f32 = 20.;
 
@@ -93,8 +94,9 @@ pub fn orbit(
 #[derive(Component, Debug, Default)]
 pub struct Velocity(pub Vec3, pub f32);
 
+// second arg is acceleration rate
 #[derive(Component, Debug, Default)]
-pub struct Acceleration(pub Vec3);
+pub struct Acceleration(pub Vec3, pub f32);
 
 // FIXME(skend): acceleration is NaN the very first time
 // with this func commented out, everything works as expected

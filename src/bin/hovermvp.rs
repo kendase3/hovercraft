@@ -288,7 +288,10 @@ fn setup(
                 Vec3::new(0., 0., 0.),
                 physics::PLAYER_MAX_VELOCITY,
             ),
-            physics::Acceleration(Vec3::new(0., 0., 0.)),
+            physics::Acceleration(
+                Vec3::new(0., 0., 0.),
+                physics::PLAYER_ACCEL_RATE,
+            ),
             Name::new("Protagonist"),
             Mesh2d(player_circle),
             MeshMaterial2d(materials.add(player_color)),
@@ -347,7 +350,10 @@ fn setup(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_MAX_VELOCITY,
             ),
-            physics::Acceleration(Vec3::new(0., 0., 0.)),
+            physics::Acceleration(
+                Vec3::new(0., 0., 0.),
+                physics::BOT_ACCEL_RATE,
+            ),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -474,7 +480,8 @@ fn move_player(
         n_direction = Vec3::ZERO;
     }
     // the new acceleration value is based on what player is up to
-    accel.0 = n_direction * physics::PLAYER_ACCEL_RATE * time.delta_secs();
+    // accel.1 = acceleration rate
+    accel.0 = n_direction * accel.1 * time.delta_secs();
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
