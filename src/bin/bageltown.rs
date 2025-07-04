@@ -159,8 +159,28 @@ fn main() {
         .run();
 }
 
-fn init_ui() {
-
+// FIXME(skend): no output yet
+fn init_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    ) {
+    let font = asset_server.load("fonts/DejaVuSansMono.ttf");
+    let text_font = TextFont {
+        font: font.clone(),
+        font_size: 100.0,
+        ..default()
+    };
+    commands.spawn((
+        Text2d::new("warp destinations"),
+        text_font,
+        TextColor(Color::srgb(0., 1., 1.)),
+        Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(20.),
+            right: Val::Px(20.),
+            ..default()
+        }));
 }
 
 fn setup(
