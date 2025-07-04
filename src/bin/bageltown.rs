@@ -182,8 +182,8 @@ fn setup(
         Transform::from_xyz(0.0, 0.0, 20.0)
             //.with_rotation(Quat::from_rotation_x(0.25 * -PI / 2.)),
             .with_rotation(Quat::from_rotation_x(0.3 * -PI / 2.)),
-            // first arg: target, second arg: up
-            //.looking_at(Vec3::ZERO, Vec3::Z),
+        // first arg: target, second arg: up
+        //.looking_at(Vec3::ZERO, Vec3::Z),
     ));
     /*
     commands.spawn((
@@ -518,37 +518,44 @@ fn draw_map(
     mut materials: ResMut<Assets<StandardMaterial>>,
     //mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let mut matl = |color| {
-        materials.add(StandardMaterial {
-            base_color: color,
-            //perceptual_roughness: 1.0,
-            //metallic: 1.0,
-            //emissive: PURPLE.into(),
-            ..default()
-        })
-    };
-    let mut plane = Mesh::from(
-        Plane3d {
-            normal: Dir3::Z,
-            half_size: Vec2::new(0.5, 0.5),
-            ..default()
-        }
-        .mesh(),
-    );
-    let vertex_colors: Vec<[f32; 4]> = vec![
-        LinearRgba::RED.to_f32_array(),
-        LinearRgba::GREEN.to_f32_array(),
-        LinearRgba::BLUE.to_f32_array(),
-        LinearRgba::WHITE.to_f32_array(),
+    let centers = vec![
+        Vec3::new(10.0, 10.0, 0.0),
+        Vec3::new(-10.0, 10.0, 0.0),
+        Vec3::new(-10.0, -10.0, 0.0),
+        Vec3::new(10.0, -10.0, 0.0),
     ];
-    plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
-    commands.spawn((
-        Mesh3d(meshes.add(plane)),
-        //MeshMaterial3d(matl(Color::from(PURPLE))),
-        MeshMaterial3d(matl(Color::WHITE)),
-        Transform::from_xyz(0.0, 0.0, -1.0)
-            .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
-    ));
+    for center in centers {
+        let mut matl = |color| {
+            materials.add(StandardMaterial {
+                base_color: color,
+                //perceptual_roughness: 1.0,
+                //metallic: 1.0,
+                //emissive: PURPLE.into(),
+                ..default()
+            })
+        };
+        let mut plane = Mesh::from(
+            Plane3d {
+                normal: Dir3::Z,
+                half_size: Vec2::new(10., 10.),
+                ..default()
+            }
+            .mesh(),
+        );
+        let vertex_colors: Vec<[f32; 4]> = vec![
+            LinearRgba::RED.to_f32_array(),
+            LinearRgba::GREEN.to_f32_array(),
+            LinearRgba::BLUE.to_f32_array(),
+            PURPLE.to_f32_array(),
+        ];
+        plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+        commands.spawn((
+            Mesh3d(meshes.add(plane)),
+            //MeshMaterial3d(matl(Color::from(PURPLE))),
+            MeshMaterial3d(matl(Color::WHITE)),
+            Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
+        ));
+    }
 }
 
 // FIXME(skend): use tab though
