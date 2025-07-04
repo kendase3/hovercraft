@@ -28,7 +28,7 @@ use std::f32::consts::PI;
 
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
-const GRID_SIZE: f32 = 1.;
+const GRID_SIZE: f32 = 10.;
 const SPACE_BETWEEN_LINES: u32 = 20;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
@@ -516,45 +516,48 @@ fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    //mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let centers = vec![
-        Vec3::new(10.0, 10.0, 0.0),
-        Vec3::new(-10.0, 10.0, 0.0),
-        Vec3::new(-10.0, -10.0, 0.0),
-        Vec3::new(10.0, -10.0, 0.0),
-    ];
-    for center in centers {
-        let mut matl = |color| {
-            materials.add(StandardMaterial {
-                base_color: color,
-                //perceptual_roughness: 1.0,
-                //metallic: 1.0,
-                //emissive: PURPLE.into(),
-                ..default()
-            })
-        };
-        let mut plane = Mesh::from(
-            Plane3d {
-                normal: Dir3::Z,
-                half_size: Vec2::new(10., 10.),
-                ..default()
-            }
-            .mesh(),
-        );
-        let vertex_colors: Vec<[f32; 4]> = vec![
-            LinearRgba::RED.to_f32_array(),
-            LinearRgba::GREEN.to_f32_array(),
-            LinearRgba::BLUE.to_f32_array(),
-            PURPLE.to_f32_array(),
-        ];
-        plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
-        commands.spawn((
-            Mesh3d(meshes.add(plane)),
-            //MeshMaterial3d(matl(Color::from(PURPLE))),
-            MeshMaterial3d(matl(Color::WHITE)),
-            Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
-        ));
+    // we have MAP_SIZE for both width and depth
+    for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2)
+        ..(hovercraft::MAP_SIZE as i32 / 2))
+        .step_by(10)
+    {
+        for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2)
+            ..(hovercraft::MAP_SIZE as i32 / 2))
+            .step_by(10)
+        {
+            let center = Vec3::new(x as f32, y as f32, 0.0);
+            let mut matl = |color| {
+                materials.add(StandardMaterial {
+                    base_color: color,
+                    //perceptual_roughness: 1.0,
+                    //metallic: 1.0,
+                    //emissive: PURPLE.into(),
+                    ..default()
+                })
+            };
+            let mut plane = Mesh::from(
+                Plane3d {
+                    normal: Dir3::Z,
+                    half_size: Vec2::new(10., 10.),
+                    ..default()
+                }
+                .mesh(),
+            );
+            let vertex_colors: Vec<[f32; 4]> = vec![
+                LinearRgba::RED.to_f32_array(),
+                LinearRgba::GREEN.to_f32_array(),
+                LinearRgba::BLUE.to_f32_array(),
+                PURPLE.to_f32_array(),
+            ];
+            plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+            commands.spawn((
+                Mesh3d(meshes.add(plane)),
+                //MeshMaterial3d(matl(Color::from(PURPLE))),
+                MeshMaterial3d(matl(Color::WHITE)),
+                Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
+            ));
+        }
     }
 }
 
