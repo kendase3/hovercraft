@@ -32,7 +32,8 @@ use std::f32::consts::PI;
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
 const GRID_SIZE: f32 = 10.;
-const CHUNK_SIZE: f32 = GRID_SIZE * 2.;
+// TODO(skend): chunks
+//const CHUNK_SIZE: f32 = GRID_SIZE * 2.;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
