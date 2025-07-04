@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use bevy::color::palettes::basic::GREEN;
+use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
@@ -172,12 +172,6 @@ fn setup(
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
     // FIXME(skend): this light only covers an extremely small area at the center of the map
-    //commands.spawn(PointLight {
-    //    shadows_enabled: true,
-    //    intensity: 2000000.0, // this is dramatic but not crazy
-    //    range: MAP_SIZE as f32, // should basically be as big as the map
-    //    ..default()
-    //});
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
@@ -186,8 +180,20 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 20.0)
-            .with_rotation(Quat::from_rotation_x(-PI / 2.)),
+            //.with_rotation(Quat::from_rotation_x(0.25 * -PI / 2.)),
+            .with_rotation(Quat::from_rotation_x(0.3 * -PI / 2.)),
+            // first arg: target, second arg: up
+            //.looking_at(Vec3::ZERO, Vec3::Z),
     ));
+    /*
+    commands.spawn((
+        PointLight {
+            shadows_enabled: true,
+            ..default()
+        },
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ));
+    */
     commands.spawn((
         Camera3d::default(),
         Camera {
@@ -210,7 +216,7 @@ fn setup(
             scale: 1.,
             near: -1000.0,
             far: 1000.0,
-            ..OrthographicProjection::default_2d()
+            ..OrthographicProjection::default_3d()
         }),
     ));
     commands.spawn((
@@ -511,14 +517,13 @@ fn draw_map(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     //mut materials: ResMut<Assets<ColorMaterial>>,
-    mut images: ResMut<Assets<Image>>,
 ) {
     let mut matl = |color| {
         materials.add(StandardMaterial {
             base_color: color,
             //perceptual_roughness: 1.0,
             //metallic: 1.0,
-            //emissive: GREEN .into(),
+            //emissive: PURPLE.into(),
             ..default()
         })
     };
@@ -539,8 +544,7 @@ fn draw_map(
     plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
     commands.spawn((
         Mesh3d(meshes.add(plane)),
-        //MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
-        //MeshMaterial3d(matl(Color::srgb(1., 1., 1.))),
+        //MeshMaterial3d(matl(Color::from(PURPLE))),
         MeshMaterial3d(matl(Color::WHITE)),
         Transform::from_xyz(0.0, 0.0, -1.0)
             .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
