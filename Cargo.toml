@@ -2,7 +2,7 @@
 name = "hovercraft"
 version = "0.1.0"
 edition = "2024"
-default-run = "bageltown"
+default-run = "hovermvp"
 
 [profile.dev.package."*"]
 opt-level = 2

@@ -3,6 +3,8 @@ and others nearby
 
 --- plan ---
 
+how about a chunk is a 2x2 set of tiles so we have a many:1 situation to test initially
+
 i need to decide whether this is something i can make a decent improvement of my boring background by doing, or if i should just leave it some matte color and move on
 
 in the motion blur bevy demo, the ground has a cool texture on it. do i need shadows=true?

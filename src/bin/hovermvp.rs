@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use hovercraft::physics;
+
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
@@ -23,13 +25,14 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use hovercraft::Acceleration;
+use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
 
-const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
-const GRID_SIZE: f32 = 20.;
+const GRID_SIZE: f32 = 10.;
+// TODO(skend): chunks
+//const CHUNK_SIZE: f32 = GRID_SIZE * 2.;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
@@ -132,7 +135,7 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, setup))
+        .add_systems(Startup, (draw_map, setup, init_ui))
         .add_systems(
             Update,
             (
@@ -148,8 +151,7 @@ fn main() {
         .init_resource::<OrbitCache>()
         .add_systems(
             FixedUpdate,
-            (hovercraft::apply_acceleration, hovercraft::apply_velocity)
-                .chain(),
+            (physics::apply_acceleration, physics::apply_velocity).chain(),
         )
         // FIXME(skend): surely i should name these
         // won't i have dozens of fixed time events eventually?
@@ -157,6 +159,28 @@ fn main() {
             (1.0 / MAX_FRAMERATE).into(),
         ))
         .run();
+}
+
+// FIXME(skend): no output yet
+fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/DejaVuSansMono.ttf");
+    let text_font = TextFont {
+        font: font.clone(),
+        font_size: 100.0,
+        ..default()
+    };
+    commands.spawn((
+        Text2d::new("warp destinations"),
+        text_font,
+        TextColor(Color::srgb(0., 1., 1.)),
+        Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
+        Node {
+            position_type: PositionType::Absolute,
+            top: Val::Px(20.),
+            right: Val::Px(20.),
+            ..default()
+        },
+    ));
 }
 
 fn setup(
@@ -171,7 +195,6 @@ fn setup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
-    // FIXME(skend): this light only covers an extremely small area at the center of the map
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
@@ -261,8 +284,11 @@ fn setup(
                 it: false,
                 facing: 0.0,
             },
-            hovercraft::Velocity(Vec3::new(0., 0., 0.)),
-            hovercraft::Acceleration(Vec3::new(0., 0., 0.)),
+            physics::Velocity(
+                Vec3::new(0., 0., 0.),
+                physics::PLAYER_MAX_VELOCITY,
+            ),
+            physics::Acceleration(Vec3::new(0., 0., 0.)),
             Name::new("Protagonist"),
             Mesh2d(player_circle),
             MeshMaterial2d(materials.add(player_color)),
@@ -317,6 +343,11 @@ fn setup(
             Mesh2d(bot),
             MeshMaterial2d(materials.add(bot_color)),
             Transform::from_xyz(50.0, 0.0, 0.0),
+            physics::Velocity(
+                Vec3::new(0., 0., 0.),
+                physics::BOT_MAX_VELOCITY,
+            ),
+            physics::Acceleration(Vec3::new(0., 0., 0.)),
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -443,7 +474,7 @@ fn move_player(
         n_direction = Vec3::ZERO;
     }
     // the new acceleration value is based on what player is up to
-    accel.0 = n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
+    accel.0 = n_direction * physics::PLAYER_ACCEL_RATE * time.delta_secs();
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
@@ -452,38 +483,44 @@ fn move_player(
 }
 
 fn move_bot(
-    mut bot: Query<&mut Transform, With<Bot>>,
+    mut bot: Query<
+        (
+            &mut Transform,
+            &mut physics::Velocity,
+            &mut physics::Acceleration,
+        ),
+        With<Bot>,
+    >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
 ) {
     // receive an x/y coordinate we're currently flying to
-    let mut b_t = bot.single_mut();
+    let (b_t, b_v, mut b_a) = bot.single_mut();
     let p_t = player.single_mut();
 
     orbit_timer.0.tick(time.delta());
     // only update destination if it's time
     if orbit_timer.0.finished() {
-        orbit_cache.destination = hovercraft::orbit(
+        orbit_cache.destination = physics::orbit(
             b_t.translation.xy(),
             p_t.translation.xy(),
             ORBIT_DISTANCE,
         );
     }
     let dest = orbit_cache.destination;
+    // TODO(skend): now it is time to break everything and use proper acceleration
+    // to get to our destination.
+    // The new player abstraction also uses this dest input, accel output idea so it's BOGO
 
     // delta is now between us and our orbit destination
-    let move_vector = dest - b_t.translation.xy();
-
-    let move_speed = BOT_MOVE_PER_TICK;
-    // make sure to normalize the vector so the speed is correct
-    let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
-    let old_pos = b_t.translation.xy();
-    let limit = Vec2::splat(hovercraft::MAP_SIZE as f32 / 2.);
-    let new_pos = (old_pos + move_delta).clamp(-limit, limit);
-    b_t.translation.x = new_pos.x;
-    b_t.translation.y = new_pos.y;
+    // NB(skend): this is more like our desired move vector
+    let desired_move_vector = dest - b_t.translation.xy();
+    // NB(skend): we actually need our velocity too, since how much we gas up depends
+    // on our current velocity
+    let accel_direction = (desired_move_vector - b_v.0.xy()).normalize();
+    b_a.0 = accel_direction.extend(0.);
 }
 
 fn camera_follow(
@@ -512,10 +549,10 @@ fn camera_follow(
 }
 
 fn get_random_color() -> LinearRgba {
-    let mut rng = rand::thread_rng();
-    let rand_red = rng.gen_range(0.0..=0.5) as f32;
-    let rand_green = rng.gen_range(0.0..=0.5) as f32;
-    let rand_blue = rng.gen_range(0.0..=0.5) as f32;
+    let mut rng = rand::rng();
+    let rand_red = rng.random_range(0.0..=0.5) as f32;
+    let rand_green = rng.random_range(0.0..=0.5) as f32;
+    let rand_blue = rng.random_range(0.0..=0.5) as f32;
     LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
 }
 
@@ -526,14 +563,14 @@ fn draw_map(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // we have MAP_SIZE for both width and depth
-    for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+    for y in ((-1 * physics::MAP_SIZE as i32 / 2
         + ((0.5 * GRID_SIZE as f32) as i32))
-        ..=(hovercraft::MAP_SIZE as i32 / 2))
+        ..=(physics::MAP_SIZE as i32 / 2))
         .step_by(GRID_SIZE as usize)
     {
-        for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+        for x in ((-1 * physics::MAP_SIZE as i32 / 2
             + ((0.5 * GRID_SIZE as f32) as i32))
-            ..=(hovercraft::MAP_SIZE as i32 / 2))
+            ..=(physics::MAP_SIZE as i32 / 2))
             .step_by(GRID_SIZE as usize)
         {
             let center = Vec3::new(x as f32, y as f32, 0.0);
