@@ -479,7 +479,7 @@ fn move_player(
 }
 
 fn move_bot(
-    mut bot: Query<&mut Transform, With<Bot>>,
+    mut bot: Query<(&mut Transform, &mut Acceleration), With<Bot>>,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
@@ -493,24 +493,29 @@ fn move_bot(
     // only update destination if it's time
     if orbit_timer.0.finished() {
         orbit_cache.destination = physics::orbit(
-            b_t.translation.xy(),
+            b_t.0.translation.xy(),
             p_t.translation.xy(),
             ORBIT_DISTANCE,
         );
     }
     let dest = orbit_cache.destination;
+    // TODO(skend): now it is time to break everything and use proper acceleration
+    // to get to our destination.
+    // The new player abstraction also uses this dest input, accel output idea so it's BOGO
 
     // delta is now between us and our orbit destination
-    let move_vector = dest - b_t.translation.xy();
+    // NB(skend): this is more like our desired move vector
+    let move_vector = dest - b_t.0.translation.xy();
+    //let desired_move_vector = dest - b_t.translation.xy();
 
     let move_speed = BOT_MOVE_PER_TICK;
     // make sure to normalize the vector so the speed is correct
     let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
-    let old_pos = b_t.translation.xy();
+    let old_pos = b_t.0.translation.xy();
     let limit = Vec2::splat(physics::MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
-    b_t.translation.x = new_pos.x;
-    b_t.translation.y = new_pos.y;
+    b_t.0.translation.x = new_pos.x;
+    b_t.0.translation.y = new_pos.y;
 }
 
 fn camera_follow(
