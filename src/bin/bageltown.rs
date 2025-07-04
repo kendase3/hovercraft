@@ -28,8 +28,7 @@ use std::f32::consts::PI;
 
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
-const GRID_SIZE: f32 = 10.;
-const SPACE_BETWEEN_LINES: u32 = 20;
+const GRID_SIZE: f32 = 20.;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
@@ -518,13 +517,15 @@ fn draw_map(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // we have MAP_SIZE for both width and depth
-    for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2)
+    for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+        + ((0.5 * GRID_SIZE as f32) as i32))
         ..=(hovercraft::MAP_SIZE as i32 / 2))
-        .step_by(20)
+        .step_by(GRID_SIZE as usize)
     {
-        for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2)
+        for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+            + ((0.5 * GRID_SIZE as f32) as i32))
             ..=(hovercraft::MAP_SIZE as i32 / 2))
-            .step_by(20)
+            .step_by(GRID_SIZE as usize)
         {
             let center = Vec3::new(x as f32, y as f32, 0.0);
             let mut matl = |color| {
@@ -539,7 +540,10 @@ fn draw_map(
             let mut plane = Mesh::from(
                 Plane3d {
                     normal: Dir3::Z,
-                    half_size: Vec2::new(10., 10.),
+                    half_size: Vec2::new(
+                        GRID_SIZE as f32 / 2.,
+                        GRID_SIZE as f32 / 2.,
+                    ),
                     ..default()
                 }
                 .mesh(),
