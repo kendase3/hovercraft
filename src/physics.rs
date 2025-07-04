@@ -16,7 +16,7 @@ use bevy::prelude::*;
 use bevy::time::Fixed;
 use std::f32::consts::PI;
 
-pub const MAP_SIZE: u32 = 400;
+pub const MAP_SIZE: u32 = 1_000;
 pub const PLAYER_ACCEL_RATE: f32 = 1000.;
 pub const MAX_VELOCITY: f32 = 40.;
 
