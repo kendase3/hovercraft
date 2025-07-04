@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use hovercraft::physics;
+
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
@@ -23,13 +25,14 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-use hovercraft::Acceleration;
+use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
 
 const BOT_MOVE_PER_TICK: f32 = 20.;
 const PLAYER_RADIUS: f32 = 10.;
 const GRID_SIZE: f32 = 20.;
+const CHUNK_SIZE: f32 = GRID_SIZE * 2.;
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // no idea what units this is using, apparently in-game ones, not 0-1
 const TARGET_WIDTH: f32 = 2.;
@@ -148,7 +151,7 @@ fn main() {
         .init_resource::<OrbitCache>()
         .add_systems(
             FixedUpdate,
-            (hovercraft::apply_acceleration, hovercraft::apply_velocity)
+            (physics::apply_acceleration, physics::apply_velocity)
                 .chain(),
         )
         // FIXME(skend): surely i should name these
@@ -284,8 +287,8 @@ fn setup(
                 it: false,
                 facing: 0.0,
             },
-            hovercraft::Velocity(Vec3::new(0., 0., 0.)),
-            hovercraft::Acceleration(Vec3::new(0., 0., 0.)),
+            physics::Velocity(Vec3::new(0., 0., 0.)),
+            physics::Acceleration(Vec3::new(0., 0., 0.)),
             Name::new("Protagonist"),
             Mesh2d(player_circle),
             MeshMaterial2d(materials.add(player_color)),
@@ -466,7 +469,7 @@ fn move_player(
         n_direction = Vec3::ZERO;
     }
     // the new acceleration value is based on what player is up to
-    accel.0 = n_direction * hovercraft::PLAYER_ACCEL_RATE * time.delta_secs();
+    accel.0 = n_direction * physics::PLAYER_ACCEL_RATE * time.delta_secs();
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
@@ -488,7 +491,7 @@ fn move_bot(
     orbit_timer.0.tick(time.delta());
     // only update destination if it's time
     if orbit_timer.0.finished() {
-        orbit_cache.destination = hovercraft::orbit(
+        orbit_cache.destination = physics::orbit(
             b_t.translation.xy(),
             p_t.translation.xy(),
             ORBIT_DISTANCE,
@@ -503,7 +506,7 @@ fn move_bot(
     // make sure to normalize the vector so the speed is correct
     let move_delta = move_vector.normalize() * move_speed * time.delta_secs();
     let old_pos = b_t.translation.xy();
-    let limit = Vec2::splat(hovercraft::MAP_SIZE as f32 / 2.);
+    let limit = Vec2::splat(physics::MAP_SIZE as f32 / 2.);
     let new_pos = (old_pos + move_delta).clamp(-limit, limit);
     b_t.translation.x = new_pos.x;
     b_t.translation.y = new_pos.y;
@@ -549,14 +552,14 @@ fn draw_map(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // we have MAP_SIZE for both width and depth
-    for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+    for y in ((-1 * physics::MAP_SIZE as i32 / 2
         + ((0.5 * GRID_SIZE as f32) as i32))
-        ..=(hovercraft::MAP_SIZE as i32 / 2))
+        ..=(physics::MAP_SIZE as i32 / 2))
         .step_by(GRID_SIZE as usize)
     {
-        for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2
+        for x in ((-1 * physics::MAP_SIZE as i32 / 2
             + ((0.5 * GRID_SIZE as f32) as i32))
-            ..=(hovercraft::MAP_SIZE as i32 / 2))
+            ..=(physics::MAP_SIZE as i32 / 2))
             .step_by(GRID_SIZE as usize)
         {
             let center = Vec3::new(x as f32, y as f32, 0.0);
