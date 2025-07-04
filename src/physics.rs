@@ -18,7 +18,8 @@ use std::f32::consts::PI;
 
 pub const MAP_SIZE: u32 = 1_000;
 pub const PLAYER_ACCEL_RATE: f32 = 1000.;
-pub const MAX_VELOCITY: f32 = 40.;
+pub const PLAYER_MAX_VELOCITY: f32 = 40.;
+pub const BOT_MAX_VELOCITY: f32 = 20.;
 
 // the fewer of these, the farther away along the perimeter we aim
 // the less perfect circle it will be but the less often we have
@@ -88,8 +89,9 @@ pub fn orbit(
 }
 
 // notably for now we're only using X and Y
+// second arg is max velocity
 #[derive(Component, Debug, Default)]
-pub struct Velocity(pub Vec3);
+pub struct Velocity(pub Vec3, pub f32);
 
 #[derive(Component, Debug, Default)]
 pub struct Acceleration(pub Vec3);
@@ -115,9 +117,10 @@ pub fn apply_velocity(
     let dt = fixed_time.delta_secs();
     for (mut transform, mut vel) in &mut query {
         let mut actual_vel = vel.0;
-        if vel.0.length() > MAX_VELOCITY {
+        // vel.1 = max vel
+        if vel.0.length() > vel.1 {
             actual_vel = vel.0.normalize();
-            actual_vel = actual_vel * MAX_VELOCITY;
+            actual_vel = actual_vel * vel.1;
         }
         transform.translation += actual_vel * dt;
         let limit = Vec3::splat(MAP_SIZE as f32 / 2.);
