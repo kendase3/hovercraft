@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use bevy::image::{
-    ImageAddressMode, ImageFilterMode, ImageSampler, ImageSamplerDescriptor,
-};
+use bevy::color::palettes::basic::GREEN;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
@@ -269,6 +267,7 @@ fn setup(
                 SceneRoot(asset_server.load(
                     GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
                 )),
+                // NB(skend): notably does nothing
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
                     rotation: Quat::default(),
@@ -338,7 +337,7 @@ fn setup(
         });
     // kind of like a notification at the top of the screen
     commands.spawn((
-        Text::new("You're it!"),
+        Text::new("You're gaming!"),
         Proclamation,
         Node {
             position_type: PositionType::Absolute,
@@ -411,8 +410,6 @@ fn face_all(
     }
 }
 
-// FIXME(skend): this now needs to know what entity the player has targeted
-// in the case that nothing is targeted, we just float the way we were going
 fn move_player(
     mut players: Query<(&mut Acceleration, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -513,22 +510,33 @@ fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    //mut materials: ResMut<Assets<ColorMaterial>>,
     mut images: ResMut<Assets<Image>>,
 ) {
     let mut matl = |color| {
         materials.add(StandardMaterial {
             base_color: color,
-            perceptual_roughness: 1.0,
-            base_color_texture: Some(images.add(uv_debug_texture())),
+            //perceptual_roughness: 1.0,
+            //metallic: 1.0,
+            //emissive: GREEN .into(),
             ..default()
         })
     };
-    let mut preplane = Plane3d::default();
-    preplane.normal = Dir3::Z;
-    let mut plane: Mesh = preplane.into();
-    let uv_size = 4000.0;
-    let uvs = vec![[uv_size, 0.0], [0.0, 0.0], [0.0, uv_size], [uv_size; 2]];
-    plane.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
+    let mut plane = Mesh::from(
+        Plane3d {
+            normal: Dir3::Z,
+            half_size: Vec2::new(0.5, 0.5),
+            ..default()
+        }
+        .mesh(),
+    );
+    let vertex_colors: Vec<[f32; 4]> = vec![
+        LinearRgba::RED.to_f32_array(),
+        LinearRgba::GREEN.to_f32_array(),
+        LinearRgba::BLUE.to_f32_array(),
+        LinearRgba::WHITE.to_f32_array(),
+    ];
+    plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
     commands.spawn((
         Mesh3d(meshes.add(plane)),
         //MeshMaterial3d(matl(Color::srgb(0.0, 0.0, 1.))),
@@ -538,45 +546,6 @@ fn draw_map(
             .with_scale(Vec3::splat(hovercraft::MAP_SIZE as f32)),
     ));
 }
-
-// from bevy examples
-fn uv_debug_texture() -> Image {
-    use bevy::render::{render_asset::RenderAssetUsages, render_resource::*};
-    const TEXTURE_SIZE: usize = 7;
-
-    let mut palette = [
-        164, 164, 164, 255, 168, 168, 168, 255, 153, 153, 153, 255, 139, 139,
-        139, 255, 153, 153, 153, 255, 177, 177, 177, 255, 159, 159, 159, 255,
-    ];
-
-    let mut texture_data = [0; TEXTURE_SIZE * TEXTURE_SIZE * 4];
-    for y in 0..TEXTURE_SIZE {
-        let offset = TEXTURE_SIZE * y * 4;
-        texture_data[offset..(offset + TEXTURE_SIZE * 4)]
-            .copy_from_slice(&palette);
-        palette.rotate_right(12);
-    }
-
-    let mut img = Image::new_fill(
-        Extent3d {
-            width: TEXTURE_SIZE as u32,
-            height: TEXTURE_SIZE as u32,
-            depth_or_array_layers: 1,
-        },
-        TextureDimension::D2,
-        &texture_data,
-        TextureFormat::Rgba8UnormSrgb,
-        RenderAssetUsages::RENDER_WORLD,
-    );
-    img.sampler = ImageSampler::Descriptor(ImageSamplerDescriptor {
-        address_mode_u: ImageAddressMode::Repeat,
-        address_mode_v: ImageAddressMode::MirrorRepeat,
-        mag_filter: ImageFilterMode::Nearest,
-        ..ImageSamplerDescriptor::linear()
-    });
-    img
-}
-// end from bevy examples
 
 // FIXME(skend): use tab though
 // also need a cooldown of like .5 seconds to stop multi-press
