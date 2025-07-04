@@ -519,12 +519,12 @@ fn draw_map(
 ) {
     // we have MAP_SIZE for both width and depth
     for y in ((-1 * hovercraft::MAP_SIZE as i32 / 2)
-        ..(hovercraft::MAP_SIZE as i32 / 2))
-        .step_by(10)
+        ..=(hovercraft::MAP_SIZE as i32 / 2))
+        .step_by(20)
     {
         for x in ((-1 * hovercraft::MAP_SIZE as i32 / 2)
-            ..(hovercraft::MAP_SIZE as i32 / 2))
-            .step_by(10)
+            ..=(hovercraft::MAP_SIZE as i32 / 2))
+            .step_by(20)
         {
             let center = Vec3::new(x as f32, y as f32, 0.0);
             let mut matl = |color| {
