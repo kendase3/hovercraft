@@ -479,7 +479,7 @@ fn move_player(
 }
 
 fn move_bot(
-    //mut bot: Query<(&mut Transform, &mut Acceleration), With<Bot>>,
+    //mut bot: Query<(&mut Transform, &mut Velocity, &mut Acceleration), With<Bot>>,
     mut bot: Query<&mut Transform, With<Bot>>,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
