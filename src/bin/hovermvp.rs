@@ -76,6 +76,20 @@ struct TagReady {
     ready: bool,
 }
 
+// the glb asset itself
+#[derive(Component)]
+struct ShipModel;
+
+// we have to add this component after initial load
+// because it's a child in the glb
+// FIXME(skend): should just call cannon and ship? it's not like there's a non-model version of
+// these
+#[derive(Component)]
+struct CannonModel;
+
+#[derive(Resource, Default)]
+struct CannonInitialized(bool);
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
     #[uniform(0)] // same
@@ -111,6 +125,15 @@ impl FromWorld for OrbitTimer {
     }
 }
 
+// FIXME(skend): surely there's a way to just have one of these
+fn dont_need_cannon_init(ci: Res<CannonInitialized>) -> bool {
+    ci.0
+}
+
+fn need_cannon_init(ci: Res<CannonInitialized>) -> bool {
+    !ci.0
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -135,7 +158,9 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, setup, init_ui))
+        .insert_resource(CannonInitialized(false))
+        .add_systems(Startup, (draw_map, setup))
+        .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
         .add_systems(
             Update,
             (
@@ -147,6 +172,7 @@ fn main() {
                 handle_target,
             ),
         )
+        .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
@@ -161,7 +187,8 @@ fn main() {
         .run();
 }
 
-// FIXME(skend): no output yet
+// FIXME(skend): doesn't do anything yet
+// run at startup when it's ready
 fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -181,6 +208,36 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
     ));
+}
+
+fn touch_ship(
+    time: Res<Time>,
+    ship_stuff: Query<Entity, With<ShipModel>>,
+    children: Query<&Children>,
+    q_name: Query<&Name>,
+    mut commands: Commands,
+    mut cannon_initialized: ResMut<CannonInitialized>,
+) {
+    for ship_gubbins in &ship_stuff {
+        for entity in children.iter_descendants(ship_gubbins) {
+            let name = q_name.get(entity);
+            if let Ok(name_success) = name {
+                if name_success.as_str() == "cannon" {
+                    info!("found our cannon");
+                    if let Some(mut entity_commands) =
+                        commands.get_entity(entity)
+                    {
+                        entity_commands.insert(CannonModel {});
+                        // FIXME(skend): not sure whether this should use facing
+                        //entity_commands.insert(Facing {});
+                        //entity_commands.insert(Transform::default());
+                        entity_commands.insert(Visibility::Visible);
+                        cannon_initialized.0 = true;
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn setup(
@@ -295,7 +352,7 @@ fn setup(
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_1.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_6.glb"),
                 )),
                 // NB(skend): notably does nothing
                 Transform {
@@ -305,6 +362,7 @@ fn setup(
                 },
                 Visibility::Visible,
                 Facing,
+                ShipModel,
             ));
             parent.spawn((
                 Text2d::new("@"),
@@ -314,7 +372,7 @@ fn setup(
                 TextLayout::new_with_justify(JustifyText::Center),
                 TextColor(Color::srgb(1., 0., 1.)),
                 Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
-                Visibility::Visible,
+                Visibility::Hidden,
             ));
             parent.spawn((
                 Facing,
@@ -448,6 +506,42 @@ fn face_all(
     }
 }
 
+// FIXME(skend): can only one update func have mut access to CannonModel transform?
+// seems unlikely i would have gotten this far if that were true
+fn aim_cannon(
+    //mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
+    mut cannon: Query<&mut Transform, With<CannonModel>>,
+    player_transform: Query<
+        &Transform,
+        (With<Player>, Without<CannonModel>),
+    >,
+    ship_transform: Query<&Transform, (With<ShipModel>, (Without<Player>, Without<CannonModel>))>,
+    bot_location: Query<&Transform, (With<Bot>, (Without<Player>, Without<CannonModel>, Without<ShipModel>))>,
+) {
+    // find the location of the bot
+    // FIXME(skend): just in general, i have a lot of single() and single_mut()s
+    // these will have to become loops to handle multiplayer or multiple bots
+    // and i want both.
+    let bot_loc = bot_location.single().translation.xy();
+    // find our location
+    let mut c = cannon.single_mut();
+    let p = player_transform.single();
+    let s = ship_transform.single();
+    // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
+    // is roughly true
+    //let delta_loc = (bot_loc - p.translation.xy()).normalize();
+    let delta_loc = (bot_loc - p.translation.xy());
+    // find the angle toward the bot
+    let radians = delta_loc.y.atan2(delta_loc.x);
+    // rotate the cannon that way
+    // just checked and the cannon does in fact rotate
+    //c.rotate_z(0.1);
+    //info!("the angle in degrees is {}", radians * (180. / PI));
+    c.rotation = Quat::from_rotation_z(radians) * s.rotation.inverse();
+    // TODO(skend): just point forward if no target
+    // TODO(skend): the cannon should angular-accelerate
+}
+
 fn move_player(
     mut players: Query<(&mut Acceleration, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -491,7 +585,7 @@ fn move_bot(
             &mut physics::Velocity,
             &mut physics::Acceleration,
         ),
-        With<Bot>,
+        (With<Bot>, Without<CannonModel>),
     >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
@@ -554,7 +648,6 @@ fn get_random_color() -> LinearRgba {
     LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
 }
 
-// TODO(skend): the map should have texture, and maybe a fun fog effect
 fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
