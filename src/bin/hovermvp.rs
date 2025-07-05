@@ -80,6 +80,14 @@ struct TagReady {
 #[derive(Component)]
 struct ShipModel;
 
+// we have to add this component after initial load
+// because it's a child in the glb
+#[derive(Component)]
+struct CannonModel;
+
+#[derive(Resource, Default)]
+struct CannonInitialized(bool);
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
     #[uniform(0)] // same
@@ -115,6 +123,10 @@ impl FromWorld for OrbitTimer {
     }
 }
 
+fn need_cannon_init(ci: Res<CannonInitialized>) -> bool {
+    !ci.0
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -139,8 +151,9 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
+        .insert_resource(CannonInitialized(false))
         .add_systems(Startup, (draw_map, setup, init_ui))
-        .add_systems(Update, (touch_ship))
+        .add_systems(Update, (touch_ship).run_if(need_cannon_init))
         .add_systems(
             Update,
             (
@@ -194,18 +207,26 @@ fn touch_ship(
     children: Query<&Children>,
     mut transforms: Query<&mut Transform>,
     q_name: Query<&Name>,
-    ) {
-        for ship_gubbins in &ship_stuff {
-            for entity in children.iter_descendants(ship_gubbins) {
-                let name = q_name.get(entity);
-                if let Ok(name_success) = name {
+    mut commands: Commands,
+    mut cannon_initialized: ResMut<CannonInitialized>,
+) {
+    for ship_gubbins in &ship_stuff {
+        for entity in children.iter_descendants(ship_gubbins) {
+            let name = q_name.get(entity);
+            if let Ok(name_success) = name {
                 info!("touched {:?} with name {}", entity, name_success);
-                    if name_success.as_str() == "cannon" {
-                        info!("found our cannon");
+                if name_success.as_str() == "cannon" {
+                    info!("found our cannon");
+                    if let Some(mut entity_commands) =
+                        commands.get_entity(entity)
+                    {
+                        entity_commands.insert(CannonModel {});
+                        cannon_initialized.0 = true;
                     }
                 }
             }
         }
+    }
 }
 
 fn setup(
