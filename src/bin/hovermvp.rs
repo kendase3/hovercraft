@@ -234,6 +234,7 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
     asset_server: Res<AssetServer>,
+    mut scene_spawner: ResMut<SceneSpawner>,
 ) {
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
@@ -351,6 +352,8 @@ fn setup(
         .with_children(|parent| {
             // TODO(skend): need to discover how to access the child node
             // of gnat2 (the teal cannon)
+            // FIXME(skend): supposedly i need to not use sceneroot as
+            // it does not fire the events. i need a scenebundle?
             parent.spawn((
                 SceneRoot(
                     asset_server.load(
