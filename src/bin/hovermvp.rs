@@ -66,6 +66,14 @@ struct TagCooldownTimer {
     timer: Timer,
 }
 
+#[derive(Component)]
+struct ShipModel;
+
+// weirdly the plan is to apply this component
+// after load
+#[derive(Component)]
+struct Cannon;
+
 // a planetary body like a planet, asteroid field, a location you can warp to
 #[derive(Component)]
 struct Warp;
@@ -135,7 +143,7 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, setup, init_ui))
+        .add_systems(Startup, (draw_map, setup, init_ui, init_cannon))
         .add_systems(
             Update,
             (
@@ -181,6 +189,24 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
     ));
+}
+
+fn init_cannon(
+    mut commands: Commands,
+    query: Query<Entity, With<ShipModel>>,
+    child_query: Query<(Entity, &Name), Without<ShipModel>>,
+    other_child_query: Query<&Children>,
+) {
+    for ship_model in query.iter() {
+        for entry in other_child_query.iter_descendants(ship_model) {
+            if let Ok((entity, name)) = child_query.get(entry) {
+                if name.as_str() == "cannon" {
+                    commands.entity(entity).insert(Cannon);
+                    info!("marked cannon for {:?}", entity);
+                }
+            }
+        }
+    }
 }
 
 fn setup(
@@ -312,6 +338,7 @@ fn setup(
                 },
                 Visibility::Visible,
                 Facing,
+                ShipModel,
             ));
             parent.spawn((
                 Text2d::new("@"),
