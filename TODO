@@ -71,3 +71,6 @@ how to configure models in blender:
 model facing x+
 top facing z+
 +Y up unchecked
+
+--- weird bevy bugs ---
+you basically just have to rename a glb file each time you change it. otherwise it will reload the stale file until you like sleep or reboot your computer. even cargo clean or deleting target/ doesn't do it. weird.

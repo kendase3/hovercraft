@@ -298,9 +298,11 @@ fn setup(
             Visibility::Hidden,
         ))
         .with_children(|parent| {
+            // TODO(skend): need to discover how to access the child node
+            // of gnat2 (the teal cannon)
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_1.glb"),
                 )),
                 // NB(skend): notably does nothing
                 Transform {
