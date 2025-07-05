@@ -25,10 +25,11 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
-//use bevy::gltf::SceneInstanceReady;
 use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
+
+use bevy::scene::SceneInstanceReady;
 
 const PLAYER_RADIUS: f32 = 10.;
 const GRID_SIZE: f32 = 10.;
@@ -149,7 +150,8 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (draw_map, setup, init_ui))
-        .add_systems(Update, init_cannon.run_if(on_event::<SceneInstanceReady>()).run_if(not(resource_exists::<CannonsFound>)))
+        .add_event::<SceneInstanceReady>()
+        //.add_systems(Update, init_cannon.run_if(on_event::<SceneInstanceReady>()))
         .add_systems(
             Update,
             (
@@ -200,12 +202,13 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn init_cannon(
     mut commands: Commands,
     mut scene_instance_ready: EventReader<SceneInstanceReady>,
-    ship_query: Query<(Entity, &Handle<Scene>), With<ShipModel>>,
+    //ship_query: Query<(Entity, &Handle<Scene>), With<ShipModel>>,
     child_query: Query<(Entity, &Name), Without<ShipModel>>,
     other_child_query: Query<&Children>,
     scene_spawner: Res<SceneSpawner>,
 ) {
     info!("in init_cannon");
+    /*
     for event in scene_instance_ready.read() {
         info!("in a scene_instance_ready event");
         for (root_entity, scene_handle) in ship_query.iter() {
@@ -216,6 +219,7 @@ fn init_cannon(
 
         }
     }
+    */
     /*
     for ship_model in query.iter() {
         info!("found a ship model");
