@@ -29,7 +29,9 @@ use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
 
-use bevy::scene::{SceneInstanceReady, SceneSpawner, InstanceId, SceneInstance};
+use bevy::scene::{
+    InstanceId, SceneInstance, SceneInstanceReady, SceneSpawner,
+};
 
 const PLAYER_RADIUS: f32 = 10.;
 const GRID_SIZE: f32 = 10.;
@@ -126,9 +128,11 @@ impl FromWorld for OrbitTimer {
 }
 
 // this fires at least
-fn submeshes_ready( mut event_reader: EventReader<SceneInstanceReady>)
--> bool {
-    !event_reader.is_empty()
+fn submeshes_ready(mut event_reader: EventReader<SceneInstanceReady>) -> bool {
+    if !event_reader.is_empty() {
+        info!("got an event!");
+    }
+    true
 }
 
 fn main() {
@@ -157,7 +161,8 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (draw_map, setup, init_ui))
         .add_event::<SceneInstanceReady>()
-        .add_systems(Update, init_cannon.run_if(submeshes_ready))
+        //.add_systems(Update, init_cannon.run_if(submeshes_ready))
+        //.add_systems(Update, (submeshes_ready))
         .add_systems(
             Update,
             (
@@ -215,7 +220,9 @@ fn init_cannon(
     for event in scene_instance_ready.read() {
         let scene_instance_id = event.instance_id;
         let mut found_parent = false;
-        for (scene_parent_entity, scene_instance_component) in maybe_cannons_query.iter() {
+        for (scene_parent_entity, scene_instance_component) in
+            maybe_cannons_query.iter()
+        {
             info!("at least we found a cannon?");
         }
     }
@@ -345,9 +352,12 @@ fn setup(
             // TODO(skend): need to discover how to access the child node
             // of gnat2 (the teal cannon)
             parent.spawn((
-                SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_1.glb"),
-                )),
+                SceneRoot(
+                    asset_server.load(
+                        GltfAssetLabel::Scene(0)
+                            .from_asset("models/gnat2_1.glb#Scene0"),
+                    ),
+                ),
                 // NB(skend): notably does nothing
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
