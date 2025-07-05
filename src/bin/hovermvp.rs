@@ -200,6 +200,9 @@ fn touch_ship(
                 let name = q_name.get(entity);
                 if let Ok(name_success) = name {
                 info!("touched {:?} with name {}", entity, name_success);
+                    if name_success.as_str() == "cannon" {
+                        info!("found our cannon");
+                    }
                 }
             }
         }
