@@ -203,10 +203,7 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 20.0)
-            //.with_rotation(Quat::from_rotation_x(0.25 * -PI / 2.)),
             .with_rotation(Quat::from_rotation_x(0.3 * -PI / 2.)),
-        // first arg: target, second arg: up
-        //.looking_at(Vec3::ZERO, Vec3::Z),
     ));
     /*
     commands.spawn((
@@ -220,12 +217,13 @@ fn setup(
     commands.spawn((
         Camera3d::default(),
         Camera {
-            hdr: true, // HDR is required for the bloom effect
+            // hdr required for bloom and also apparently to display us at all
+            hdr: true,
             order: 0,
             ..default()
         },
-        // 6 was in transmission.rs bevy example
-        Exposure { ev100: 10.0 },
+        // lower is brighter
+        Exposure { ev100: 12.0 },
         Transform {
             // raise the light above the world so it hits the top faces the viewer sees
             translation: Vec3::new(0., 0., 20.),
@@ -268,10 +266,8 @@ fn setup(
         Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
-    let player_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let planet_color = Color::srgb(0.0, 1.0, 0.0);
-    let player_circle = meshes.add(Circle::new(PLAYER_RADIUS));
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -293,14 +289,13 @@ fn setup(
                 physics::PLAYER_ACCEL_RATE,
             ),
             Name::new("Protagonist"),
-            Mesh2d(player_circle),
-            MeshMaterial2d(materials.add(player_color)),
+            Transform::default(),
             Visibility::Hidden,
         ))
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_1.glb"),
                 )),
                 // NB(skend): notably does nothing
                 Transform {
@@ -424,7 +419,7 @@ fn handle_tag(
     // if there's a timer that's done, set tagready to ready
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
     if tagr.ready && distance < 2. * PLAYER_RADIUS {
-        info!("you're it!");
+        info!("you're gaming!");
         p.it = !p.it;
         b.it = !b.it;
         // begin the cooldown period before we can tag again
@@ -517,10 +512,6 @@ fn move_bot(
         );
     }
     let dest = orbit_cache.destination;
-    // TODO(skend): now it is time to break everything and use proper acceleration
-    // to get to our destination.
-    // The new player abstraction also uses this dest input, accel output idea so it's BOGO
-
     // delta is now between us and our orbit destination
     // NB(skend): this is more like our desired move vector
     let desired_move_vector = dest - b_t.translation.xy();
@@ -611,7 +602,6 @@ fn draw_map(
             commands.spawn((
                 Mesh3d(meshes.add(plane)),
                 MeshMaterial3d(matl(Color::from(PURPLE))),
-                //MeshMaterial3d(matl(Color::WHITE)),
                 Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
             ));
         }
