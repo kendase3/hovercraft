@@ -193,10 +193,14 @@ fn touch_ship(
     ship_stuff: Query<Entity, With<ShipModel>>,
     children: Query<&Children>,
     mut transforms: Query<&mut Transform>,
+    q_name: Query<&Name>,
     ) {
         for ship_gubbins in &ship_stuff {
             for entity in children.iter_descendants(ship_gubbins) {
-                info!("touched {:?}", entity);
+                let name = q_name.get(entity);
+                if let Ok(name_success) = name {
+                info!("touched {:?} with name {}", entity, name_success);
+                }
             }
         }
 }
