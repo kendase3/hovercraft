@@ -203,10 +203,7 @@ fn setup(
             ..default()
         },
         Transform::from_xyz(0.0, 0.0, 20.0)
-            //.with_rotation(Quat::from_rotation_x(0.25 * -PI / 2.)),
             .with_rotation(Quat::from_rotation_x(0.3 * -PI / 2.)),
-        // first arg: target, second arg: up
-        //.looking_at(Vec3::ZERO, Vec3::Z),
     ));
     /*
     commands.spawn((
@@ -220,12 +217,15 @@ fn setup(
     commands.spawn((
         Camera3d::default(),
         Camera {
-            hdr: true, // HDR is required for the bloom effect
+            // hdr required for bloom and also apparently to display us at all
+            hdr: true,
             order: 0,
             ..default()
         },
         // 6 was in transmission.rs bevy example
-        Exposure { ev100: 10.0 },
+        // making this 6 makes the background white too, maybe a clue
+        // lower is brighter!
+        Exposure { ev100: 12.0 },
         Transform {
             // raise the light above the world so it hits the top faces the viewer sees
             translation: Vec3::new(0., 0., 20.),
@@ -424,7 +424,7 @@ fn handle_tag(
     // if there's a timer that's done, set tagready to ready
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
     if tagr.ready && distance < 2. * PLAYER_RADIUS {
-        info!("you're it!");
+        info!("you're gaming!");
         p.it = !p.it;
         b.it = !b.it;
         // begin the cooldown period before we can tag again
