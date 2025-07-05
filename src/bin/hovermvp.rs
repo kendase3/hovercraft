@@ -125,6 +125,11 @@ impl FromWorld for OrbitTimer {
     }
 }
 
+// FIXME(skend): surely there's a way to just have one of these
+fn dont_need_cannon_init(ci: Res<CannonInitialized>) -> bool {
+    ci.0
+}
+
 fn need_cannon_init(ci: Res<CannonInitialized>) -> bool {
     !ci.0
 }
@@ -168,6 +173,7 @@ fn main() {
                 aim_cannon,
             ),
         )
+        .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
@@ -224,6 +230,7 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Facing {});
+                        entity_commands.insert(Transform::default());
                         cannon_initialized.0 = true;
                     }
                 }
@@ -498,6 +505,8 @@ fn face_all(
     }
 }
 
+// FIXME(skend): can only one update func have mut access to CannonModel transform?
+// seems unlikely i would have gotten this far if that were true
 fn aim_cannon(
     mut cannon: Query<&mut Transform, With<CannonModel>>,
     bot_location: Query<&Transform, (With<Bot>, Without<CannonModel>)>,
