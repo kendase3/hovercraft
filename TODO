@@ -3,6 +3,8 @@ and others nearby
 
 --- plan ---
 
+it occurs to me the scene load logic may only fire if the scene _is not cached_. i may need to mess around renmaing the file just to force it to reload and fire the event
+
 how about a chunk is a 2x2 set of tiles so we have a many:1 situation to test initially
 
 i need to decide whether this is something i can make a decent improvement of my boring background by doing, or if i should just leave it some matte color and move on
