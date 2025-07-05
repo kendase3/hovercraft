@@ -29,7 +29,7 @@ use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
 
-use bevy::scene::SceneInstanceReady;
+use bevy::scene::{SceneInstanceReady, SceneSpawner, InstanceId, SceneInstance};
 
 const PLAYER_RADIUS: f32 = 10.;
 const GRID_SIZE: f32 = 10.;
@@ -125,6 +125,12 @@ impl FromWorld for OrbitTimer {
     }
 }
 
+// this fires at least
+fn submeshes_ready( mut event_reader: EventReader<SceneInstanceReady>)
+-> bool {
+    !event_reader.is_empty()
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -151,7 +157,7 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (draw_map, setup, init_ui))
         .add_event::<SceneInstanceReady>()
-        //.add_systems(Update, init_cannon.run_if(on_event::<SceneInstanceReady>()))
+        .add_systems(Update, init_cannon.run_if(submeshes_ready))
         .add_systems(
             Update,
             (
@@ -202,41 +208,17 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn init_cannon(
     mut commands: Commands,
     mut scene_instance_ready: EventReader<SceneInstanceReady>,
-    //ship_query: Query<(Entity, &Handle<Scene>), With<ShipModel>>,
-    child_query: Query<(Entity, &Name), Without<ShipModel>>,
-    other_child_query: Query<&Children>,
-    scene_spawner: Res<SceneSpawner>,
+    mut maybe_cannons_query: Query<(Entity, &SceneInstance), With<ShipModel>>,
+    ship_query: Query<Entity, With<ShipModel>>,
 ) {
     info!("in init_cannon");
-    /*
     for event in scene_instance_ready.read() {
-        info!("in a scene_instance_ready event");
-        for (root_entity, scene_handle) in ship_query.iter() {
-            if scene_handle == &event.scene {
-                info!("the scenes match, so that's great i guess");
-                // then we do a bunch of other crap
-            }
-
+        let scene_instance_id = event.instance_id;
+        let mut found_parent = false;
+        for (scene_parent_entity, scene_instance_component) in maybe_cannons_query.iter() {
+            info!("at least we found a cannon?");
         }
     }
-    */
-    /*
-    for ship_model in query.iter() {
-        info!("found a ship model");
-        // FIXME(skend): this for loop currently coming up empty
-        for entry in other_child_query.iter_descendants(ship_model) {
-            info!("found a child");
-            if let Ok((entity, name)) = child_query.get(entry) {
-                //if name.as_str() == "Cube.001" {
-                commands.entity(entity).insert(Cannon);
-                info!("marked cannon for {:?}", entity);
-                //}
-            } else {
-                info!("failed on the inside");
-            }
-        }
-    }
-    */
 }
 
 fn setup(
