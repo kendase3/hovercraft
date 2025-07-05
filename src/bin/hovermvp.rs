@@ -143,7 +143,7 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, setup, init_ui, init_cannon))
+        .add_systems(Startup, (draw_map, setup, init_ui, init_cannon.after(setup)))
         .add_systems(
             Update,
             (
@@ -202,6 +202,7 @@ fn init_cannon(
     info!("in init_cannon");
     for ship_model in query.iter() {
         info!("found a ship model");
+        // FIXME(skend): this for loop currently coming up empty
         for entry in other_child_query.iter_descendants(ship_model) {
             info!("found a child");
             if let Ok((entity, name)) = child_query.get(entry) {
@@ -331,6 +332,10 @@ fn setup(
             // they all have weird modifiers that the others
             // would inherit. so here we are.
             Transform::default(),
+            // it also needs visibility specified
+            // because it freaks out if the children
+            // specify visibility and it doesn't.
+            Visibility::Hidden,
         ))
         .with_children(|parent| {
             // TODO(skend): need to discover how to access the child node
