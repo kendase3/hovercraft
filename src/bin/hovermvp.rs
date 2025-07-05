@@ -517,9 +517,6 @@ fn move_bot(
         );
     }
     let dest = orbit_cache.destination;
-    // TODO(skend): now it is time to break everything and use proper acceleration
-    // to get to our destination.
-    // The new player abstraction also uses this dest input, accel output idea so it's BOGO
 
     // delta is now between us and our orbit destination
     // NB(skend): this is more like our desired move vector
@@ -611,7 +608,6 @@ fn draw_map(
             commands.spawn((
                 Mesh3d(meshes.add(plane)),
                 MeshMaterial3d(matl(Color::from(PURPLE))),
-                //MeshMaterial3d(matl(Color::WHITE)),
                 Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
             ));
         }
