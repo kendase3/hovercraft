@@ -25,6 +25,7 @@ use bevy::{
     render::camera::Exposure,
     render::render_resource::{AsBindGroup, ShaderRef},
 };
+//use bevy::gltf::SceneInstanceReady;
 use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
@@ -73,6 +74,10 @@ struct ShipModel;
 // after load
 #[derive(Component)]
 struct Cannon;
+
+// basically just denote that we have loaded all the cannons as children
+#[derive(Resource)]
+struct CannonsFound;
 
 // a planetary body like a planet, asteroid field, a location you can warp to
 #[derive(Component)]
@@ -143,7 +148,8 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-        .add_systems(Startup, (draw_map, setup, init_ui, init_cannon.after(setup)))
+        .add_systems(Startup, (draw_map, setup, init_ui))
+        .add_systems(Update, init_cannon.run_if(on_event::<SceneInstanceReady>()).run_if(not(resource_exists::<CannonsFound>)))
         .add_systems(
             Update,
             (
@@ -193,13 +199,24 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn init_cannon(
     mut commands: Commands,
-    // FIXME(skend): i think the complication is that my 3d model
-    // is itself just a child of the main entity
-    query: Query<Entity, With<ShipModel>>,
+    mut scene_instance_ready: EventReader<SceneInstanceReady>,
+    ship_query: Query<(Entity, &Handle<Scene>), With<ShipModel>>,
     child_query: Query<(Entity, &Name), Without<ShipModel>>,
     other_child_query: Query<&Children>,
+    scene_spawner: Res<SceneSpawner>,
 ) {
     info!("in init_cannon");
+    for event in scene_instance_ready.read() {
+        info!("in a scene_instance_ready event");
+        for (root_entity, scene_handle) in ship_query.iter() {
+            if scene_handle == &event.scene {
+                info!("the scenes match, so that's great i guess");
+                // then we do a bunch of other crap
+            }
+
+        }
+    }
+    /*
     for ship_model in query.iter() {
         info!("found a ship model");
         // FIXME(skend): this for loop currently coming up empty
@@ -215,6 +232,7 @@ fn init_cannon(
             }
         }
     }
+    */
 }
 
 fn setup(
