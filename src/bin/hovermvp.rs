@@ -76,6 +76,10 @@ struct TagReady {
     ready: bool,
 }
 
+// the glb asset itself
+#[derive(Component)]
+struct ShipModel;
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
     #[uniform(0)] // same
@@ -136,6 +140,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .add_systems(Startup, (draw_map, setup, init_ui))
+        .add_systems(Update, (touch_ship))
         .add_systems(
             Update,
             (
@@ -181,6 +186,19 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
     ));
+}
+
+fn touch_ship(
+    time: Res<Time>,
+    ship_stuff: Query<Entity, With<ShipModel>>,
+    children: Query<&Children>,
+    mut transforms: Query<&mut Transform>,
+    ) {
+        for ship_gubbins in &ship_stuff {
+            for entity in children.iter_descendants(ship_gubbins) {
+                info!("touched {:?}", entity);
+            }
+        }
 }
 
 fn setup(
@@ -305,6 +323,7 @@ fn setup(
                 },
                 Visibility::Visible,
                 Facing,
+                ShipModel,
             ));
             parent.spawn((
                 Text2d::new("@"),
