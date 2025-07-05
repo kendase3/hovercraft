@@ -82,6 +82,8 @@ struct ShipModel;
 
 // we have to add this component after initial load
 // because it's a child in the glb
+// FIXME(skend): should just call cannon and ship? it's not like there's a non-model version of
+// these
 #[derive(Component)]
 struct CannonModel;
 
@@ -163,6 +165,7 @@ fn main() {
                 handle_tag,
                 camera_follow,
                 handle_target,
+                aim_cannon,
             ),
         )
         .init_resource::<OrbitTimer>()
@@ -214,13 +217,13 @@ fn touch_ship(
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
-                info!("touched {:?} with name {}", entity, name_success);
                 if name_success.as_str() == "cannon" {
                     info!("found our cannon");
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
+                        entity_commands.insert(Facing {});
                         cannon_initialized.0 = true;
                     }
                 }
@@ -495,6 +498,17 @@ fn face_all(
     }
 }
 
+fn aim_cannon(
+    cannon_location: Query<&mut Transform, With<CannonModel>>,
+    bot_location: Query<&Transform, (With<Bot>, Without<CannonModel>)>,
+) {
+    // find the location of the bot
+    // find the angle towrad the bot
+    // rotate the cannon that way
+    // TODO(skend): just point forward if no target
+    // TODO(skend): the cannon should angular-accelerate
+}
+
 fn move_player(
     mut players: Query<(&mut Acceleration, &mut Player)>,
     keys: Res<ButtonInput<KeyCode>>,
@@ -601,7 +615,6 @@ fn get_random_color() -> LinearRgba {
     LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
 }
 
-// TODO(skend): the map should have texture, and maybe a fun fog effect
 fn draw_map(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
