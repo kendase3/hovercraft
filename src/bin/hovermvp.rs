@@ -128,11 +128,10 @@ impl FromWorld for OrbitTimer {
 }
 
 // this fires at least
-fn submeshes_ready(mut event_reader: EventReader<SceneInstanceReady>) -> bool {
+fn submeshes_ready(mut event_reader: EventReader<SceneInstanceReady>) {
     if !event_reader.is_empty() {
         info!("got an event!");
     }
-    true
 }
 
 fn main() {
@@ -162,7 +161,7 @@ fn main() {
         .add_systems(Startup, (draw_map, setup, init_ui))
         .add_event::<SceneInstanceReady>()
         //.add_systems(Update, init_cannon.run_if(submeshes_ready))
-        //.add_systems(Update, (submeshes_ready))
+        .add_systems(Update, (submeshes_ready))
         .add_systems(
             Update,
             (
@@ -354,6 +353,13 @@ fn setup(
             // of gnat2 (the teal cannon)
             // FIXME(skend): supposedly i need to not use sceneroot as
             // it does not fire the events. i need a scenebundle?
+            scene_spawner.spawn_as_child(
+                asset_server.load(
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_1.glb"),
+                ),
+                parent.parent_entity(),
+            );
+            /*
             parent.spawn((
                 SceneRoot(
                     asset_server.load(
@@ -361,16 +367,13 @@ fn setup(
                             .from_asset("models/gnat2_1.glb#Scene0"),
                     ),
                 ),
-                // NB(skend): notably does nothing
-                Transform {
-                    translation: Vec3::new(0., 0., 0.),
-                    rotation: Quat::default(),
-                    scale: Vec3::new(1.0, 1.0, 1.0),
-                },
                 Visibility::Visible,
                 Facing,
                 ShipModel,
             ));
+            */
+            // ^ FIXME(skend): i will have to add Facing and ShipModel once the scene loaded event
+            // fires
             parent.spawn((
                 Text2d::new("@"),
                 text_font
