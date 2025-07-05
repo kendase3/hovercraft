@@ -229,7 +229,7 @@ fn touch_ship(
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
-                        entity_commands.insert(Facing {});
+                        //entity_commands.insert(Facing {});
                         entity_commands.insert(Transform::default());
                         cannon_initialized.0 = true;
                     }
@@ -517,12 +517,14 @@ fn aim_cannon(
     // and i want both.
     let bot_loc = bot_location.single().translation.xy();
     // find our location
+    /*
     let mut c = cannon.single_mut();
     let delta_loc = bot_loc - c.translation.xy().normalize();
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
     c.rotate_z(radians);
+    */
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
