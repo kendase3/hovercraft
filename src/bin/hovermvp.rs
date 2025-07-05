@@ -193,17 +193,24 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn init_cannon(
     mut commands: Commands,
+    // FIXME(skend): i think the complication is that my 3d model
+    // is itself just a child of the main entity
     query: Query<Entity, With<ShipModel>>,
     child_query: Query<(Entity, &Name), Without<ShipModel>>,
     other_child_query: Query<&Children>,
 ) {
+    info!("in init_cannon");
     for ship_model in query.iter() {
+        info!("found a ship model");
         for entry in other_child_query.iter_descendants(ship_model) {
+            info!("found a child");
             if let Ok((entity, name)) = child_query.get(entry) {
-                if name.as_str() == "cannon" {
-                    commands.entity(entity).insert(Cannon);
-                    info!("marked cannon for {:?}", entity);
-                }
+                //if name.as_str() == "Cube.001" {
+                commands.entity(entity).insert(Cannon);
+                info!("marked cannon for {:?}", entity);
+                //}
+            } else {
+                info!("failed on the inside");
             }
         }
     }
@@ -294,10 +301,8 @@ fn setup(
         Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
-    let player_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let planet_color = Color::srgb(0.0, 1.0, 0.0);
-    let player_circle = meshes.add(Circle::new(PLAYER_RADIUS));
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -319,9 +324,13 @@ fn setup(
                 physics::PLAYER_ACCEL_RATE,
             ),
             Name::new("Protagonist"),
-            Mesh2d(player_circle),
-            MeshMaterial2d(materials.add(player_color)),
-            Visibility::Hidden,
+            // NB(skend): in my case, the parent is empty
+            // but bevy freaks out if it can't run transforms on it
+            // so here is a blank transform.
+            // the children would not make good parents.
+            // they all have weird modifiers that the others
+            // would inherit. so here we are.
+            Transform::default(),
         ))
         .with_children(|parent| {
             // TODO(skend): need to discover how to access the child node
