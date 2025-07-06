@@ -29,7 +29,8 @@ use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
 
-const PLAYER_RADIUS: f32 = 10.;
+const BOT_RADIUS: f32 = 10.;
+const PLANET_RADIUS: f32 = 15.;
 const GRID_SIZE: f32 = 10.;
 // TODO(skend): chunks
 //const CHUNK_SIZE: f32 = GRID_SIZE * 2.;
@@ -172,6 +173,7 @@ fn main() {
             (
                 move_player,
                 face_all,
+                rotface_all,
                 move_bot,
                 handle_tag,
                 camera_follow,
@@ -217,7 +219,6 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn touch_ship(
-    time: Res<Time>,
     ship_stuff: Query<Entity, With<ShipModel>>,
     children: Query<&Children>,
     q_name: Query<&Name>,
@@ -388,7 +389,11 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
                 Transform {
-                    translation: Vec3::new(FACING_INDICATOR_OUTER_SIZE * 0.8, 0.0, 0.0),
+                    translation: Vec3::new(
+                        FACING_INDICATOR_OUTER_SIZE * 0.8,
+                        0.0,
+                        0.0,
+                    ),
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
@@ -399,12 +404,10 @@ fn setup(
                 Visibility::Visible,
             ));
         });
-    let bot = meshes.add(Circle::new(PLAYER_RADIUS));
-    let bot_target = meshes.add(Mesh::from(Rectangle::new(
-        PLAYER_RADIUS * 2.,
-        PLAYER_RADIUS * 2.,
-    )));
-    let planet1 = meshes.add(Circle::new(PLAYER_RADIUS * 2.));
+    let bot = meshes.add(Circle::new(BOT_RADIUS));
+    let bot_target = meshes
+        .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
+    let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
     commands
         .spawn((
             Bot { it: true },
@@ -489,7 +492,8 @@ fn handle_tag(
     let y_delta = (b_t.translation.y - p_t.translation.y).abs();
     // if there's a timer that's done, set tagready to ready
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
-    if tagr.ready && distance < 2. * PLAYER_RADIUS {
+    // FIXME(skend): player does not really have an obvious radius anymore
+    if tagr.ready && distance < 2. * BOT_RADIUS {
         info!("you're gaming!");
         p.it = !p.it;
         b.it = !b.it;
