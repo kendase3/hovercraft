@@ -47,16 +47,68 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 
-#[derive(Component)]
-struct Player {
-    it: bool,
-    facing: f32,
+#[derive(Component, PartialEq)]
+enum PilotType {
+    Player,
+    Bot,
 }
 
-#[derive(Component)]
-struct Bot {
-    it: bool,
+impl Default for PilotType {
+    fn default() -> Self {
+        PilotType::Bot
+    }
 }
+
+#[derive(Component, Default)]
+struct Pilot {
+    pilottype: PilotType,
+    it: bool,
+    // FIXME(skend): suppose bots do not have facing
+    // as is the case right now. how would we use the
+    // enum to handle this split?
+    facing: Option<f32>,
+    target: Option<Entity>,
+}
+
+// is it actually fine to not have normal form
+// if it makes lookups faster? now i have
+// learned how to fix later if i must
+#[derive(Component)]
+struct Player;
+#[derive(Component)]
+struct Bot;
+
+impl Pilot {
+    fn get_target_coords(
+        &self,
+        qtransform: &Query<&Transform>,
+    ) -> Option<Vec2> {
+        if let Some(a_target) = self.target {
+            let maybe_target = qtransform.get(a_target);
+            if let Ok(target) = maybe_target {
+                return Some(target.translation.xy());
+            }
+        }
+        None
+    }
+}
+
+// FIXME(skend): design crutch i think
+// it does make lookups faster though
+#[derive(Component)]
+struct PlayerSub;
+
+#[derive(Component)]
+struct BotSub;
+
+// a dude is the union between a player and a bot
+// a player-like entity
+#[derive(Component)]
+struct DudeRef(Entity);
+
+// like dudes but for ships
+#[derive(Component)]
+struct Craft(Entity);
 
 #[derive(Component)]
 struct Proclamation;
@@ -64,6 +116,10 @@ struct Proclamation;
 #[derive(Component)]
 struct Facing;
 
+// FIXME(skend): this is just for the GUI element to target things currently
+// what doesn't map very well is that bots will also have targets. there
+// won't be a GUI indicator but we will still need to do target lookup
+// for aiming etc.
 #[derive(Component)]
 struct Target;
 
@@ -92,6 +148,9 @@ struct ShipModel;
 // these
 #[derive(Component)]
 struct CannonModel;
+
+#[derive(Component)]
+struct NotCannonModel;
 
 #[derive(Component)]
 struct NotchOffset(pub Vec3);
@@ -168,7 +227,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
-        .add_systems(Startup, (draw_map, setup))
+        .add_systems(Startup, (draw_map, (setup, setup_targets).chain()))
         .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
         .add_systems(
             Update,
@@ -223,25 +282,49 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
+// FIXME(skend): even with our design crutch
+// we will need to know whether to append PlayerSub
+// or BotSub component to the cannon.
+// We will need to crawl up the parents to see
+// which one we are. That sounds rather annoying to
+// implement and then debug but once it's done
+// it's done.
 fn touch_ship(
-    ship_stuff: Query<Entity, With<ShipModel>>,
+    ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
+    pilot_query: Query<&Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
 ) {
-    for ship_gubbins in &ship_stuff {
+    for (ship_gubbins, ship_parent) in &ship_stuff {
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
                 if name_success.as_str() == "cannon" {
-                    //info!("found our cannon");
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
-                        cannon_initialized.0 = true;
+                        entity_commands.insert(DudeRef(ship_parent.get()));
+                        entity_commands.insert(Craft(ship_gubbins));
+                        if let Ok(pilot) = pilot_query.get(ship_parent.get()) {
+                            // then the ship's parent is a player
+                            if pilot.pilottype == PilotType::Player {
+                                entity_commands.insert(PlayerSub {});
+                            } else if pilot.pilottype == PilotType::Bot {
+                                entity_commands.insert(BotSub {});
+                            }
+                            cannon_initialized.0 = true;
+                        }
+                    }
+                } else {
+                    // don't actually need this
+                    if let Some(mut entity_commands) =
+                        commands.get_entity(entity)
+                    {
+                        entity_commands.insert(NotCannonModel {});
                     }
                 }
             }
@@ -254,6 +337,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
+    mut qpilots: Query<&mut Pilot>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -337,7 +421,6 @@ fn setup(
         (Vec2::new(-1. * triangle_sin, -1. * triangle_cos)) * shrinker,
         (Vec2::new(-1. * triangle_sin, triangle_cos)) * shrinker,
     ));
-    let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let planet_color = Color::srgb(0.0, 1.0, 0.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
@@ -351,10 +434,13 @@ fn setup(
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
-            Player {
+            Pilot {
+                pilottype: PilotType::Player,
                 it: false,
-                facing: 0.0,
+                facing: Some(0.0),
+                target: None,
             },
+            Player,
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
                 physics::PLAYER_MAX_VELOCITY,
@@ -381,6 +467,7 @@ fn setup(
                 Visibility::Visible,
                 Facing,
                 ShipModel,
+                PlayerSub,
             ));
             parent.spawn((
                 Text2d::new("@"),
@@ -409,17 +496,21 @@ fn setup(
                 Visibility::Visible,
             ));
         });
-    let bot = meshes.add(Circle::new(BOT_RADIUS));
     let bot_target = meshes
         .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
     let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
     commands
         .spawn((
-            Bot { it: true },
+            Pilot {
+                pilottype: PilotType::Bot,
+                it: true,
+                target: None,
+                ..default()
+            },
+            Bot,
             Name::new("Antagonist"),
-            Mesh2d(bot),
-            MeshMaterial2d(materials.add(bot_color)),
             Transform::from_xyz(50.0, 0.0, 0.0),
+            Visibility::Hidden,
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_MAX_VELOCITY,
@@ -431,14 +522,18 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text2d::new("@"),
-                text_font
-                    .clone()
-                    .with_font_smoothing(FontSmoothing::AntiAliased),
-                TextLayout::new_with_justify(JustifyText::Center),
-                TextColor(Color::srgb(1., 0., 0.)),
-                Transform::from_xyz(0.0, 0.0, 0.0)
-                    .with_scale(Vec3::splat(0.2)),
+                SceneRoot(asset_server.load(
+                    GltfAssetLabel::Scene(0).from_asset("models/gubbins2.glb"),
+                )),
+                // NB(skend): notably does nothing
+                Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    rotation: Quat::default(),
+                    scale: Vec3::new(1.0, 1.0, 1.0),
+                },
+                Visibility::Visible,
+                Facing,
+                ShipModel,
             ));
             parent.spawn((
                 Mesh2d(bot_target),
@@ -452,6 +547,7 @@ fn setup(
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
         });
+
     // kind of like a notification at the top of the screen
     commands.spawn((
         Text::new("You're gaming!"),
@@ -473,11 +569,33 @@ fn setup(
     ));
 }
 
+fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
+    let mut player_id: Option<Entity> = None;
+    let mut bot_id: Option<Entity> = None;
+    for (entity, mut pilot) in query.iter_mut() {
+        if pilot.pilottype == PilotType::Player {
+            player_id = Some(entity);
+        } else if pilot.pilottype == PilotType::Bot {
+            bot_id = Some(entity);
+        }
+    }
+    for (entity, mut pilot) in query.iter_mut() {
+        if pilot.pilottype == PilotType::Player {
+            pilot.target = bot_id;
+        } else if pilot.pilottype == PilotType::Bot {
+            pilot.target = player_id;
+        }
+    }
+}
+
 // generally handle tagging state changes
 fn handle_tag(
     mut proclamation: Query<&mut Visibility, With<Proclamation>>,
-    mut bot: Query<(&mut Bot, &mut Transform)>,
-    mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
+    mut bot: Query<(&mut Pilot, &mut Transform), (With<Bot>, Without<Player>)>,
+    mut player: Query<
+        (&mut Pilot, &mut Transform),
+        (With<Player>, Without<Bot>),
+    >,
     mut tagready: Query<&mut TagReady>,
     mut tagtimer: Query<&mut TagCooldownTimer>,
     time: Res<Time>,
@@ -519,11 +637,13 @@ fn handle_tag(
 
 fn face_all(
     mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
-    player_query: Query<&Player>,
+    pilot_query: Query<&Pilot>,
 ) {
     for (mut facer, parent) in &mut facers_query {
-        if let Ok(player) = player_query.get(parent.get()) {
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+        if let Ok(player) = pilot_query.get(parent.get()) {
+            if let Some(player_facing) = player.facing {
+                facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
+            }
         }
     }
 }
@@ -533,58 +653,86 @@ fn rotface_all(
         (&mut Transform, &Parent, &NotchOffset),
         With<NotchOffset>,
     >,
-    player_query: Query<&Player>,
+    player_query: Query<&Pilot, With<Player>>,
 ) {
     for (mut facer, parent, offset) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
             // we apply our intended offset from spawn to our new relative angle
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
-            facer.translation = facer.rotation * offset.0;
+            if let Some(player_facing) = player.facing {
+                facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
+                facer.translation = facer.rotation * offset.0;
+            }
         }
     }
 }
 
+// FIXME(skend): i believe currently broken for both player and bot, let me check
+// if so, i'll fix the player case first.
+// yeah the player one is no longer adjusting for the angle of its parent, or
+// its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut cannon: Query<&mut Transform, With<CannonModel>>,
-    player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
-    ship_transform: Query<
-        &Transform,
-        (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
-    >,
-    bot_location: Query<
-        &Transform,
-        (
-            With<Bot>,
-            (Without<Player>, Without<CannonModel>, Without<ShipModel>),
-        ),
-    >,
+    mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
+    players: Query<&Pilot, (With<Player>, Without<Bot>)>,
+    bots: Query<&Pilot, (With<Bot>, Without<Player>)>,
+    pilots: Query<&Pilot>,
+    ships: Query<&ShipModel>,
+    qtransform: Query<&Transform, Without<CannonModel>>,
+    // TODO(skend): may make the above without ship and then add a ship transform
+    //ship_transform: Query<
+    //    &Transform,
+    //    (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
+    //>,
 ) {
-    // find the location of the bot
-    // FIXME(skend): just in general, i have a lot of single() and single_mut()s
-    // these will have to become loops to handle multiplayer or multiple bots
-    // and i want both.
-    let bot_loc = bot_location.single().translation.xy();
-    // find our location
-    let mut c = cannon.single_mut();
-    let p = player_transform.single();
-    let s = ship_transform.single();
-    // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
-    // is roughly true
-    let delta_loc = bot_loc
-        - (p.translation.xy() + s.translation.xy() + c.translation.xy());
-    // find the angle toward the bot
-    let radians = delta_loc.y.atan2(delta_loc.x);
-    // rotate the cannon that way
-    // just checked and the cannon does in fact rotate
-    //c.rotate_z(0.1);
-    //info!("the angle in degrees is {}", radians * (180. / PI));
-    c.rotation = Quat::from_rotation_z(radians) * s.rotation.inverse();
-    // TODO(skend): just point forward if no target
-    // TODO(skend): the cannon should angular-accelerate
+    // TODO(skend): for each cannon, have to find its target
+    // TODO(skend): lettuce do the same idea of patriarch, but
+    // for the shipmodel as well. then the cannon will not
+    // have to go crawling every frame or whatever to find
+    // things it should just memorize
+    for (mut cannon_transform, dude, craft) in cannon.iter_mut() {
+        let our_cannon_xy = cannon_transform.translation.xy();
+        let mut our_ship_xy: Option<Vec2> = None;
+        let mut our_dude_xy: Option<Vec2> = None;
+        // FIXME(skend): apparently i still have a bit to learn
+        // about dyn in rust
+        //let mut our_dude: Option<Box<dyn Targeting>> = None;
+        let mut target_xy: Option<Vec2> = None;
+        let ship_transform = qtransform.get(craft.0).unwrap();
+        if let Ok(cur_pilot) = pilots.get(dude.0) {
+            //info!("we found our pilot");
+            // FIXME(skend): our pilot apparently does _not_ have a target
+            if let Some(cur_target) = cur_pilot.target {
+                //info!("our pilot has a target");
+                if let Ok(their_pilot_t) = qtransform.get(cur_target) {
+                    //info!("the target has a transform");
+                    target_xy = Some(their_pilot_t.translation.xy());
+                }
+            }
+            if let Ok(pilot_t) = qtransform.get(dude.0) {
+                our_dude_xy = Some(pilot_t.translation.xy());
+            }
+        }
+        if let Ok(cur_craft) = ships.get(craft.0) {
+            if let Ok(craft_t) = qtransform.get(craft.0) {
+                our_ship_xy = Some(craft_t.translation.xy());
+            }
+        }
+
+        if our_ship_xy == None || our_dude_xy == None || target_xy == None {
+            warn!("Error in aim function!");
+            return;
+        }
+        let delta_loc = target_xy.unwrap() - our_dude_xy.unwrap()
+            + our_ship_xy.unwrap()
+            + our_cannon_xy;
+        let radians = delta_loc.y.atan2(delta_loc.x);
+        //info!("the angle in degrees is {}", radians * (180. / PI));
+        cannon_transform.rotation =
+            Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
+    }
 }
 
 fn move_player(
-    mut players: Query<(&mut Acceleration, &mut Player)>,
+    mut players: Query<(&mut Acceleration, &mut Pilot), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -615,7 +763,7 @@ fn move_player(
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
-        play.facing = n_direction.y.atan2(n_direction.x);
+        play.facing = Some(n_direction.y.atan2(n_direction.x));
     }
 }
 
@@ -626,7 +774,7 @@ fn move_bot(
             &mut physics::Velocity,
             &mut physics::Acceleration,
         ),
-        (With<Bot>, Without<CannonModel>),
+        (With<Bot>, Without<Player>, Without<CannonModel>),
     >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
@@ -657,7 +805,7 @@ fn move_bot(
 }
 
 fn camera_follow(
-    playerq: Query<&Transform, With<Player>>,
+    playerq: Query<&Transform, (With<Player>, Without<Bot>)>,
     botq: Query<&Transform, (With<Bot>, Without<Player>)>,
     mut cameraq: Query<
         &mut Transform,
@@ -750,6 +898,12 @@ fn draw_map(
 
 // FIXME(skend): use tab though
 // also need a cooldown of like .5 seconds to stop multi-press
+// TODO(skend): while a cooldown could be good for some cases,
+// extreme bevy tutorial suggests checking for the pressed key
+// not being pressed, which would then switch a bool and allow
+// the key to be pressed again. so each "new press" would count
+// which is the behavior we would expect. it would be more
+// responsive-feeling than the cooldown idea.
 fn handle_target(
     keys: Res<ButtonInput<KeyCode>>,
     mut botq: Query<&mut Visibility, With<Target>>,
