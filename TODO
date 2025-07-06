@@ -1,5 +1,3 @@
-https://bevyengine.org/examples/math/custom-primitives/
-
 --- plan ---
 
 it occurs to me the scene load logic may only fire if the scene _is not cached_. i may need to mess around renmaing the file just to force it to reload and fire the event
@@ -53,10 +51,13 @@ i think some of my systems now with the custom timers could instead use fixedupd
 
 --- ideas for iterative projects ---
 tag(done): there's a bot that wants to tag you, then just runs left once it's no longer it
-star control: an enemy bot is trying to destroy you. you each shoot bullets. one hit kills. may orbit, approach, or flee
+sun overseer instagib: an enemy bot is trying to destroy you. you each shoot bullets. one hit kills. may orbit, approach, or flee
+steve online: expand navigation system by loading chunks of 1km square at a time. systems are made up of a _great_ many of these.
+you can warp to different chunks and take gates between different systems. each system could have 1k square chunks of 1km square. it would be mostly empty. you could warp to the sun, planets, asteroid belts, space stations, or similar points of interest. you could then orbit them, keep at distance, etc. no combat for this one, just embiggen navigation.
 
 --- units ---
 the units of the world are meters. if things are not the right scale for that to be reasonable, i messed up
+currently the world is 1km square. each cell is 10m.
 
 --- goodies ---
 #[cfg(not(target_arch = "wasm32"))]
@@ -66,8 +67,6 @@ the units of the world are meters. if things are not the right scale for that to
 my "home" dir is ~/.var/app/com.valvesoftware.Steam
 
 --- notes on making models in bevy that render the right way in this project ---
-i haven't found the right way yet, but i will denote here once i know how
-
 how to configure models in blender:
 model facing x+
 top facing z+
@@ -79,3 +78,7 @@ you basically just have to rename a glb file each time you change it. otherwise 
 --- tools i may try ---
 bevy_inspector_egui
 ^ this lets you visually debug your game and inspect it like a webpage.
+
+--- learning resources ---
+https://bevy.org/examples/
+https://johanhelsing.studio/posts/extreme-bevy
