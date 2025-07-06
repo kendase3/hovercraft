@@ -351,7 +351,7 @@ fn setup(
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_1.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_5.glb"),
                 )),
                 // NB(skend): notably does nothing
                 Transform {
@@ -527,7 +527,8 @@ fn aim_cannon(
     // rotate the cannon that way
     //c.rotate_z(radians);
     //c.rotate_z(PI);
-    c.rotation = Quat::from_rotation_z(PI);
+    //c.rotation = Quat::from_rotation_z(PI);
+    c.rotation = Quat::from_rotation_z(0.);
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
