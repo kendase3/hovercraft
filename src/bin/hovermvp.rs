@@ -41,8 +41,8 @@ const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 const MAX_FRAMERATE: f32 = 60.;
 const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
-const FACING_INDICATOR_OUTER_SIZE: f32 = 10.;
-const FACING_INDICATOR_INNER_SIZE: f32 = 9.;
+const NOTCH_OUTER_SIZE: f32 = 10.;
+const NOTCH_INNER_SIZE: f32 = 9.;
 
 #[derive(Component)]
 struct Player {
@@ -93,6 +93,9 @@ struct ShipModel;
 // these
 #[derive(Component)]
 struct CannonModel;
+
+#[derive(Component)]
+struct NotchOffset(pub Vec3);
 
 #[derive(Resource, Default)]
 struct CannonInitialized(bool);
@@ -320,10 +323,9 @@ fn setup(
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
     // sin and cos same for 45 case
-    let fortyfivepoint =
-        FACING_INDICATOR_OUTER_SIZE * (45.0 as f32).to_radians().sin();
+    let fortyfivepoint = NOTCH_OUTER_SIZE * (45.0 as f32).to_radians().sin();
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::X * FACING_INDICATOR_OUTER_SIZE,
+        Vec2::X * NOTCH_OUTER_SIZE,
         Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
         Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
     ));
@@ -336,10 +338,9 @@ fn setup(
         font_size: 100.0,
         ..default()
     };
-    let hollow_circle = meshes.add(Annulus::new(
-        FACING_INDICATOR_INNER_SIZE,
-        FACING_INDICATOR_OUTER_SIZE,
-    ));
+    let notch_circle =
+        meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
+    let notch_offset = Vec3::new(NOTCH_OUTER_SIZE * 0.8, 0., 0.);
     commands
         .spawn((
             Player {
@@ -389,19 +390,16 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
                 Transform {
-                    translation: Vec3::new(
-                        FACING_INDICATOR_OUTER_SIZE * 0.8,
-                        0.0,
-                        0.0,
-                    ),
+                    translation: notch_offset,
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
             ));
             parent.spawn((
-                Mesh2d(hollow_circle),
+                Mesh2d(notch_circle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
+                NotchOffset(notch_offset),
             ));
         });
     let bot = meshes.add(Circle::new(BOT_RADIUS));
@@ -524,7 +522,7 @@ fn face_all(
 }
 
 fn rotface_all(
-    mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
+    mut facers_query: Query<(&mut Transform, &Parent), With<RotFacing>>,
     player_query: Query<&Player>,
 ) {
     for (mut facer, parent) in &mut facers_query {
