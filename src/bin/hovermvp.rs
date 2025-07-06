@@ -526,7 +526,8 @@ fn aim_cannon(
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
     //c.rotate_z(radians);
-    c.rotate_z(PI);
+    //c.rotate_z(PI);
+    c.rotation = Quat::from_rotation_z(PI);
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
