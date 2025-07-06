@@ -160,16 +160,16 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .add_systems(Startup, (draw_map, setup, init_ui))
-        .add_systems(Update, (touch_ship).run_if(need_cannon_init))
+        .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
         .add_systems(
             Update,
             (
                 move_player,
-                face_all,
-                move_bot,
-                handle_tag,
+                //face_all,
+                //move_bot,
+                //handle_tag,
                 camera_follow,
-                handle_target,
+                //handle_target,
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
