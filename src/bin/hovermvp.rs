@@ -166,7 +166,7 @@ fn main() {
             (
                 move_player,
                 face_all,
-                move_bot,
+                //move_bot,
                 handle_tag,
                 camera_follow,
                 handle_target,
@@ -540,7 +540,7 @@ fn aim_cannon(
     //c.rotate_z(0.1);
     // FIXME(skend): not sure how to undo the parent rotation and then
     // apply this rotation
-    info!("the angle in degrees is {}", radians * (180. / PI));
+    //info!("the angle in degrees is {}", radians * (180. / PI));
     c.rotation = Quat::from_rotation_z(radians) * p.rotation.inverse();
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
