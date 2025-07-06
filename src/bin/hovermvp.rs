@@ -372,7 +372,7 @@ fn setup(
                 TextLayout::new_with_justify(JustifyText::Center),
                 TextColor(Color::srgb(1., 0., 1.)),
                 Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
-                Visibility::Visible,
+                Visibility::Hidden,
             ));
             parent.spawn((
                 Facing,
@@ -511,6 +511,10 @@ fn face_all(
 fn aim_cannon(
     //mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
     mut cannon: Query<(&mut Transform), With<CannonModel>>,
+    parent_rotation: Query<
+        &Transform,
+        (With<ShipModel>, Without<CannonModel>),
+    >,
     bot_location: Query<&Transform, (With<Bot>, Without<CannonModel>)>,
 ) {
     // find the location of the bot
@@ -520,6 +524,7 @@ fn aim_cannon(
     let bot_loc = bot_location.single().translation.xy();
     // find our location
     let mut c = cannon.single_mut();
+    let p = parent_rotation.single().rotation;
     // FIXME(skend): even if i get this working, i will need to rotate
     // relative to world, not to parent
     let delta_loc = bot_loc - c.translation.xy().normalize();
@@ -528,7 +533,7 @@ fn aim_cannon(
     // rotate the cannon that way
     //c.rotate_z(radians);
     //c.rotate_z(PI);
-    c.rotation = Quat::from_rotation_z(PI);
+    c.rotation = Quat::from_rotation_z(radians) * p.inverse();
     // FIXME(skend): even rotating by zero breaks it?
     //c.rotation = Quat::from_rotation_z(0.);
     // TODO(skend): just point forward if no target
