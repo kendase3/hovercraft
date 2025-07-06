@@ -394,12 +394,12 @@ fn setup(
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
+                NotchOffset(notch_offset),
             ));
             parent.spawn((
                 Mesh2d(notch_circle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
-                NotchOffset(notch_offset),
             ));
         });
     let bot = meshes.add(Circle::new(BOT_RADIUS));
@@ -522,12 +522,16 @@ fn face_all(
 }
 
 fn rotface_all(
-    mut facers_query: Query<(&mut Transform, &Parent), With<RotFacing>>,
+    mut facers_query: Query<
+        (&mut Transform, &Parent, &NotchOffset),
+        (With<RotFacing>, With<NotchOffset>),
+    >,
     player_query: Query<&Player>,
 ) {
-    for (mut facer, parent) in &mut facers_query {
+    for (mut facer, parent, offset) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
             facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+            facer.translation = facer.rotation * offset.0;
         }
     }
 }
