@@ -532,9 +532,11 @@ fn aim_cannon(
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
+    // just checked and the cannon does in fact rotate
     //c.rotate_z(0.1);
     // FIXME(skend): not sure how to undo the parent rotation and then
     // apply this rotation
+    info!("the angle in degrees is {}", radians * (180. / PI));
     c.rotation = Quat::from_rotation_z(radians) * p.inverse();
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
