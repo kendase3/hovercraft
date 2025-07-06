@@ -530,7 +530,9 @@ fn aim_cannon(
     //let delta_loc = (bot_loc - c.translation.xy()).normalize();
     // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
     // is roughly true
-    let delta_loc = (p.translation.xy() - bot_loc).normalize();
+    //let delta_loc = (bot_loc - p.translation.xy()).normalize();
+    let delta_loc = (bot_loc - p.translation.xy());
+    info!("delta_loc {:?}", delta_loc);
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
