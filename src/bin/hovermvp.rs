@@ -40,6 +40,8 @@ const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 const MAX_FRAMERATE: f32 = 60.;
 const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
+const FACING_INDICATOR_OUTER_SIZE: f32 = 10.;
+const FACING_INDICATOR_INNER_SIZE: f32 = 9.;
 
 #[derive(Component)]
 struct Player {
@@ -223,14 +225,11 @@ fn touch_ship(
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
                 if name_success.as_str() == "cannon" {
-                    info!("found our cannon");
+                    //info!("found our cannon");
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
-                        // FIXME(skend): not sure whether this should use facing
-                        //entity_commands.insert(Facing {});
-                        //entity_commands.insert(Transform::default());
                         entity_commands.insert(Visibility::Visible);
                         cannon_initialized.0 = true;
                     }
@@ -316,9 +315,10 @@ fn setup(
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
     // sin and cos same for 45 case
-    let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
+    let fortyfivepoint =
+        FACING_INDICATOR_OUTER_SIZE * (45.0 as f32).to_radians().sin();
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::X * PLAYER_RADIUS,
+        Vec2::X * FACING_INDICATOR_OUTER_SIZE,
         Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
         Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
     ));
@@ -331,6 +331,10 @@ fn setup(
         font_size: 100.0,
         ..default()
     };
+    let hollow_circle = meshes.add(Annulus::new(
+        FACING_INDICATOR_INNER_SIZE,
+        FACING_INDICATOR_OUTER_SIZE,
+    ));
     commands
         .spawn((
             Player {
@@ -384,6 +388,11 @@ fn setup(
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
+            ));
+            parent.spawn((
+                Mesh2d(hollow_circle),
+                MeshMaterial2d(materials.add(triangle_color)),
+                Visibility::Visible,
             ));
         });
     let bot = meshes.add(Circle::new(PLAYER_RADIUS));
@@ -506,17 +515,20 @@ fn face_all(
     }
 }
 
-// FIXME(skend): can only one update func have mut access to CannonModel transform?
-// seems unlikely i would have gotten this far if that were true
 fn aim_cannon(
-    //mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
     mut cannon: Query<&mut Transform, With<CannonModel>>,
-    player_transform: Query<
+    player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
+    ship_transform: Query<
         &Transform,
-        (With<Player>, Without<CannonModel>),
+        (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
     >,
-    ship_transform: Query<&Transform, (With<ShipModel>, (Without<Player>, Without<CannonModel>))>,
-    bot_location: Query<&Transform, (With<Bot>, (Without<Player>, Without<CannonModel>, Without<ShipModel>))>,
+    bot_location: Query<
+        &Transform,
+        (
+            With<Bot>,
+            (Without<Player>, Without<CannonModel>, Without<ShipModel>),
+        ),
+    >,
 ) {
     // find the location of the bot
     // FIXME(skend): just in general, i have a lot of single() and single_mut()s
@@ -529,8 +541,8 @@ fn aim_cannon(
     let s = ship_transform.single();
     // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
     // is roughly true
-    //let delta_loc = (bot_loc - p.translation.xy()).normalize();
-    let delta_loc = (bot_loc - p.translation.xy());
+    let delta_loc = bot_loc
+        - (p.translation.xy() + s.translation.xy() + c.translation.xy());
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
