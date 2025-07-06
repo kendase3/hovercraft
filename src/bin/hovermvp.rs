@@ -60,6 +60,10 @@ struct Proclamation;
 #[derive(Component)]
 struct Facing;
 
+// like facing but also rotate around the center of the parent
+#[derive(Component)]
+struct RotFacing;
+
 #[derive(Component)]
 struct Target;
 
@@ -379,12 +383,12 @@ fn setup(
                 Visibility::Hidden,
             ));
             parent.spawn((
-                Facing,
+                RotFacing,
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
                 Transform {
-                    translation: Vec3::new(PLAYER_RADIUS * 0.8, 0.0, 0.0),
+                    translation: Vec3::new(FACING_INDICATOR_OUTER_SIZE * 0.8, 0.0, 0.0),
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
@@ -505,6 +509,17 @@ fn handle_tag(
 }
 
 fn face_all(
+    mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
+    player_query: Query<&Player>,
+) {
+    for (mut facer, parent) in &mut facers_query {
+        if let Ok(player) = player_query.get(parent.get()) {
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+        }
+    }
+}
+
+fn rotface_all(
     mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
     player_query: Query<&Player>,
 ) {
