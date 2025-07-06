@@ -521,13 +521,11 @@ fn aim_cannon(
     let mut c = cannon.single_mut();
     // FIXME(skend): even if i get this working, i will need to rotate
     // relative to world, not to parent
-    /*
     let delta_loc = bot_loc - c.translation.xy().normalize();
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
     c.rotate_z(radians);
-    */
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
