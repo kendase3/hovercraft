@@ -41,6 +41,8 @@ const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 const MAX_FRAMERATE: f32 = 60.;
 const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
+// TODO(skend): simplify these and they do not have to be constants
+// half of them like "shrinker" are just inline for some reason
 const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.5;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
@@ -321,12 +323,18 @@ fn setup(
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
     // sin and cos same for 45 case
-    let fortyfivepoint = (NOTCH_TRIANGLE_RADIUS_KINDOF * (45.0 as f32).to_radians().sin());
+    let kewlangle = 30.;
+    let shrinker = 0.15;
+    let fortyfivepoint_sin =
+        (NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().sin());
+    let fortyfivepoint_cos =
+        (NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().cos());
     // TODO(skend): just do vector math instead of doing this 3 times
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::X * NOTCH_TRIANGLE_RADIUS_KINDOF,
-        Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
-        Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
+        (Vec2::X * NOTCH_TRIANGLE_RADIUS_KINDOF) * shrinker,
+        (Vec2::new(-1. * fortyfivepoint_sin, -1. * fortyfivepoint_cos))
+            * shrinker,
+        (Vec2::new(-1. * fortyfivepoint_sin, fortyfivepoint_cos)) * shrinker,
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
@@ -339,7 +347,7 @@ fn setup(
     };
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
-    let notch_offset = Vec3::new(NOTCH_OUTER_SIZE * 0.8, 0., 0.);
+    let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
             Player {
