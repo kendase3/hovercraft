@@ -525,6 +525,7 @@ fn rotface_all(
 ) {
     for (mut facer, parent, offset) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
+            // we apply our intended offset from spawn to our new relative angle
             facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
             facer.translation = facer.rotation * offset.0;
         }
