@@ -44,7 +44,7 @@ const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 // TODO(skend): simplify these and they do not have to be constants
 // half of them like "shrinker" are just inline for some reason
 const NOTCH_OUTER_SIZE: f32 = 5.;
-const NOTCH_INNER_SIZE: f32 = 4.5;
+const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const NOTCH_TRIANGLE_SIZEISH: f32 = 0.5;
 
