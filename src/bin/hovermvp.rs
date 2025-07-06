@@ -527,15 +527,15 @@ fn aim_cannon(
     let p = parent_rotation.single().rotation;
     // FIXME(skend): even if i get this working, i will need to rotate
     // relative to world, not to parent
-    let delta_loc = bot_loc - c.translation.xy().normalize();
+    //let delta_loc = (bot_loc - c.translation.xy()).normalize();
+    let delta_loc = (c.translation.xy() - bot_loc).normalize();
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
-    //c.rotate_z(radians);
-    //c.rotate_z(PI);
+    //c.rotate_z(0.1);
+    // FIXME(skend): not sure how to undo the parent rotation and then
+    // apply this rotation
     c.rotation = Quat::from_rotation_z(radians) * p.inverse();
-    // FIXME(skend): even rotating by zero breaks it?
-    //c.rotation = Quat::from_rotation_z(0.);
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
