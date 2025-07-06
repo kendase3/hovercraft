@@ -508,8 +508,8 @@ fn face_all(
 // FIXME(skend): can only one update func have mut access to CannonModel transform?
 // seems unlikely i would have gotten this far if that were true
 fn aim_cannon(
-    //mut cannon: Query<&mut Transform, With<CannonModel>>,
-    mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
+    //mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
+    mut cannon: Query<(&mut Transform), With<CannonModel>>,
     bot_location: Query<&Transform, (With<Bot>, Without<CannonModel>)>,
 ) {
     // find the location of the bot
