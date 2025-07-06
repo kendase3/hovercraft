@@ -337,7 +337,6 @@ fn setup(
         (Vec2::new(-1. * triangle_sin, -1. * triangle_cos)) * shrinker,
         (Vec2::new(-1. * triangle_sin, triangle_cos)) * shrinker,
     ));
-    let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let planet_color = Color::srgb(0.0, 1.0, 0.0);
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
@@ -409,7 +408,6 @@ fn setup(
                 Visibility::Visible,
             ));
         });
-    let bot = meshes.add(Circle::new(BOT_RADIUS));
     let bot_target = meshes
         .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
     let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
@@ -417,9 +415,8 @@ fn setup(
         .spawn((
             Bot { it: true },
             Name::new("Antagonist"),
-            Mesh2d(bot),
-            MeshMaterial2d(materials.add(bot_color)),
             Transform::from_xyz(50.0, 0.0, 0.0),
+            Visibility::Hidden,
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_MAX_VELOCITY,
@@ -431,14 +428,18 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                Text2d::new("@"),
-                text_font
-                    .clone()
-                    .with_font_smoothing(FontSmoothing::AntiAliased),
-                TextLayout::new_with_justify(JustifyText::Center),
-                TextColor(Color::srgb(1., 0., 0.)),
-                Transform::from_xyz(0.0, 0.0, 0.0)
-                    .with_scale(Vec3::splat(0.2)),
+                SceneRoot(asset_server.load(
+                    GltfAssetLabel::Scene(0).from_asset("models/gubbins2.glb"),
+                )),
+                // NB(skend): notably does nothing
+                Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    rotation: Quat::default(),
+                    scale: Vec3::new(1.0, 1.0, 1.0),
+                },
+                Visibility::Visible,
+                //Facing,
+                ShipModel,
             ));
             parent.spawn((
                 Mesh2d(bot_target),
@@ -565,22 +566,28 @@ fn aim_cannon(
     // and i want both.
     let bot_loc = bot_location.single().translation.xy();
     // find our location
-    let mut c = cannon.single_mut();
-    let p = player_transform.single();
-    let s = ship_transform.single();
-    // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
-    // is roughly true
-    let delta_loc = bot_loc
-        - (p.translation.xy() + s.translation.xy() + c.translation.xy());
-    // find the angle toward the bot
-    let radians = delta_loc.y.atan2(delta_loc.x);
-    // rotate the cannon that way
-    // just checked and the cannon does in fact rotate
-    //c.rotate_z(0.1);
-    //info!("the angle in degrees is {}", radians * (180. / PI));
-    c.rotation = Quat::from_rotation_z(radians) * s.rotation.inverse();
-    // TODO(skend): just point forward if no target
-    // TODO(skend): the cannon should angular-accelerate
+    //let mut c = cannon.single_mut();
+    for mut c in cannon.iter_mut() {
+        let p = player_transform.single();
+        //let s = ship_transform.single();
+        for s in ship_transform.iter() {
+            // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
+            // is roughly true
+            let delta_loc = bot_loc
+                - (p.translation.xy()
+                    + s.translation.xy()
+                    + c.translation.xy());
+            // find the angle toward the bot
+            let radians = delta_loc.y.atan2(delta_loc.x);
+            // rotate the cannon that way
+            // just checked and the cannon does in fact rotate
+            //c.rotate_z(0.1);
+            //info!("the angle in degrees is {}", radians * (180. / PI));
+            c.rotation = Quat::from_rotation_z(radians) * s.rotation.inverse();
+        }
+        // TODO(skend): just point forward if no target
+        // TODO(skend): the cannon should angular-accelerate
+    }
 }
 
 fn move_player(
