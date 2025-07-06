@@ -327,16 +327,15 @@ fn setup(
     // sin and cos same for 45 case
     let kewlangle = 30.;
     let shrinker = 0.15;
-    let fortyfivepoint_sin =
+    let triangle_sin =
         NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().sin();
-    let fortyfivepoint_cos =
+    let triangle_cos =
         NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().cos();
     // TODO(skend): just do vector math instead of doing this 3 times
     let player_facing_triangle = meshes.add(Triangle2d::new(
         (Vec2::X * NOTCH_TRIANGLE_RADIUS_KINDOF) * shrinker,
-        (Vec2::new(-1. * fortyfivepoint_sin, -1. * fortyfivepoint_cos))
-            * shrinker,
-        (Vec2::new(-1. * fortyfivepoint_sin, fortyfivepoint_cos)) * shrinker,
+        (Vec2::new(-1. * triangle_sin, -1. * triangle_cos)) * shrinker,
+        (Vec2::new(-1. * triangle_sin, triangle_cos)) * shrinker,
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
