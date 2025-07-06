@@ -513,7 +513,7 @@ fn aim_cannon(
     mut cannon: Query<(&mut Transform), With<CannonModel>>,
     parent_transform: Query<
         &Transform,
-        (With<ShipModel>, Without<CannonModel>),
+        (With<Player>, Without<CannonModel>),
     >,
     bot_location: Query<&Transform, (With<Bot>, Without<CannonModel>)>,
 ) {
