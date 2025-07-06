@@ -172,7 +172,7 @@ fn main() {
                 //handle_target,
             ),
         )
-        .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
+        //.add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
