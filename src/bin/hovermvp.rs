@@ -511,7 +511,7 @@ fn face_all(
 fn aim_cannon(
     //mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
     mut cannon: Query<(&mut Transform), With<CannonModel>>,
-    parent_rotation: Query<
+    parent_transform: Query<
         &Transform,
         (With<ShipModel>, Without<CannonModel>),
     >,
@@ -524,11 +524,13 @@ fn aim_cannon(
     let bot_loc = bot_location.single().translation.xy();
     // find our location
     let mut c = cannon.single_mut();
-    let p = parent_rotation.single().rotation;
+    let p = parent_transform.single();
     // FIXME(skend): even if i get this working, i will need to rotate
     // relative to world, not to parent
     //let delta_loc = (bot_loc - c.translation.xy()).normalize();
-    let delta_loc = (c.translation.xy() - bot_loc).normalize();
+    // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
+    // is roughly true
+    let delta_loc = (p.translation.xy() - bot_loc).normalize();
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
@@ -537,7 +539,7 @@ fn aim_cannon(
     // FIXME(skend): not sure how to undo the parent rotation and then
     // apply this rotation
     info!("the angle in degrees is {}", radians * (180. / PI));
-    c.rotation = Quat::from_rotation_z(radians) * p.inverse();
+    c.rotation = Quat::from_rotation_z(radians) * p.rotation.inverse();
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
