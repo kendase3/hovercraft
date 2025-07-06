@@ -735,12 +735,13 @@ fn draw_map(
                 get_random_color().to_f32_array(),
             ];
             plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+            let repeat_material = materials.add(StandardMaterial {
+                base_color: Color::from(PURPLE),
+                ..default()
+            });
             commands.spawn((
                 Mesh3d(meshes.add(plane)),
-                MeshMaterial3d(materials.add(StandardMaterial {
-                    base_color: Color::from(PURPLE),
-                    ..default()
-                })),
+                MeshMaterial3d(repeat_material),
                 Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
             ));
         }
