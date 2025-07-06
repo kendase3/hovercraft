@@ -29,7 +29,8 @@ use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
 
-const PLAYER_RADIUS: f32 = 10.;
+const BOT_RADIUS: f32 = 10.;
+const PLANET_RADIUS: f32 = 15.;
 const GRID_SIZE: f32 = 10.;
 // TODO(skend): chunks
 //const CHUNK_SIZE: f32 = GRID_SIZE * 2.;
@@ -40,6 +41,12 @@ const ORBIT_DISTANCE: f32 = 50.;
 const ORBIT_CALC_INTERVAL: f32 = 0.2; // in seconds
 const MAX_FRAMERATE: f32 = 60.;
 const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
+// TODO(skend): simplify these and they do not have to be constants
+// half of them like "shrinker" are just inline for some reason
+const NOTCH_OUTER_SIZE: f32 = 5.;
+const NOTCH_INNER_SIZE: f32 = 4.5;
+const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
+const NOTCH_TRIANGLE_SIZEISH: f32 = 0.5;
 
 #[derive(Component)]
 struct Player {
@@ -86,6 +93,9 @@ struct ShipModel;
 // these
 #[derive(Component)]
 struct CannonModel;
+
+#[derive(Component)]
+struct NotchOffset(pub Vec3);
 
 #[derive(Resource, Default)]
 struct CannonInitialized(bool);
@@ -166,6 +176,7 @@ fn main() {
             (
                 move_player,
                 face_all,
+                rotface_all,
                 move_bot,
                 handle_tag,
                 camera_follow,
@@ -211,7 +222,6 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 fn touch_ship(
-    time: Res<Time>,
     ship_stuff: Query<Entity, With<ShipModel>>,
     children: Query<&Children>,
     q_name: Query<&Name>,
@@ -223,14 +233,11 @@ fn touch_ship(
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
                 if name_success.as_str() == "cannon" {
-                    info!("found our cannon");
+                    //info!("found our cannon");
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
-                        // FIXME(skend): not sure whether this should use facing
-                        //entity_commands.insert(Facing {});
-                        //entity_commands.insert(Transform::default());
                         entity_commands.insert(Visibility::Visible);
                         cannon_initialized.0 = true;
                     }
@@ -316,11 +323,18 @@ fn setup(
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
     // sin and cos same for 45 case
-    let fortyfivepoint = PLAYER_RADIUS * (45.0 as f32).to_radians().sin();
+    let kewlangle = 30.;
+    let shrinker = 0.15;
+    let fortyfivepoint_sin =
+        (NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().sin());
+    let fortyfivepoint_cos =
+        (NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().cos());
+    // TODO(skend): just do vector math instead of doing this 3 times
     let player_facing_triangle = meshes.add(Triangle2d::new(
-        Vec2::X * PLAYER_RADIUS,
-        Vec2::new(-1. * fortyfivepoint, -1. * fortyfivepoint),
-        Vec2::new(-1. * fortyfivepoint, fortyfivepoint),
+        (Vec2::X * NOTCH_TRIANGLE_RADIUS_KINDOF) * shrinker,
+        (Vec2::new(-1. * fortyfivepoint_sin, -1. * fortyfivepoint_cos))
+            * shrinker,
+        (Vec2::new(-1. * fortyfivepoint_sin, fortyfivepoint_cos)) * shrinker,
     ));
     let bot_color = Color::srgb(0.0, 0.0, 0.0);
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
@@ -331,6 +345,9 @@ fn setup(
         font_size: 100.0,
         ..default()
     };
+    let notch_circle =
+        meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
+    let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
             Player {
@@ -375,23 +392,26 @@ fn setup(
                 Visibility::Hidden,
             ));
             parent.spawn((
-                Facing,
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
                 Transform {
-                    translation: Vec3::new(PLAYER_RADIUS * 0.8, 0.0, 0.0),
+                    translation: notch_offset,
                     rotation: default(),
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
+                NotchOffset(notch_offset),
+            ));
+            parent.spawn((
+                Mesh2d(notch_circle),
+                MeshMaterial2d(materials.add(triangle_color)),
+                Visibility::Visible,
             ));
         });
-    let bot = meshes.add(Circle::new(PLAYER_RADIUS));
-    let bot_target = meshes.add(Mesh::from(Rectangle::new(
-        PLAYER_RADIUS * 2.,
-        PLAYER_RADIUS * 2.,
-    )));
-    let planet1 = meshes.add(Circle::new(PLAYER_RADIUS * 2.));
+    let bot = meshes.add(Circle::new(BOT_RADIUS));
+    let bot_target = meshes
+        .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
+    let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
     commands
         .spawn((
             Bot { it: true },
@@ -476,7 +496,8 @@ fn handle_tag(
     let y_delta = (b_t.translation.y - p_t.translation.y).abs();
     // if there's a timer that's done, set tagready to ready
     let distance = (x_delta.powf(2.) + y_delta.powf(2.)).sqrt();
-    if tagr.ready && distance < 2. * PLAYER_RADIUS {
+    // FIXME(skend): player does not really have an obvious radius anymore
+    if tagr.ready && distance < 2. * BOT_RADIUS {
         info!("you're gaming!");
         p.it = !p.it;
         b.it = !b.it;
@@ -506,17 +527,36 @@ fn face_all(
     }
 }
 
-// FIXME(skend): can only one update func have mut access to CannonModel transform?
-// seems unlikely i would have gotten this far if that were true
-fn aim_cannon(
-    //mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
-    mut cannon: Query<&mut Transform, With<CannonModel>>,
-    player_transform: Query<
-        &Transform,
-        (With<Player>, Without<CannonModel>),
+fn rotface_all(
+    mut facers_query: Query<
+        (&mut Transform, &Parent, &NotchOffset),
+        With<NotchOffset>,
     >,
-    ship_transform: Query<&Transform, (With<ShipModel>, (Without<Player>, Without<CannonModel>))>,
-    bot_location: Query<&Transform, (With<Bot>, (Without<Player>, Without<CannonModel>, Without<ShipModel>))>,
+    player_query: Query<&Player>,
+) {
+    for (mut facer, parent, offset) in &mut facers_query {
+        if let Ok(player) = player_query.get(parent.get()) {
+            // we apply our intended offset from spawn to our new relative angle
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+            facer.translation = facer.rotation * offset.0;
+        }
+    }
+}
+
+fn aim_cannon(
+    mut cannon: Query<&mut Transform, With<CannonModel>>,
+    player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
+    ship_transform: Query<
+        &Transform,
+        (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
+    >,
+    bot_location: Query<
+        &Transform,
+        (
+            With<Bot>,
+            (Without<Player>, Without<CannonModel>, Without<ShipModel>),
+        ),
+    >,
 ) {
     // find the location of the bot
     // FIXME(skend): just in general, i have a lot of single() and single_mut()s
@@ -529,8 +569,8 @@ fn aim_cannon(
     let s = ship_transform.single();
     // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
     // is roughly true
-    //let delta_loc = (bot_loc - p.translation.xy()).normalize();
-    let delta_loc = (bot_loc - p.translation.xy());
+    let delta_loc = bot_loc
+        - (p.translation.xy() + s.translation.xy() + c.translation.xy());
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
     // rotate the cannon that way
