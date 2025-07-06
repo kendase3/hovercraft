@@ -188,7 +188,7 @@ fn main() {
         .run();
 }
 
-// FIXME(skend): no output yet
+// FIXME(skend): doesn't do anything yet
 fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -214,7 +214,6 @@ fn touch_ship(
     time: Res<Time>,
     ship_stuff: Query<Entity, With<ShipModel>>,
     children: Query<&Children>,
-    mut transforms: Query<&mut Transform>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
@@ -230,7 +229,7 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         // FIXME(skend): not sure whether this should use facing
-                        entity_commands.insert(Facing {});
+                        //entity_commands.insert(Facing {});
                         entity_commands.insert(Transform::default());
                         cannon_initialized.0 = true;
                     }
@@ -576,7 +575,7 @@ fn move_bot(
             &mut physics::Velocity,
             &mut physics::Acceleration,
         ),
-        With<Bot>,
+        (With<Bot>, Without<CannonModel>),
     >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
