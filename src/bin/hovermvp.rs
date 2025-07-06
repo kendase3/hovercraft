@@ -159,20 +159,20 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
-        .add_systems(Startup, (draw_map, setup, init_ui))
+        .add_systems(Startup, (draw_map, setup))
         .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
-        .add_systems(
-            Update,
-            (
-                move_player,
+        //.add_systems(
+        //    Update,
+        //    (
+                //move_player,
                 //face_all,
                 //move_bot,
                 //handle_tag,
-                camera_follow,
+                //camera_follow,
                 //handle_target,
-            ),
-        )
-        //.add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
+        //    ),
+        //)
+        .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
@@ -188,6 +188,7 @@ fn main() {
 }
 
 // FIXME(skend): doesn't do anything yet
+// run at startup when it's ready
 fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
