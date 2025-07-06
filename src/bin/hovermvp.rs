@@ -160,7 +160,7 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .add_systems(Startup, (draw_map, setup))
-        .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
+        //.add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
         .add_systems(
             Update,
             (
@@ -172,7 +172,7 @@ fn main() {
                 handle_target,
             ),
         )
-        .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
+        //.add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
@@ -231,6 +231,7 @@ fn touch_ship(
                         // FIXME(skend): not sure whether this should use facing
                         //entity_commands.insert(Facing {});
                         entity_commands.insert(Transform::default());
+                        entity_commands.insert(Visibility::Visible);
                         cannon_initialized.0 = true;
                     }
                 }
@@ -351,7 +352,7 @@ fn setup(
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_5.glb"),
+                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_6.glb"),
                 )),
                 // NB(skend): notably does nothing
                 Transform {
@@ -528,7 +529,8 @@ fn aim_cannon(
     //c.rotate_z(radians);
     //c.rotate_z(PI);
     //c.rotation = Quat::from_rotation_z(PI);
-    c.rotation = Quat::from_rotation_z(0.);
+    // FIXME(skend): even rotating by zero breaks it?
+    //c.rotation = Quat::from_rotation_z(0.);
     // TODO(skend): just point forward if no target
     // TODO(skend): the cannon should angular-accelerate
 }
