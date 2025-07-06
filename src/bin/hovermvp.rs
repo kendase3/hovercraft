@@ -229,7 +229,8 @@ fn touch_ship(
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
-                        //entity_commands.insert(Facing {});
+                        // FIXME(skend): not sure whether this should use facing
+                        entity_commands.insert(Facing {});
                         entity_commands.insert(Transform::default());
                         cannon_initialized.0 = true;
                     }
@@ -508,7 +509,8 @@ fn face_all(
 // FIXME(skend): can only one update func have mut access to CannonModel transform?
 // seems unlikely i would have gotten this far if that were true
 fn aim_cannon(
-    mut cannon: Query<&mut Transform, With<CannonModel>>,
+    //mut cannon: Query<&mut Transform, With<CannonModel>>,
+    mut cannon: Query<(&mut Facing, &mut Transform), With<CannonModel>>,
     bot_location: Query<&Transform, (With<Bot>, Without<CannonModel>)>,
 ) {
     // find the location of the bot
@@ -517,8 +519,10 @@ fn aim_cannon(
     // and i want both.
     let bot_loc = bot_location.single().translation.xy();
     // find our location
-    /*
     let mut c = cannon.single_mut();
+    // FIXME(skend): even if i get this working, i will need to rotate
+    // relative to world, not to parent
+    /*
     let delta_loc = bot_loc - c.translation.xy().normalize();
     // find the angle toward the bot
     let radians = delta_loc.y.atan2(delta_loc.x);
