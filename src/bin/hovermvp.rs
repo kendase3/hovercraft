@@ -170,7 +170,6 @@ fn main() {
                 handle_tag,
                 camera_follow,
                 handle_target,
-                aim_cannon,
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
