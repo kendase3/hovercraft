@@ -46,7 +46,6 @@ const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
-const NOTCH_TRIANGLE_SIZEISH: f32 = 0.5;
 
 #[derive(Component)]
 struct Player {
@@ -200,6 +199,8 @@ fn main() {
 
 // FIXME(skend): doesn't do anything yet
 // run at startup when it's ready
+//
+/*
 fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -220,6 +221,7 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
     ));
 }
+*/
 
 fn touch_ship(
     ship_stuff: Query<Entity, With<ShipModel>>,
@@ -326,9 +328,9 @@ fn setup(
     let kewlangle = 30.;
     let shrinker = 0.15;
     let fortyfivepoint_sin =
-        (NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().sin());
+        NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().sin();
     let fortyfivepoint_cos =
-        (NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().cos());
+        NOTCH_TRIANGLE_RADIUS_KINDOF * (kewlangle as f32).to_radians().cos();
     // TODO(skend): just do vector math instead of doing this 3 times
     let player_facing_triangle = meshes.add(Triangle2d::new(
         (Vec2::X * NOTCH_TRIANGLE_RADIUS_KINDOF) * shrinker,
@@ -705,6 +707,7 @@ fn draw_map(
             .step_by(GRID_SIZE as usize)
         {
             let center = Vec3::new(x as f32, y as f32, 0.0);
+            /*
             let mut matl = |color| {
                 materials.add(StandardMaterial {
                     base_color: color,
@@ -714,6 +717,7 @@ fn draw_map(
                     ..default()
                 })
             };
+            */
             let mut plane = Mesh::from(
                 Plane3d {
                     normal: Dir3::Z,
@@ -734,7 +738,10 @@ fn draw_map(
             plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
             commands.spawn((
                 Mesh3d(meshes.add(plane)),
-                MeshMaterial3d(matl(Color::from(PURPLE))),
+                MeshMaterial3d(materials.add(StandardMaterial {
+                    base_color: Color::from(PURPLE),
+                    ..default()
+                })),
                 Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
             ));
         }
