@@ -61,10 +61,6 @@ struct Proclamation;
 #[derive(Component)]
 struct Facing;
 
-// like facing but also rotate around the center of the parent
-#[derive(Component)]
-struct RotFacing;
-
 #[derive(Component)]
 struct Target;
 
@@ -385,7 +381,6 @@ fn setup(
                 Visibility::Hidden,
             ));
             parent.spawn((
-                RotFacing,
                 Mesh2d(player_facing_triangle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
@@ -524,7 +519,7 @@ fn face_all(
 fn rotface_all(
     mut facers_query: Query<
         (&mut Transform, &Parent, &NotchOffset),
-        (With<RotFacing>, With<NotchOffset>),
+        With<NotchOffset>,
     >,
     player_query: Query<&Player>,
 ) {
