@@ -64,6 +64,10 @@ struct Proclamation;
 #[derive(Component)]
 struct Facing;
 
+// FIXME(skend): this is just for the GUI element to target things currently
+// what doesn't map very well is that bots will also have targets. there
+// won't be a GUI indicator but we will still need to do target lookup
+// for aiming etc.
 #[derive(Component)]
 struct Target;
 
@@ -567,6 +571,7 @@ fn aim_cannon(
     let bot_loc = bot_location.single().translation.xy();
     // find our location
     //let mut c = cannon.single_mut();
+    // TODO(skend): for each cannon, have to find its target
     for mut c in cannon.iter_mut() {
         let p = player_transform.single();
         //let s = ship_transform.single();
