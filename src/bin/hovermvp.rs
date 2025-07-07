@@ -53,6 +53,10 @@ struct Player {
     facing: f32,
 }
 
+// FIXME(skend): design crutch i think
+#[derive(Component)]
+struct PlayerSub;
+
 #[derive(Component)]
 struct Bot {
     it: bool,
@@ -227,6 +231,13 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
+// FIXME(skend): even with our design crutch
+// we will need to know whether to append PlayerSub
+// or BotSub component to the cannon.
+// We will need to crawl up the parents to see
+// which one we are. That sounds rather annoying to
+// implement and then debug but once it's done
+// it's done.
 fn touch_ship(
     ship_stuff: Query<Entity, With<ShipModel>>,
     children: Query<&Children>,
