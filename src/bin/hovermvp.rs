@@ -530,10 +530,16 @@ fn handle_tag(
 fn face_all(
     mut facers_query: Query<(&mut Transform, &Parent, &Facing)>,
     player_query: Query<&Player>,
+    bot_query: Query<&Bot>,
 ) {
+    // FIXME(skend): why do i even have to check parent here?
+    // in my current setup, all facers have the info they need
+    // and they should all face, that's why they're facers
     for (mut facer, parent, facing) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
             facer.rotation = Quat::from_axis_angle(Vec3::Z, facing.0);
+        }
+        else if let Ok(bot) = bot_query.get(parent.get()) {
         }
     }
 }
