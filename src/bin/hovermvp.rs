@@ -409,6 +409,7 @@ fn setup(
                     scale: Vec3::new(0.2, 0.2, 1.0),
                 },
                 NotchOffset(notch_offset),
+                PlayerSub,
             ));
             parent.spawn((
                 Mesh2d(notch_circle),
@@ -527,7 +528,7 @@ fn handle_tag(
     }
 }
 
-fn face_all(mut facers_query: Query<(&mut Transform, &Facing)>) {
+fn face_all(mut facers_query: Query<(&mut Transform, &Facing), Without<NotchOffset>>) {
     // FIXME(skend): why do i even have to check parent here?
     // in my current setup, all facers have the info they need
     // and they should all face, that's why they're facers
@@ -536,7 +537,7 @@ fn face_all(mut facers_query: Query<(&mut Transform, &Facing)>) {
     }
 }
 
-// FIXME(skend): make this work for the bot too but should be fine for now
+// FIXME(skend): i super broke this
 fn rotface_all(
     mut facers_query: Query<(&mut Transform, &NotchOffset, &Facing)>,
 ) {
@@ -597,9 +598,6 @@ fn aim_cannon(
 }
 
 fn move_player(
-    // FIXME(skend): the facing is on a child entity, not the player
-    // so i guess we have to...iterate over the children to find facing?
-    // is it better to call from the child and call parent?
     mut qsubplayers: Query<&mut Facing, With<PlayerSub>>,
     mut qaccel: Query<&mut Acceleration, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
