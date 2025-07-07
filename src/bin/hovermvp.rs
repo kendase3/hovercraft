@@ -549,6 +549,7 @@ fn rotface_all(
     }
 }
 
+// FIXME(skend): i broke this even before i did my reworks in the kendall-combat-09 branch
 fn aim_cannon(
     mut cannon: Query<&mut Transform, With<CannonModel>>,
     player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
