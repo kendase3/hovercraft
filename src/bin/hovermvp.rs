@@ -57,6 +57,9 @@ struct Player {
 struct PlayerSub;
 
 #[derive(Component)]
+struct BotSub;
+
+#[derive(Component)]
 struct Bot {
     it: bool,
 }
@@ -445,6 +448,7 @@ fn setup(
                 Visibility::Visible,
                 Facing(0.0),
                 ShipModel,
+                BotSub,
             ));
             parent.spawn((
                 Mesh2d(bot_target),
@@ -648,6 +652,7 @@ fn move_bot(
         (With<Bot>, Without<CannonModel>),
     >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
+    mut qfacing: Query<&mut Facing, With<BotSub>>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
@@ -673,6 +678,10 @@ fn move_bot(
     // on our current velocity
     let accel_direction = (desired_move_vector - b_v.0.xy()).normalize();
     b_a.0 = accel_direction.extend(0.);
+
+    let accel_radians = accel_direction.y.atan2(accel_direction.x);
+    let mut facing = qfacing.single_mut();
+    facing.0 = accel_radians;
 }
 
 fn camera_follow(
