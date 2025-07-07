@@ -50,8 +50,11 @@ const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 #[derive(Component)]
 struct Player {
     it: bool,
-    facing: f32,
 }
+
+// FIXME(skend): just design pattern smell for now
+#[derive(Component)]
+struct PlayerSub;
 
 #[derive(Component)]
 struct Bot {
@@ -62,7 +65,7 @@ struct Bot {
 struct Proclamation;
 
 #[derive(Component)]
-struct Facing;
+struct Facing(f32);
 
 // FIXME(skend): this is just for the GUI element to target things currently
 // what doesn't map very well is that bots will also have targets. there
@@ -354,10 +357,7 @@ fn setup(
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
-            Player {
-                it: false,
-                facing: 0.0,
-            },
+            Player { it: false },
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
                 physics::PLAYER_MAX_VELOCITY,
@@ -382,8 +382,9 @@ fn setup(
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
                 Visibility::Visible,
-                Facing,
+                Facing(0.0),
                 ShipModel,
+                PlayerSub,
             ));
             parent.spawn((
                 Text2d::new("@"),
@@ -442,7 +443,7 @@ fn setup(
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
                 Visibility::Visible,
-                //Facing,
+                Facing(0.0),
                 ShipModel,
             ));
             parent.spawn((
@@ -523,27 +524,28 @@ fn handle_tag(
 }
 
 fn face_all(
-    mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
+    mut facers_query: Query<(&mut Transform, &Parent, &Facing)>,
     player_query: Query<&Player>,
 ) {
-    for (mut facer, parent) in &mut facers_query {
+    for (mut facer, parent, facing) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, facing.0);
         }
     }
 }
 
+// FIXME(skend): make this work for the bot too but should be fine for now
 fn rotface_all(
     mut facers_query: Query<
-        (&mut Transform, &Parent, &NotchOffset),
+        (&mut Transform, &Parent, &NotchOffset, &Facing),
         With<NotchOffset>,
     >,
     player_query: Query<&Player>,
 ) {
-    for (mut facer, parent, offset) in &mut facers_query {
+    for (mut facer, parent, offset, facing) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
             // we apply our intended offset from spawn to our new relative angle
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, facing.0);
             facer.translation = facer.rotation * offset.0;
         }
     }
@@ -596,7 +598,11 @@ fn aim_cannon(
 }
 
 fn move_player(
-    mut players: Query<(&mut Acceleration, &mut Player)>,
+    // FIXME(skend): the facing is on a child entity, not the player
+    // so i guess we have to...iterate over the children to find facing?
+    // is it better to call from the child and call parent?
+    mut qsubplayers: Query<&mut Facing, With<PlayerSub>>,
+    mut qaccel: Query<&mut Acceleration, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
@@ -614,7 +620,8 @@ fn move_player(
         direction.x -= 1.0;
     }
 
-    let (mut accel, mut play) = players.single_mut();
+    let mut facing = qsubplayers.single_mut();
+    let mut accel = qaccel.single_mut();
     let n_direction;
     if direction != Vec3::ZERO {
         n_direction = direction.normalize(); // likely unnecessary
@@ -627,7 +634,7 @@ fn move_player(
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
-        play.facing = n_direction.y.atan2(n_direction.x);
+        facing.0 = n_direction.y.atan2(n_direction.x);
     }
 }
 
