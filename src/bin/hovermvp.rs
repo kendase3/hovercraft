@@ -58,6 +58,9 @@ struct Player {
 struct PlayerSub;
 
 #[derive(Component)]
+struct BotSub;
+
+#[derive(Component)]
 struct Bot {
     it: bool,
 }
@@ -239,13 +242,15 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 // implement and then debug but once it's done
 // it's done.
 fn touch_ship(
-    ship_stuff: Query<Entity, With<ShipModel>>,
+    ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
+    player_query: Query<&Player>,
+    bot_query: Query<&Bot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
 ) {
-    for ship_gubbins in &ship_stuff {
+    for (ship_gubbins, parent) in &ship_stuff {
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
@@ -256,6 +261,12 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
+                        // then its parent is a player
+                        if let Ok(player) = player_query.get(parent.get()) {
+                            entity_commands.insert(PlayerSub {});
+                        } else if let Ok(bot) = bot_query.get(parent.get()) {
+                            entity_commands.insert(BotSub {});
+                        }
                         cannon_initialized.0 = true;
                     }
                 }
