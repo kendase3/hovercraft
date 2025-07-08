@@ -262,9 +262,9 @@ fn touch_ship(
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
                         // then its parent is a player
-                        if let Ok(player) = player_query.get(parent.get()) {
+                        if let Ok(_) = player_query.get(parent.get()) {
                             entity_commands.insert(PlayerSub {});
-                        } else if let Ok(bot) = bot_query.get(parent.get()) {
+                        } else if let Ok(_) = bot_query.get(parent.get()) {
                             entity_commands.insert(BotSub {});
                         }
                         cannon_initialized.0 = true;
@@ -406,6 +406,7 @@ fn setup(
                 Visibility::Visible,
                 Facing,
                 ShipModel,
+                PlayerSub,
             ));
             parent.spawn((
                 Text2d::new("@"),
@@ -576,11 +577,16 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut cannon: Query<&mut Transform, With<CannonModel>>,
+    mut cannon: Query<&mut Transform, (With<CannonModel>, With<PlayerSub>)>,
     player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
     ship_transform: Query<
         &Transform,
-        (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
+        (
+            With<ShipModel>,
+            With<PlayerSub>,
+            Without<Player>,
+            Without<CannonModel>,
+        ),
     >,
     bot_location: Query<
         &Transform,
