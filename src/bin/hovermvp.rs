@@ -797,6 +797,12 @@ fn draw_map(
 
 // FIXME(skend): use tab though
 // also need a cooldown of like .5 seconds to stop multi-press
+// TODO(skend): while a cooldown could be good for some cases,
+// extreme bevy tutorial suggests checking for the pressed key
+// not being pressed, which would then switch a bool and allow
+// the key to be pressed again. so each "new press" would count
+// which is the behavior we would expect. it would be more
+// responsive-feeling than the cooldown idea.
 fn handle_target(
     keys: Res<ButtonInput<KeyCode>>,
     mut botq: Query<&mut Visibility, With<Target>>,
