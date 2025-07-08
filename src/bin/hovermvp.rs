@@ -571,7 +571,10 @@ fn rotface_all(
     }
 }
 
-// FIXME(skend): i broke this even before i did my reworks in the kendall-combat-09 branch
+// FIXME(skend): i believe currently broken for both player and bot, let me check
+// if so, i'll fix the player case first.
+// yeah the player one is no longer adjusting for the angle of its parent, or
+// its grandparent or whatever. i will take a look.
 fn aim_cannon(
     mut cannon: Query<&mut Transform, With<CannonModel>>,
     player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
