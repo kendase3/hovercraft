@@ -644,10 +644,11 @@ fn rotface_all(
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
     mut qcannon: Query<(&mut Transform, &Parent), With<CannonModel>>,
-    qplayers: Query<
-        (&Transform, &Player),
-        (Without<CannonModel>, Without<Bot>),
+    qtransformswithplayers: Query<
+        &Transform, (With<Player>,
+        Without<CannonModel>, Without<Bot>),
     >,
+    qplayer: Query<&Player>,
     ship_transform: Query<
         &Transform,
         (
@@ -657,28 +658,27 @@ fn aim_cannon(
             Without<CannonModel>,
         ),
     >,
-    qbot: Query<
-        (&Transform, &Bot),
-        (Without<Player>, Without<CannonModel>, Without<ShipModel>),
+    qbot: Query<&Bot>,
+    qtransformwithbots: Query<
+        &Transform, (With<Bot>,
+        Without<Player>, Without<CannonModel>, Without<ShipModel>),
     >,
-) {
-    // find the location of the bot
-    // FIXME(skend): just in general, i have a lot of single() and single_mut()s
-    // these will have to become loops to handle multiplayer or multiple bots
-    // and i want both.
-    // find our location
-    //let mut c = cannon.single_mut();
+) { }
     // TODO(skend): for each cannon, have to find its target
-    for (mut c, parent) in qcannon.iter_mut() {
-        info!("aiming a cannon");
-        let cur_parent = parent.get();
+    //for (mut c, parent) in qcannon.iter_mut() {
+    //    info!("aiming a cannon");
+    //    let cur_parent = parent.get();
         //if we successfully found the parent of this cannon
-        if let Ok((p, actual_p)) = qplayers.get(cur_parent) {
+        //if let Ok(player) = qplayer.get(cur_parent) { }
+            /*
+                        // FIXME(skend): we need to query the translation guy with the same target
+                        // id
+            //if let Ok(player_transform) = qtransformwithplayers.get(cur_parent) { } // and then instead use it
             info!("found cannon parent");
             // we need to find the entity we are supposed to be targeting from our parent
             // FIXME(skend): right now just only look in bots from players and vice versa
             // but going forward we will have to search both
-            if let Some(target) = actual_p.get_target() {
+            if let Some(target) = player.get_target() {
                 info!("found target for player case");
                 if let Ok((bot_loc_almost, _)) = qbot.get(target) {
                     info!("set target for player");
@@ -686,7 +686,7 @@ fn aim_cannon(
 
                     for s in ship_transform.iter() {
                         let delta_loc = bot_loc
-                            - (p.translation.xy()
+                            - (PLAYER_TRANSLATION_TODO.translation.xy()
                                 + s.translation.xy()
                                 + c.translation.xy());
                         // find the angle toward the bot
@@ -703,10 +703,10 @@ fn aim_cannon(
                 // TODO(skend): just point forward if no target
                 // TODO(skend): the cannon should angular-accelerate
             }
-        } else if let Ok((b, actual_b)) = qbot.get(cur_parent) {
-            if let Some(target) = actual_b.get_target() {
+        } else if let Ok(bot) = qbot.get(cur_parent) {
+            if let Some(target) = bot.get_target() {
                 info!("found target for bot case");
-                if let Ok((player_loc_almost, _)) = qplayers.get(target) {
+                if let Ok(player_loc_almost) = qplayer.get(target) {
                     info!("set target for bot");
                     let player_loc = player_loc_almost.translation.xy();
 
@@ -729,7 +729,8 @@ fn aim_cannon(
             }
         }
     }
-}
+    */
+//}
 
 fn move_player(
     mut players: Query<(&mut Acceleration, &mut Player)>,
