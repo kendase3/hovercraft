@@ -672,11 +672,16 @@ fn aim_cannon(
     // TODO(skend): for each cannon, have to find its target
     for (mut c, parent) in qcannon.iter_mut() {
         info!("aiming a cannon");
+        let cur_parent = parent.get();
+        // if we successfully found the parent of this cannon
+        // FIXME(skend): the player is actually the _grandparent_ of this cannon.
+        // well that's one breakthrough at least
+        if let Ok(player) = qplayer.get(cur_parent) { 
+            // FIXME(skend): this log never fires
+            info!("found the proud owner of this cannon");
+        }
     }
 }
-//    let cur_parent = parent.get();
-//if we successfully found the parent of this cannon
-//if let Ok(player) = qplayer.get(cur_parent) { }
 /*
                     // FIXME(skend): we need to query the translation guy with the same target
                     // id
