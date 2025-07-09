@@ -50,7 +50,17 @@ const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 pub trait Targeting {
     fn get_target(&self) -> Entity;
     fn set_target(&mut self, entity: Entity);
+    // FIXME(skend): seems like a rather broad query
+    fn get_target_coords(&self, qtransform: &Query<&Transform>) -> Option<Vec2> {
+        let maybe_target = qtransform.get(self.get_target());
+        if let Ok(target) = maybe_target {
+            return Some(target.translation.xy());
+        }
+        None
+    }
 }
+
+// TODO(skend): impl targeting for player
 
 // TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
 // always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
