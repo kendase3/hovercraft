@@ -105,6 +105,10 @@ struct PlayerSub;
 struct BotSub;
 
 // FIXME(skend): if that was a design crutch above then close your eyes for this one
+// FIXME(skend): this name is awful and long. what we are looking for is a player-esque
+// root object that could be a player or could be a bot. bots in this game currently
+// fill the exact same gameplay role as a player. i'm thinking "Dude" since it's
+// short and you might say "move your dude around" so it feels natural
 #[derive(Component)]
 struct PatriarchLink(Entity);
 
