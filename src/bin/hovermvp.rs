@@ -643,17 +643,17 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut qcannon: Query<
-        (&mut Transform, &Parent),
-        (With<CannonModel>, With<PlayerSub>),
+    mut qcannon: Query<(&mut Transform, &Parent), With<CannonModel>>,
+    qplayers: Query<
+        (&Transform, &Player),
+        (Without<CannonModel>, Without<Bot>),
     >,
-    qplayers: Query<(&Transform, &Player), Without<CannonModel>>,
     ship_transform: Query<
         &Transform,
         (
             With<ShipModel>,
-            With<PlayerSub>,
             Without<Player>,
+            Without<Bot>,
             Without<CannonModel>,
         ),
     >,
@@ -670,14 +670,18 @@ fn aim_cannon(
     //let mut c = cannon.single_mut();
     // TODO(skend): for each cannon, have to find its target
     for (mut c, parent) in qcannon.iter_mut() {
+        info!("aiming a cannon");
         let cur_parent = parent.get();
         //if we successfully found the parent of this cannon
         if let Ok((p, actual_p)) = qplayers.get(cur_parent) {
+            info!("found cannon parent");
             // we need to find the entity we are supposed to be targeting from our parent
             // FIXME(skend): right now just only look in bots from players and vice versa
             // but going forward we will have to search both
             if let Some(target) = actual_p.get_target() {
+                info!("found target for player case");
                 if let Ok((bot_loc_almost, _)) = qbot.get(target) {
+                    info!("set target for player");
                     let bot_loc = bot_loc_almost.translation.xy();
 
                     for s in ship_transform.iter() {
@@ -688,7 +692,10 @@ fn aim_cannon(
                         // find the angle toward the bot
                         let radians = delta_loc.y.atan2(delta_loc.x);
                         // rotate the cannon that way
-                        //info!("the angle in degrees is {}", radians * (180. / PI));
+                        info!(
+                            "the angle in degrees is {}",
+                            radians * (180. / PI)
+                        );
                         c.rotation = Quat::from_rotation_z(radians)
                             * s.rotation.inverse();
                     }
@@ -698,7 +705,9 @@ fn aim_cannon(
             }
         } else if let Ok((b, actual_b)) = qbot.get(cur_parent) {
             if let Some(target) = actual_b.get_target() {
+                info!("found target for bot case");
                 if let Ok((player_loc_almost, _)) = qplayers.get(target) {
+                    info!("set target for bot");
                     let player_loc = player_loc_almost.translation.xy();
 
                     for s in ship_transform.iter() {
@@ -709,7 +718,10 @@ fn aim_cannon(
                         // find the angle toward the bot
                         let radians = delta_loc.y.atan2(delta_loc.x);
                         // rotate the cannon that way
-                        //info!("the angle in degrees is {}", radians * (180. / PI));
+                        info!(
+                            "the angle in degrees is {}",
+                            radians * (180. / PI)
+                        );
                         c.rotation = Quat::from_rotation_z(radians)
                             * s.rotation.inverse();
                     }
