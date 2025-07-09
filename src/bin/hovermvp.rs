@@ -75,6 +75,15 @@ impl Targeting for Player {
     }
 }
 
+impl Targeting for Bot {
+    fn get_target(&self) -> Option<Entity> {
+        self.target
+    }
+    fn set_target(&mut self, entity: Entity) {
+        self.target = Some(entity);
+    }
+}
+
 // TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
 // always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
 // likely to hit borrow checkout conflits if i am operating on both players and bots but we'll see
