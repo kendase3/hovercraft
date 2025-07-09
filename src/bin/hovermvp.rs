@@ -697,6 +697,24 @@ fn aim_cannon(
                 // TODO(skend): the cannon should angular-accelerate
             }
         } else if let Ok((b, actual_b)) = qbot.get(cur_parent) {
+            if let Some(target) = actual_b.get_target() {
+                if let Ok((player_loc_almost, _)) = qplayers.get(target) {
+                    let player_loc = player_loc_almost.translation.xy();
+
+                    for s in ship_transform.iter() {
+                        let delta_loc = player_loc
+                            - (b.translation.xy()
+                                + s.translation.xy()
+                                + c.translation.xy());
+                        // find the angle toward the bot
+                        let radians = delta_loc.y.atan2(delta_loc.x);
+                        // rotate the cannon that way
+                        //info!("the angle in degrees is {}", radians * (180. / PI));
+                        c.rotation = Quat::from_rotation_z(radians)
+                            * s.rotation.inverse();
+                    }
+                }
+            }
         }
     }
 }
