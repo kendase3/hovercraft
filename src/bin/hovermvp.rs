@@ -644,7 +644,7 @@ fn rotface_all(
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
     mut cannon: Query<&mut Transform, (With<CannonModel>, With<PlayerSub>)>,
-    player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
+    player_transform: Query<(&Transform, &Player), Without<CannonModel>>,
     ship_transform: Query<
         &Transform,
         (
@@ -671,7 +671,7 @@ fn aim_cannon(
     //let mut c = cannon.single_mut();
     // TODO(skend): for each cannon, have to find its target
     for mut c in cannon.iter_mut() {
-        let p = player_transform.single();
+        let (p, actual_p) = player_transform.single();
         //let s = ship_transform.single();
         for s in ship_transform.iter() {
             // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
