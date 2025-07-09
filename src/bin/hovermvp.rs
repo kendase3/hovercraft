@@ -150,6 +150,9 @@ struct ShipModel;
 struct CannonModel;
 
 #[derive(Component)]
+struct NotCannonModel;
+
+#[derive(Component)]
 struct NotchOffset(pub Vec3);
 
 #[derive(Resource, Default)]
@@ -298,6 +301,7 @@ fn touch_ship(
     for (ship_gubbins, ship_parent) in &ship_stuff {
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
+            info!("name of ship child is {:?}", name);
             if let Ok(name_success) = name {
                 if name_success.as_str() == "cannon" {
                     //info!("found our cannon");
@@ -314,10 +318,17 @@ fn touch_ship(
                             // with the id of the parent entity? it's silly to have to
                             // look it up. i have no plans for like turrets and ships
                             // to suddenly have a different player owner
-                        } else if let Ok(_) = bot_query.get(ship_parent.get()) {
+                        } else if let Ok(_) = bot_query.get(ship_parent.get())
+                        {
                             entity_commands.insert(BotSub {});
                         }
                         cannon_initialized.0 = true;
+                    }
+                } else {
+                    if let Some(mut entity_commands) =
+                        commands.get_entity(entity)
+                    {
+                        entity_commands.insert(NotCannonModel {});
                     }
                 }
             }
@@ -648,53 +659,29 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut qcannontransform: Query<&mut Transform, With<CannonModel>>,
     mut qcannonparent: Query<&Parent, With<CannonModel>>,
-    qtransformswithplayers: Query<
-        &Transform,
-        (With<Player>, Without<CannonModel>, Without<Bot>),
-    >,
-    qplayer: Query<&Player>,
-    ship_transform: Query<
-        &Transform,
-        (
-            With<ShipModel>,
-            Without<Player>,
-            Without<Bot>,
-            Without<CannonModel>,
-        ),
-    >,
-    qbot: Query<&Bot>,
-    qtransformwithbots: Query<
-        &Transform,
-        (
-            With<Bot>,
-            Without<Player>,
-            Without<CannonModel>,
-            Without<ShipModel>,
-        ),
-    >,
-    qshipmodelparent: Query<&Parent, With<ShipModel>>,
-    ship_stuff: Query<Entity, With<ShipModel>>,
     qshipmodel: Query<&ShipModel>,
+    qplayer: Query<&Player>,
+    ship_stuff: Query<Entity, With<ShipModel>>,
+    qnotcannon: Query<&NotCannonModel>,
 ) {
     // TODO(skend): for each cannon, have to find its target
     for parent in qcannonparent.iter() {
-        info!("aiming a cannon");
+        //info!("aiming a cannon");
         // if we successfully found the parent of this cannon
         // FIXME(skend): the player is actually the _grandparent_ of this cannon.
         // well that's one breakthrough at least
         // .get() returns the id
-        
+
         // TODO(skend): we could worst case iterate over the ships
         // or iterate over the players and see if they match
 
         // we already did something like this successfully in touch_ func
-        if let Ok(_) = qbot.get(parent.get()) {
+        if let Ok(_) = qnotcannon.get(parent.get()) {
             // FIXME(skend): this log never fires
             info!("found the proud owner of this cannon");
         } else {
-            info!("lookup failed for parent with id {:?}! have a nice day!", parent.get());
+            //info!("lookup failed for parent with id {:?}! have a nice day!", parent.get());
         }
     }
 }
