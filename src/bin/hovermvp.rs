@@ -643,8 +643,11 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut cannon: Query<&mut Transform, (With<CannonModel>, With<PlayerSub>)>,
-    player_transform: Query<(&Transform, &Player), Without<CannonModel>>,
+    mut qcannon: Query<
+        (&mut Transform, &Parent),
+        (With<CannonModel>, With<PlayerSub>),
+    >,
+    qplayers: Query<(&Transform, &Player), Without<CannonModel>>,
     ship_transform: Query<
         &Transform,
         (
@@ -654,42 +657,47 @@ fn aim_cannon(
             Without<CannonModel>,
         ),
     >,
-    bot_location: Query<
-        &Transform,
-        (
-            With<Bot>,
-            (Without<Player>, Without<CannonModel>, Without<ShipModel>),
-        ),
+    qbot: Query<
+        (&Transform, &Bot),
+        (Without<Player>, Without<CannonModel>, Without<ShipModel>),
     >,
 ) {
     // find the location of the bot
     // FIXME(skend): just in general, i have a lot of single() and single_mut()s
     // these will have to become loops to handle multiplayer or multiple bots
     // and i want both.
-    let bot_loc = bot_location.single().translation.xy();
     // find our location
     //let mut c = cannon.single_mut();
     // TODO(skend): for each cannon, have to find its target
-    for mut c in cannon.iter_mut() {
-        let (p, actual_p) = player_transform.single();
-        //let s = ship_transform.single();
-        for s in ship_transform.iter() {
-            // FIXME(skend): i think we may have to say p.translation.xy() + c.translation.xy() but just p
-            // is roughly true
-            let delta_loc = bot_loc
-                - (p.translation.xy()
-                    + s.translation.xy()
-                    + c.translation.xy());
-            // find the angle toward the bot
-            let radians = delta_loc.y.atan2(delta_loc.x);
-            // rotate the cannon that way
-            // just checked and the cannon does in fact rotate
-            //c.rotate_z(0.1);
-            //info!("the angle in degrees is {}", radians * (180. / PI));
-            c.rotation = Quat::from_rotation_z(radians) * s.rotation.inverse();
+    for (mut c, parent) in qcannon.iter_mut() {
+        let cur_parent = parent.get();
+        //if we successfully found the parent of this cannon
+        if let Ok((p, actual_p)) = qplayers.get(cur_parent) {
+            // we need to find the entity we are supposed to be targeting from our parent
+            // FIXME(skend): right now just only look in bots from players and vice versa
+            // but going forward we will have to search both
+            if let Some(target) = actual_p.get_target() {
+                if let Ok((bot_loc_almost, _)) = qbot.get(target) {
+                    let bot_loc = bot_loc_almost.translation.xy();
+
+                    for s in ship_transform.iter() {
+                        let delta_loc = bot_loc
+                            - (p.translation.xy()
+                                + s.translation.xy()
+                                + c.translation.xy());
+                        // find the angle toward the bot
+                        let radians = delta_loc.y.atan2(delta_loc.x);
+                        // rotate the cannon that way
+                        //info!("the angle in degrees is {}", radians * (180. / PI));
+                        c.rotation = Quat::from_rotation_z(radians)
+                            * s.rotation.inverse();
+                    }
+                }
+                // TODO(skend): just point forward if no target
+                // TODO(skend): the cannon should angular-accelerate
+            }
+        } else if let Ok((b, actual_b)) = qbot.get(cur_parent) {
         }
-        // TODO(skend): just point forward if no target
-        // TODO(skend): the cannon should angular-accelerate
     }
 }
 
