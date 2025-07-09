@@ -690,7 +690,7 @@ fn aim_cannon(
         // or iterate over the players and see if they match
 
         // we already did something like this successfully in touch_ func
-        if let Ok(_) = qplayer.get(parent.get()) {
+        if let Ok(_) = qbot.get(parent.get()) {
             // FIXME(skend): this log never fires
             info!("found the proud owner of this cannon");
         } else {
