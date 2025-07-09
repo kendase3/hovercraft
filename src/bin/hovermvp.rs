@@ -683,6 +683,10 @@ fn aim_cannon(
     >,
 ) {
     // TODO(skend): for each cannon, have to find its target
+    // TODO(skend): lettuce do the same idea of patriarch, but
+    // for the shipmodel as well. then the cannon will not
+    // have to go crawling every frame or whatever to find
+    // things it should just memorize
     for (mut cannon_transform, pat_link) in cannon.iter_mut() {
         if let Ok(cur_player) = players.get(pat_link.0) {
             info!("our cannon belonged to a player");
