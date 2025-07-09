@@ -47,6 +47,11 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 
+pub trait Targeting {
+    fn get_target(&self) -> Entity;
+    fn set_target(&mut self, entity: Entity);
+}
+
 // TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
 // always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
 // likely to hit borrow checkout conflits if i am operating on both players and bots but we'll see
