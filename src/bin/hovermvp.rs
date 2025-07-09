@@ -84,6 +84,9 @@ impl Targeting for Bot {
     }
 }
 
+#[derive(Component)]
+struct Targeter;
+
 // TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
 // always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
 // likely to hit borrow checkout conflits if i am operating on both players and bots but we'll see
@@ -436,6 +439,7 @@ fn setup(
             Name::new("Protagonist"),
             Transform::default(),
             Visibility::Hidden,
+            Targeter,
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -501,6 +505,7 @@ fn setup(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_ACCEL_RATE,
             ),
+            Targeter,
         ))
         .with_children(|parent| {
             parent.spawn((
