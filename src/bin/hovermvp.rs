@@ -51,7 +51,10 @@ pub trait Targeting {
     fn get_target(&self) -> Entity;
     fn set_target(&mut self, entity: Entity);
     // FIXME(skend): seems like a rather broad query
-    fn get_target_coords(&self, qtransform: &Query<&Transform>) -> Option<Vec2> {
+    fn get_target_coords(
+        &self,
+        qtransform: &Query<&Transform>,
+    ) -> Option<Vec2> {
         let maybe_target = qtransform.get(self.get_target());
         if let Ok(target) = maybe_target {
             return Some(target.translation.xy());
@@ -61,6 +64,13 @@ pub trait Targeting {
 }
 
 // TODO(skend): impl targeting for player
+/*
+impl Targeting for Player {
+    fn get_target(&self) -> Entity {
+       self.target
+    }
+}
+*/
 
 // TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
 // always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
@@ -69,6 +79,7 @@ pub trait Targeting {
 struct Player {
     it: bool,
     facing: f32,
+    target: Option<Entity>,
 }
 
 // FIXME(skend): design crutch i think
@@ -81,6 +92,7 @@ struct BotSub;
 #[derive(Component)]
 struct Bot {
     it: bool,
+    target: Option<Entity>,
 }
 
 #[derive(Component)]
@@ -298,6 +310,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
+    mut qplayers: Query<&mut Player>,
+    mut qbots: Query<&mut Bot>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -392,11 +406,12 @@ fn setup(
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
-    commands
+    let playerguy = commands
         .spawn((
             Player {
                 it: false,
                 facing: 0.0,
+                target: None,
             },
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
@@ -452,13 +467,17 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-        });
+        })
+        .id(); // appending .id() here has this whole nested call return the entity id of player
     let bot_target = meshes
         .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
     let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
-    commands
+    let botguy = commands
         .spawn((
-            Bot { it: true },
+            Bot {
+                it: true,
+                target: None,
+            },
             Name::new("Antagonist"),
             Transform::from_xyz(50.0, 0.0, 0.0),
             Visibility::Hidden,
@@ -497,7 +516,19 @@ fn setup(
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
-        });
+        })
+        .id();
+
+    // set the initial targets for player and bot. later there will be some other logic for this.
+    //playerguy.target = botguy;
+    if let Ok(mut pl) = qplayers.get_mut(playerguy) {
+        pl.target = Some(botguy);
+    }
+
+    if let Ok(mut bo) = qbots.get_mut(botguy) {
+        bo.target = Some(playerguy);
+    }
+
     // kind of like a notification at the top of the screen
     commands.spawn((
         Text::new("You're gaming!"),
