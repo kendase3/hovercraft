@@ -295,7 +295,7 @@ fn touch_ship(
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
 ) {
-    for (ship_gubbins, parent) in &ship_stuff {
+    for (ship_gubbins, ship_parent) in &ship_stuff {
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
@@ -306,15 +306,15 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
-                        // then its parent is a player
-                        if let Ok(_) = player_query.get(parent.get()) {
+                        // then the ship's parent is a player
+                        if let Ok(_) = player_query.get(ship_parent.get()) {
                             entity_commands.insert(PlayerSub {});
                             // FIXME(skend): further init here to solve my problem?
                             // how about PlayerSub and BotSub are optionally initialized
                             // with the id of the parent entity? it's silly to have to
                             // look it up. i have no plans for like turrets and ships
                             // to suddenly have a different player owner
-                        } else if let Ok(_) = bot_query.get(parent.get()) {
+                        } else if let Ok(_) = bot_query.get(ship_parent.get()) {
                             entity_commands.insert(BotSub {});
                         }
                         cannon_initialized.0 = true;
@@ -674,20 +674,27 @@ fn aim_cannon(
             Without<ShipModel>,
         ),
     >,
-    qshipmodel: Query<&Parent, With<ShipModel>>,
+    qshipmodelparent: Query<&Parent, With<ShipModel>>,
+    ship_stuff: Query<Entity, With<ShipModel>>,
+    qshipmodel: Query<&ShipModel>,
 ) {
     // TODO(skend): for each cannon, have to find its target
     for parent in qcannonparent.iter() {
         info!("aiming a cannon");
-        let cur_parent_id = parent.get();
         // if we successfully found the parent of this cannon
         // FIXME(skend): the player is actually the _grandparent_ of this cannon.
         // well that's one breakthrough at least
-        if let Ok(player_id) = qplayer.get(cur_parent_id) {
+        // .get() returns the id
+        
+        // TODO(skend): we could worst case iterate over the ships
+        // or iterate over the players and see if they match
+
+        // we already did something like this successfully in touch_ func
+        if let Ok(_) = qplayer.get(parent.get()) {
             // FIXME(skend): this log never fires
             info!("found the proud owner of this cannon");
         } else {
-            info!("lookup failed for parent with id {:?}! have a nice day!", cur_parent_id);
+            info!("lookup failed for parent with id {:?}! have a nice day!", parent.get());
         }
     }
 }
