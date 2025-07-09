@@ -643,7 +643,8 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut qcannon: Query<(&mut Transform, &Parent), With<CannonModel>>,
+    mut qcannontransform: Query<&mut Transform, With<CannonModel>>,
+    mut qcannonparent: Query<&Parent, With<CannonModel>>,
     qtransformswithplayers: Query<
         &Transform,
         (With<Player>, Without<CannonModel>, Without<Bot>),
@@ -671,15 +672,17 @@ fn aim_cannon(
     qshipmodel: Query<&Parent, With<ShipModel>>,
 ) {
     // TODO(skend): for each cannon, have to find its target
-    for (mut c, parent) in qcannon.iter_mut() {
+    for parent in qcannonparent.iter() {
         info!("aiming a cannon");
-        let cur_parent = parent.get();
+        let cur_parent_id = parent.get();
         // if we successfully found the parent of this cannon
         // FIXME(skend): the player is actually the _grandparent_ of this cannon.
         // well that's one breakthrough at least
-        if let Ok(player) = qshipmodel.get(cur_parent) {
+        if let Ok(ship_id) = qshipmodel.get(cur_parent_id) {
             // FIXME(skend): this log never fires
             info!("found the proud owner of this cannon");
+        } else {
+            info!("lookup failed for parent with id {:?}! have a nice day!", cur_parent_id);
         }
     }
 }
