@@ -668,6 +668,7 @@ fn aim_cannon(
             Without<ShipModel>,
         ),
     >,
+    qshipmodel: Query<&Parent, With<ShipModel>>,
 ) {
     // TODO(skend): for each cannon, have to find its target
     for (mut c, parent) in qcannon.iter_mut() {
@@ -676,7 +677,7 @@ fn aim_cannon(
         // if we successfully found the parent of this cannon
         // FIXME(skend): the player is actually the _grandparent_ of this cannon.
         // well that's one breakthrough at least
-        if let Ok(player) = qplayer.get(cur_parent) { 
+        if let Ok(player) = qshipmodel.get(cur_parent) {
             // FIXME(skend): this log never fires
             info!("found the proud owner of this cannon");
         }
