@@ -309,6 +309,11 @@ fn touch_ship(
                         // then its parent is a player
                         if let Ok(_) = player_query.get(parent.get()) {
                             entity_commands.insert(PlayerSub {});
+                            // FIXME(skend): further init here to solve my problem?
+                            // how about PlayerSub and BotSub are optionally initialized
+                            // with the id of the parent entity? it's silly to have to
+                            // look it up. i have no plans for like turrets and ships
+                            // to suddenly have a different player owner
                         } else if let Ok(_) = bot_query.get(parent.get()) {
                             entity_commands.insert(BotSub {});
                         }
@@ -678,7 +683,7 @@ fn aim_cannon(
         // if we successfully found the parent of this cannon
         // FIXME(skend): the player is actually the _grandparent_ of this cannon.
         // well that's one breakthrough at least
-        if let Ok(ship_id) = qshipmodel.get(cur_parent_id) {
+        if let Ok(player_id) = qplayer.get(cur_parent_id) {
             // FIXME(skend): this log never fires
             info!("found the proud owner of this cannon");
         } else {
