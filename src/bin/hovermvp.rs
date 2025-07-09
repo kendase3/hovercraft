@@ -104,6 +104,10 @@ struct PlayerSub;
 #[derive(Component)]
 struct BotSub;
 
+// FIXME(skend): if that was a design crutch above then close your eyes for this one
+#[derive(Component)]
+struct PatriarchLink(Entity);
+
 #[derive(Component)]
 struct Bot {
     it: bool,
@@ -310,6 +314,8 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
+                        entity_commands
+                            .insert(PatriarchLink(ship_parent.get()));
                         // then the ship's parent is a player
                         if let Ok(_) = player_query.get(ship_parent.get()) {
                             entity_commands.insert(PlayerSub {});
@@ -325,6 +331,7 @@ fn touch_ship(
                         cannon_initialized.0 = true;
                     }
                 } else {
+                    // don't actually need this
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
@@ -659,29 +666,28 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut qcannonparent: Query<&Parent, With<CannonModel>>,
-    qshipmodel: Query<&ShipModel>,
-    qplayer: Query<&Player>,
-    ship_stuff: Query<Entity, With<ShipModel>>,
-    qnotcannon: Query<&NotCannonModel>,
+    mut cannon: Query<(&mut Transform, &PatriarchLink), With<CannonModel>>,
+    players: Query<&Player>,
+    bots: Query<&Bot>,
+    player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
+    ship_transform: Query<
+        &Transform,
+        (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
+    >,
+    bot_location: Query<
+        &Transform,
+        (
+            With<Bot>,
+            (Without<Player>, Without<CannonModel>, Without<ShipModel>),
+        ),
+    >,
 ) {
     // TODO(skend): for each cannon, have to find its target
-    for parent in qcannonparent.iter() {
-        //info!("aiming a cannon");
-        // if we successfully found the parent of this cannon
-        // FIXME(skend): the player is actually the _grandparent_ of this cannon.
-        // well that's one breakthrough at least
-        // .get() returns the id
-
-        // TODO(skend): we could worst case iterate over the ships
-        // or iterate over the players and see if they match
-
-        // we already did something like this successfully in touch_ func
-        if let Ok(_) = qnotcannon.get(parent.get()) {
-            // FIXME(skend): this log never fires
-            info!("found the proud owner of this cannon");
-        } else {
-            //info!("lookup failed for parent with id {:?}! have a nice day!", parent.get());
+    for (mut cannon_transform, pat_link) in cannon.iter_mut() {
+        if let Ok(cur_player) = players.get(pat_link.0) {
+            info!("our cannon belonged to a player");
+        } else if let Ok(cur_bot) = bots.get(pat_link.0) {
+            info!("our cannon belonged to a bot");
         }
     }
 }
