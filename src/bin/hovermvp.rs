@@ -569,8 +569,7 @@ fn setup(
     ));
 }
 
-fn setup_targets(mut query: Query<(Entity, &mut Pilot)>,
-) {
+fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
     let mut player_id: Option<Entity> = None;
     let mut bot_id: Option<Entity> = None;
     for (entity, mut pilot) in query.iter_mut() {
@@ -719,24 +718,14 @@ fn aim_cannon(
         }
 
         if our_ship_xy == None || our_dude_xy == None || target_xy == None {
-            //warn!("Error in aim function!");
-            if our_ship_xy == None {
-                //warn!("our_ship_xy was none!");
-            }
-            if our_dude_xy == None {
-                //warn!("our_dude_xy was none!");
-            }
-            if target_xy == None {
-                // FIXME(skend): error case
-                //warn!("target_xy was none!");
-            }
+            warn!("Error in aim function!");
             return;
         }
-        let delta_loc = our_dude_xy.unwrap() - target_xy.unwrap()
+        let delta_loc = target_xy.unwrap() - our_dude_xy.unwrap()
             + our_ship_xy.unwrap()
             + our_cannon_xy;
         let radians = delta_loc.y.atan2(delta_loc.x);
-        info!("the angle in degrees is {}", radians * (180. / PI));
+        //info!("the angle in degrees is {}", radians * (180. / PI));
         cannon_transform.rotation =
             Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
     }
