@@ -694,8 +694,12 @@ fn aim_cannon(
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_pilot) = pilots.get(dude.0) {
+            info!("we found our pilot");
+            // FIXME(skend): our pilot apparently does _not_ have a target
             if let Some(cur_target) = cur_pilot.target {
+                info!("our pilot has a target");
                 if let Ok(their_pilot_t) = qtransform.get(cur_target) {
+                    info!("the target has a transform");
                     target_xy = Some(their_pilot_t.translation.xy());
                 }
             }
