@@ -104,13 +104,10 @@ struct PlayerSub;
 #[derive(Component)]
 struct BotSub;
 
-// FIXME(skend): if that was a design crutch above then close your eyes for this one
-// FIXME(skend): this name is awful and long. what we are looking for is a player-esque
-// root object that could be a player or could be a bot. bots in this game currently
-// fill the exact same gameplay role as a player. i'm thinking "Dude" since it's
-// short and you might say "move your dude around" so it feels natural
+// a dude is the union between a player and a bot
+// a player-like entity
 #[derive(Component)]
-struct PatriarchLink(Entity);
+struct Dude(Entity);
 
 #[derive(Component)]
 struct Bot {
@@ -319,7 +316,7 @@ fn touch_ship(
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
                         entity_commands
-                            .insert(PatriarchLink(ship_parent.get()));
+                            .insert(Dude(ship_parent.get()));
                         // then the ship's parent is a player
                         if let Ok(_) = player_query.get(ship_parent.get()) {
                             entity_commands.insert(PlayerSub {});
@@ -670,7 +667,7 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut cannon: Query<(&mut Transform, &PatriarchLink), With<CannonModel>>,
+    mut cannon: Query<(&mut Transform, &Dude), With<CannonModel>>,
     players: Query<&Player>,
     bots: Query<&Bot>,
     player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
@@ -691,10 +688,10 @@ fn aim_cannon(
     // for the shipmodel as well. then the cannon will not
     // have to go crawling every frame or whatever to find
     // things it should just memorize
-    for (mut cannon_transform, pat_link) in cannon.iter_mut() {
-        if let Ok(cur_player) = players.get(pat_link.0) {
+    for (mut cannon_transform, dude) in cannon.iter_mut() {
+        if let Ok(cur_player) = players.get(dude.0) {
             info!("our cannon belonged to a player");
-        } else if let Ok(cur_bot) = bots.get(pat_link.0) {
+        } else if let Ok(cur_bot) = bots.get(dude.0) {
             info!("our cannon belonged to a bot");
         }
     }
