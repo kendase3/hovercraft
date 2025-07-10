@@ -683,15 +683,10 @@ fn aim_cannon(
     bots: Query<&Bot>,
     ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
-    // TODO(skend): may make the above without ship and then add a ship transform
-    //ship_transform: Query<
-    //    &Transform,
-    //    (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
-    //>,
 ) {
     // TODO(skend): for each cannon, have to find its target
     // TODO(skend): lettuce do the same idea of patriarch, but
-    // for the shipmodel as well. then the cannon will not
+    // for the shipmodel as well. then the gannon will not
     // have to go crawling every frame or whatever to find
     // things it should just memorize
     for (mut cannon_transform, dude, craft) in cannon.iter_mut() {
@@ -717,6 +712,9 @@ fn aim_cannon(
                 our_ship_xy = Some(craft_t.translation.xy());
             }
         }
+        // first get the target
+        //if let Ok(target) = 
+
         //if let Ok(cur_target) = qtransform.get(targeting.get_target()) {
         //    target_xy = Some(cur_target.translation.xy());
         // }
@@ -742,30 +740,6 @@ fn aim_cannon(
         cannon_transform.rotation =
             Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
     }
-    // at the end of all this, we want to have:
-    // - a cannon's transform to aim as our output
-    // - the target's location to calculate the aim
-    // - our cannon's location to calculate the aim
-    //
-    // we want it to be O(1) to do all this because we are going to do it
-    // like all the time. and there's no reason why it can't be. we just
-    // have to save/cache the information about which ship and cannon is associated
-    // with each dude.
-    /*
-    let delta_loc = player_loc
-        - (b.translation.xy()
-            + s.translation.xy()
-            + c.translation.xy());
-    // find the angle toward the bot
-    let radians = delta_loc.y.atan2(delta_loc.x);
-    // rotate the cannon that way
-    info!(
-        "the angle in degrees is {}",
-        radians * (180. / PI)
-    );
-    c.rotation = Quat::from_rotation_z(radians)
-        * s.rotation.inverse();
-        * */
 }
 
 fn move_player(
