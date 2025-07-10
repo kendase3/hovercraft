@@ -569,10 +569,13 @@ fn setup(
     ));
 }
 
-fn setup_targets(mut qpilots: Query<(Entity, &mut Pilot)>) {
+fn setup_targets(mut query: Query<(Entity, &mut Pilot)>,
+) {
     let mut player_id: Option<Entity> = None;
     let mut bot_id: Option<Entity> = None;
-    for (entity, mut pilot) in qpilots.iter_mut() {
+    let mut player_pilot: Option<Pilot> = None;
+    let mut bot_pilot: Option<Pilot> = None;
+    for ((entity, mut pilot)) in query.iter_mut() {
         if pilot.pilottype == PilotType::Player {
             player_id = Some(entity);
         } else if pilot.pilottype == PilotType::Bot {
@@ -580,11 +583,13 @@ fn setup_targets(mut qpilots: Query<(Entity, &mut Pilot)>) {
         }
     }
     // set the initial targets for player and bot. later there will be some other logic for this.
+    /*
     if let Ok(mut pl) = qpilots.get_mut(player_id.unwrap()) {
-        //info!("we set the player's target");
+        info!("we set the player's target");
+        // FIXME(skend): this data type is weird
+        pl.target = None;
         //pl.target = qpilots.get(bot_id.unwrap());
     }
-    /*
 
     if let Ok(mut bo) = qpilots.get_mut(bot_id) {
         info!("we set the bot's target");
