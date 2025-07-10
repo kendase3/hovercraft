@@ -532,7 +532,7 @@ fn setup(
                     scale: Vec3::new(1.0, 1.0, 1.0),
                 },
                 Visibility::Visible,
-                //Facing,
+                Facing,
                 ShipModel,
             ));
             parent.spawn((
@@ -637,10 +637,10 @@ fn handle_tag(
 
 fn face_all(
     mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
-    player_query: Query<&Pilot, With<Player>>,
+    pilot_query: Query<&Pilot>,
 ) {
     for (mut facer, parent) in &mut facers_query {
-        if let Ok(player) = player_query.get(parent.get()) {
+        if let Ok(player) = pilot_query.get(parent.get()) {
             if let Some(player_facing) = player.facing {
                 facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
             }
