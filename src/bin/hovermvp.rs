@@ -670,9 +670,9 @@ fn aim_cannon(
     mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
     players: Query<&Pilot, (With<Player>, Without<Bot>)>,
     bots: Query<&Pilot, (With<Bot>, Without<Player>)>,
+    pilots: Query<&Pilot>,
     ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
-    //qtargeting: Query<&dyn Targeting>,
     // TODO(skend): may make the above without ship and then add a ship transform
     //ship_transform: Query<
     //    &Transform,
@@ -693,13 +693,14 @@ fn aim_cannon(
         //let mut our_dude: Option<Box<dyn Targeting>> = None;
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
-        if let Ok(cur_player) = players.get(dude.0) {
-            if let Ok(player_t) = qtransform.get(dude.0) {
-                our_dude_xy = Some(player_t.translation.xy());
+        if let Ok(cur_pilot) = pilots.get(dude.0) {
+            if let Some(cur_target) = cur_pilot.target {
+                if let Ok(their_pilot_t) = qtransform.get(cur_target) {
+                    target_xy = Some(their_pilot_t.translation.xy());
+                }
             }
-        } else if let Ok(cur_bot) = bots.get(dude.0) {
-            if let Ok(bot_t) = qtransform.get(dude.0) {
-                our_dude_xy = Some(bot_t.translation.xy());
+            if let Ok(pilot_t) = qtransform.get(dude.0) {
+                our_dude_xy = Some(pilot_t.translation.xy());
             }
         }
         if let Ok(cur_craft) = ships.get(craft.0) {
@@ -707,16 +708,7 @@ fn aim_cannon(
                 our_ship_xy = Some(craft_t.translation.xy());
             }
         }
-        // FIXME(skend): implement this somehow, maybe with enums
-        // and maybe i can use the enums slightly differently for it
-        // to fit my case well
-        //if let Ok(targeter) = qtargeting.get(dude.0) {
-        //    target_xy = targeter.get_target();
-        //}
 
-        //if let Ok(cur_target) = qtransform.get(targeting.get_target()) {
-        //    target_xy = Some(cur_target.translation.xy());
-        // }
         if our_ship_xy == None || our_dude_xy == None || target_xy == None {
             warn!("Error in aim function!");
             if our_ship_xy == None {
@@ -739,30 +731,6 @@ fn aim_cannon(
         cannon_transform.rotation =
             Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
     }
-    // at the end of all this, we want to have:
-    // - a cannon's transform to aim as our output
-    // - the target's location to calculate the aim
-    // - our cannon's location to calculate the aim
-    //
-    // we want it to be O(1) to do all this because we are going to do it
-    // like all the time. and there's no reason why it can't be. we just
-    // have to save/cache the information about which ship and cannon is associated
-    // with each dude.
-    /*
-    let delta_loc = player_loc
-        - (b.translation.xy()
-            + s.translation.xy()
-            + c.translation.xy());
-    // find the angle toward the bot
-    let radians = delta_loc.y.atan2(delta_loc.x);
-    // rotate the cannon that way
-    info!(
-        "the angle in degrees is {}",
-        radians * (180. / PI)
-    );
-    c.rotation = Quat::from_rotation_z(radians)
-        * s.rotation.inverse();
-        * */
 }
 
 fn move_player(
