@@ -47,7 +47,7 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 
-#[derive(Component)]
+#[derive(Component, PartialEq)]
 enum PilotType {
     Player,
     Bot,
@@ -70,8 +70,19 @@ struct Pilot {
     target: Option<Entity>,
 }
 
+// is it actually fine to not have normal form
+// if it makes lookups faster? now i have
+// learned how to fix later if i must
+#[derive(Component)]
+struct Player;
+#[derive(Component)]
+struct Bot;
+
 impl Pilot {
-    fn get_target_coords(&self, qtransform: &Query<&Transform>) -> Option<Vec2> {
+    fn get_target_coords(
+        &self,
+        qtransform: &Query<&Transform>,
+    ) -> Option<Vec2> {
         if let Some(a_target) = self.target {
             let maybe_target = qtransform.get(a_target);
             if let Ok(target) = maybe_target {
@@ -80,13 +91,6 @@ impl Pilot {
         }
         None
     }
-}
-
-// TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
-// always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
-// likely to hit borrow checkout conflits if i am operating on both players and bots but we'll see
-#[derive(Component)]
-struct Player {
 }
 
 // FIXME(skend): design crutch i think
@@ -105,10 +109,6 @@ struct DudeRef(Entity);
 // like dudes but for ships
 #[derive(Component)]
 struct Craft(Entity);
-
-#[derive(Component)]
-struct Bot {
-}
 
 #[derive(Component)]
 struct Proclamation;
@@ -292,8 +292,7 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn touch_ship(
     ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
-    player_query: Query<&Pilot, With<Player>>,
-    bot_query: Query<&Pilot, With<Bot>>,
+    pilot_query: Query<&Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
@@ -312,19 +311,15 @@ fn touch_ship(
                         entity_commands.insert(Visibility::Visible);
                         entity_commands.insert(DudeRef(ship_parent.get()));
                         entity_commands.insert(Craft(ship_gubbins));
-                        // then the ship's parent is a player
-                        if let Ok(_) = player_query.get(ship_parent.get()) {
-                            entity_commands.insert(PlayerSub {});
-                            // FIXME(skend): further init here to solve my problem?
-                            // how about PlayerSub and BotSub are optionally initialized
-                            // with the id of the parent entity? it's silly to have to
-                            // look it up. i have no plans for like turrets and ships
-                            // to suddenly have a different player owner
-                        } else if let Ok(_) = bot_query.get(ship_parent.get())
-                        {
-                            entity_commands.insert(BotSub {});
+                        if let Ok(pilot) = pilot_query.get(ship_parent.get()) {
+                            // then the ship's parent is a player
+                            if pilot.pilottype == PilotType::Player {
+                                entity_commands.insert(PlayerSub {});
+                            } else if pilot.pilottype == PilotType::Bot {
+                                entity_commands.insert(BotSub {});
+                            }
+                            cannon_initialized.0 = true;
                         }
-                        cannon_initialized.0 = true;
                     }
                 } else {
                     // don't actually need this
@@ -344,8 +339,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
-    mut qplayers: Query<&mut Pilot, With<Player>>,
-    mut qbots: Query<&mut Pilot, With<Bot>>,
+    mut qplayers: Query<&mut Pilot, (With<Player>, Without<Bot>)>,
+    mut qbots: Query<&mut Pilot, (With<Bot>, Without<Player>)>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -443,11 +438,12 @@ fn setup(
     let playerguy = commands
         .spawn((
             Pilot {
-                pilottype: PilotType::Player, 
+                pilottype: PilotType::Player,
                 it: false,
                 facing: Some(0.0),
                 target: None,
             },
+            Player,
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
                 physics::PLAYER_MAX_VELOCITY,
@@ -515,6 +511,7 @@ fn setup(
                 target: None,
                 ..default()
             },
+            Bot,
             Name::new("Antagonist"),
             Transform::from_xyz(50.0, 0.0, 0.0),
             Visibility::Hidden,
@@ -590,8 +587,11 @@ fn setup(
 // generally handle tagging state changes
 fn handle_tag(
     mut proclamation: Query<&mut Visibility, With<Proclamation>>,
-    mut bot: Query<(&mut Pilot, &mut Transform), With<Bot>>,
-    mut player: Query<(&mut Pilot, &mut Transform), With<Player>>,
+    mut bot: Query<(&mut Pilot, &mut Transform), (With<Bot>, Without<Player>)>,
+    mut player: Query<
+        (&mut Pilot, &mut Transform),
+        (With<Player>, Without<Bot>),
+    >,
     mut tagready: Query<&mut TagReady>,
     mut tagtimer: Query<&mut TagCooldownTimer>,
     time: Res<Time>,
@@ -638,7 +638,7 @@ fn face_all(
     for (mut facer, parent) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
             if let Some(player_facing) = player.facing {
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
+                facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
             }
         }
     }
@@ -655,8 +655,8 @@ fn rotface_all(
         if let Ok(player) = player_query.get(parent.get()) {
             // we apply our intended offset from spawn to our new relative angle
             if let Some(player_facing) = player.facing {
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
-            facer.translation = facer.rotation * offset.0;
+                facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
+                facer.translation = facer.rotation * offset.0;
             }
         }
     }
@@ -668,8 +668,8 @@ fn rotface_all(
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
     mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
-    players: Query<&Pilot, With<Player>>,
-    bots: Query<&Pilot, With<Bot>>,
+    players: Query<&Pilot, (With<Player>, Without<Bot>)>,
+    bots: Query<&Pilot, (With<Bot>, Without<Player>)>,
     ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
     //qtargeting: Query<&dyn Targeting>,
@@ -713,32 +713,31 @@ fn aim_cannon(
         //if let Ok(targeter) = qtargeting.get(dude.0) {
         //    target_xy = targeter.get_target();
         //}
-        
+
         //if let Ok(cur_target) = qtransform.get(targeting.get_target()) {
         //    target_xy = Some(cur_target.translation.xy());
-       // }
+        // }
         if our_ship_xy == None || our_dude_xy == None || target_xy == None {
             warn!("Error in aim function!");
             if our_ship_xy == None {
-            warn!("our_ship_xy was none!");
+                warn!("our_ship_xy was none!");
             }
             if our_dude_xy == None {
-            warn!("our_dude_xy was none!");
+                warn!("our_dude_xy was none!");
             }
             if target_xy == None {
                 // FIXME(skend): error case
-            warn!("target_xy was none!");
+                warn!("target_xy was none!");
             }
             return;
         }
-        let delta_loc = our_dude_xy.unwrap() - target_xy.unwrap() + our_ship_xy.unwrap() + our_cannon_xy;
+        let delta_loc = our_dude_xy.unwrap() - target_xy.unwrap()
+            + our_ship_xy.unwrap()
+            + our_cannon_xy;
         let radians = delta_loc.y.atan2(delta_loc.x);
-    info!(
-        "the angle in degrees is {}",
-        radians * (180. / PI)
-    );
-    cannon_transform.rotation = Quat::from_rotation_z(radians)
-        * ship_transform.rotation.inverse();
+        info!("the angle in degrees is {}", radians * (180. / PI));
+        cannon_transform.rotation =
+            Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
     }
     // at the end of all this, we want to have:
     // - a cannon's transform to aim as our output
@@ -809,7 +808,7 @@ fn move_bot(
             &mut physics::Velocity,
             &mut physics::Acceleration,
         ),
-        (With<Bot>, Without<CannonModel>),
+        (With<Bot>, Without<Player>, Without<CannonModel>),
     >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
@@ -840,7 +839,7 @@ fn move_bot(
 }
 
 fn camera_follow(
-    playerq: Query<&Transform, With<Player>>,
+    playerq: Query<&Transform, (With<Player>, Without<Bot>)>,
     botq: Query<&Transform, (With<Bot>, Without<Player>)>,
     mut cameraq: Query<
         &mut Transform,
