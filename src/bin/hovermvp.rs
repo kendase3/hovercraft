@@ -693,7 +693,7 @@ fn aim_cannon(
         let mut our_dude_xy: Option<Vec2> = None;
         // FIXME(skend): apparently i still have a bit to learn
         // about dyn in rust
-        let mut our_dude: Option<dyn Targeting> = None;
+        let mut our_dude: Option<Box<dyn Targeting>> = None;
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_player) = players.get(dude.0) {
