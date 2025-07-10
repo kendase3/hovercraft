@@ -227,7 +227,7 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
-        .add_systems(Startup, (draw_map, setup))
+        .add_systems(Startup, (draw_map, (setup, setup_targets).chain()))
         .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
         .add_systems(
             Update,
@@ -300,10 +300,8 @@ fn touch_ship(
     for (ship_gubbins, ship_parent) in &ship_stuff {
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
-            info!("name of ship child is {:?}", name);
             if let Ok(name_success) = name {
                 if name_success.as_str() == "cannon" {
-                    //info!("found our cannon");
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
@@ -339,8 +337,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
-    mut qplayers: Query<&mut Pilot, (With<Player>, Without<Bot>)>,
-    mut qbots: Query<&mut Pilot, (With<Bot>, Without<Player>)>,
+    mut qpilots: Query<&mut Pilot>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -435,7 +432,7 @@ fn setup(
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
-    let playerguy = commands
+    commands
         .spawn((
             Pilot {
                 pilottype: PilotType::Player,
@@ -498,12 +495,11 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-        })
-        .id(); // appending .id() here has this whole nested call return the entity id of player
+        });
     let bot_target = meshes
         .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
     let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
-    let botguy = commands
+    commands
         .spawn((
             Pilot {
                 pilottype: PilotType::Bot,
@@ -550,18 +546,7 @@ fn setup(
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
-        })
-        .id();
-
-    // set the initial targets for player and bot. later there will be some other logic for this.
-    //playerguy.target = botguy;
-    if let Ok(mut pl) = qplayers.get_mut(playerguy) {
-        pl.target = Some(botguy);
-    }
-
-    if let Ok(mut bo) = qbots.get_mut(botguy) {
-        bo.target = Some(playerguy);
-    }
+        });
 
     // kind of like a notification at the top of the screen
     commands.spawn((
@@ -582,6 +567,35 @@ fn setup(
         MeshMaterial2d(materials.add(planet_color)),
         Transform::from_xyz(PLANET_COORDS.0, PLANET_COORDS.1, PLANET_COORDS.2),
     ));
+}
+
+fn setup_targets(mut qpilots: Query<&mut Pilot>) {
+    let mut player_id;
+    let mut bot_id;
+    for pilot in qpilots.iter_mut() {
+        if pilot.pilottype == PilotType::Player {
+            player_id = pilot;
+        } else if pilot.pilottype == PilotType::Bot {
+            bot_id = pilot;
+        }
+    }
+    /*
+    // set the initial targets for player and bot. later there will be some other logic for this.
+    if let Ok(mut pl) = qpilots.get_mut(player_id) {
+        info!("we set the player's target");
+        pl.target = Some(bot_id);
+    } else {
+        // FIXME(skend): hitting this case for both of these
+        info!("we _do not_ set the player's target");
+    }
+
+    if let Ok(mut bo) = qpilots.get_mut(bot_id) {
+        info!("we set the bot's target");
+        bo.target = Some(player_id);
+    } else {
+        info!("we _do not_ set the bot's target");
+    }
+    */
 }
 
 // generally handle tagging state changes
@@ -694,12 +708,12 @@ fn aim_cannon(
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_pilot) = pilots.get(dude.0) {
-            info!("we found our pilot");
+            //info!("we found our pilot");
             // FIXME(skend): our pilot apparently does _not_ have a target
             if let Some(cur_target) = cur_pilot.target {
-                info!("our pilot has a target");
+                //info!("our pilot has a target");
                 if let Ok(their_pilot_t) = qtransform.get(cur_target) {
-                    info!("the target has a transform");
+                    //info!("the target has a transform");
                     target_xy = Some(their_pilot_t.translation.xy());
                 }
             }
@@ -714,16 +728,16 @@ fn aim_cannon(
         }
 
         if our_ship_xy == None || our_dude_xy == None || target_xy == None {
-            warn!("Error in aim function!");
+            //warn!("Error in aim function!");
             if our_ship_xy == None {
-                warn!("our_ship_xy was none!");
+                //warn!("our_ship_xy was none!");
             }
             if our_dude_xy == None {
-                warn!("our_dude_xy was none!");
+                //warn!("our_dude_xy was none!");
             }
             if target_xy == None {
                 // FIXME(skend): error case
-                warn!("target_xy was none!");
+                //warn!("target_xy was none!");
             }
             return;
         }
