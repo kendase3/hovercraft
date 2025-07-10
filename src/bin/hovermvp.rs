@@ -47,14 +47,25 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 
-pub trait Targeting {
-    fn get_target(&self) -> Option<Entity>;
-    fn set_target(&mut self, entity: Entity);
-    // FIXME(skend): seems like a rather broad query
-    fn get_target_coords(
-        &self,
-        qtransform: &Query<&Transform>,
-    ) -> Option<Vec2> {
+#[derive(Component)]
+enum PilotType {
+    Player,
+    Bot,
+}
+
+#[derive(Component)]
+struct Pilot {
+    pilottype: PilotType,
+    it: bool,
+    // FIXME(skend): suppose bots do not have facing
+    // as is the case right now. how would we use the
+    // enum to handle this split?
+    facing: f32,
+    target: Option<Entity>,
+}
+
+impl Pilot {
+    fn get_target_coords(&self, qtransform: &Query<&Transform>) -> Option<Vec2> {
         if let Some(a_target) = self.get_target() {
             let maybe_target = qtransform.get(a_target);
             if let Ok(target) = maybe_target {
@@ -65,39 +76,15 @@ pub trait Targeting {
     }
 }
 
-// TODO(skend): impl targeting for player
-impl Targeting for Player {
-    fn get_target(&self) -> Option<Entity> {
-        self.target
-    }
-    fn set_target(&mut self, entity: Entity) {
-        self.target = Some(entity);
-    }
-}
-
-impl Targeting for Bot {
-    fn get_target(&self) -> Option<Entity> {
-        self.target
-    }
-    fn set_target(&mut self, entity: Entity) {
-        self.target = Some(entity);
-    }
-}
-
-#[derive(Component)]
-struct Targeter;
-
 // TODO(skend): need a trait implemented by both Player and Bot and a good name for it, Pilot? can
 // always rename later. hopefully that idea plays nice with ECS. it feels like i would be more
 // likely to hit borrow checkout conflits if i am operating on both players and bots but we'll see
 #[derive(Component)]
 struct Player {
-    it: bool,
-    facing: f32,
-    target: Option<Entity>,
 }
 
 // FIXME(skend): design crutch i think
+// it does make lookups faster though
 #[derive(Component)]
 struct PlayerSub;
 
@@ -107,7 +94,7 @@ struct BotSub;
 // a dude is the union between a player and a bot
 // a player-like entity
 #[derive(Component)]
-struct Dude(Entity);
+struct DudeRef(Entity);
 
 // like dudes but for ships
 #[derive(Component)]
@@ -115,8 +102,6 @@ struct Craft(Entity);
 
 #[derive(Component)]
 struct Bot {
-    it: bool,
-    target: Option<Entity>,
 }
 
 #[derive(Component)]
@@ -301,8 +286,8 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn touch_ship(
     ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
-    player_query: Query<&Player>,
-    bot_query: Query<&Bot>,
+    player_query: Query<&Pilot, With<Player>>,
+    bot_query: Query<&Pilot, With<Bot>>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
@@ -319,7 +304,7 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
-                        entity_commands.insert(Dude(ship_parent.get()));
+                        entity_commands.insert(DudeRef(ship_parent.get()));
                         entity_commands.insert(Craft(ship_gubbins));
                         // then the ship's parent is a player
                         if let Ok(_) = player_query.get(ship_parent.get()) {
@@ -353,8 +338,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
-    mut qplayers: Query<&mut Player>,
-    mut qbots: Query<&mut Bot>,
+    mut qplayers: Query<&mut Pilot, With<Player>>,
+    mut qbots: Query<&mut Pilot, With<Bot>>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -451,7 +436,8 @@ fn setup(
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     let playerguy = commands
         .spawn((
-            Player {
+            Pilot {
+                pilottype: PilotType::Player, 
                 it: false,
                 facing: 0.0,
                 target: None,
@@ -467,7 +453,6 @@ fn setup(
             Name::new("Protagonist"),
             Transform::default(),
             Visibility::Hidden,
-            Targeter,
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -518,7 +503,8 @@ fn setup(
     let planet1 = meshes.add(Circle::new(PLANET_RADIUS * 2.));
     let botguy = commands
         .spawn((
-            Bot {
+            Pilot {
+                pilottype: PilotType::Bot,
                 it: true,
                 target: None,
             },
@@ -533,7 +519,6 @@ fn setup(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_ACCEL_RATE,
             ),
-            Targeter,
         ))
         .with_children(|parent| {
             parent.spawn((
@@ -598,8 +583,8 @@ fn setup(
 // generally handle tagging state changes
 fn handle_tag(
     mut proclamation: Query<&mut Visibility, With<Proclamation>>,
-    mut bot: Query<(&mut Bot, &mut Transform)>,
-    mut player: Query<(&mut Player, &mut Transform), Without<Bot>>,
+    mut bot: Query<(&mut Pilot, &mut Transform), With<Bot>>,
+    mut player: Query<(&mut Pilot, &mut Transform), With<Player>>,
     mut tagready: Query<&mut TagReady>,
     mut tagtimer: Query<&mut TagCooldownTimer>,
     time: Res<Time>,
@@ -641,7 +626,7 @@ fn handle_tag(
 
 fn face_all(
     mut facers_query: Query<(&mut Transform, &Parent), With<Facing>>,
-    player_query: Query<&Player>,
+    player_query: Query<&Pilot, With<Player>>,
 ) {
     for (mut facer, parent) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
@@ -655,7 +640,7 @@ fn rotface_all(
         (&mut Transform, &Parent, &NotchOffset),
         With<NotchOffset>,
     >,
-    player_query: Query<&Player>,
+    player_query: Query<&Pilot, With<Player>>,
 ) {
     for (mut facer, parent, offset) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
@@ -671,9 +656,9 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut cannon: Query<(&mut Transform, &Dude, &Craft), With<CannonModel>>,
-    players: Query<&Player>,
-    bots: Query<&Bot>,
+    mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
+    players: Query<&Pilot, With<Player>>,
+    bots: Query<&Pilot, With<Bot>>,
     ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
     //qtargeting: Query<&dyn Targeting>,
@@ -694,7 +679,7 @@ fn aim_cannon(
         let mut our_dude_xy: Option<Vec2> = None;
         // FIXME(skend): apparently i still have a bit to learn
         // about dyn in rust
-        let mut our_dude: Option<Box<dyn Targeting>> = None;
+        //let mut our_dude: Option<Box<dyn Targeting>> = None;
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_player) = players.get(dude.0) {
@@ -771,7 +756,7 @@ fn aim_cannon(
 }
 
 fn move_player(
-    mut players: Query<(&mut Acceleration, &mut Player)>,
+    mut players: Query<(&mut Acceleration, &mut Pilot), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
