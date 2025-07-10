@@ -53,20 +53,26 @@ enum PilotType {
     Bot,
 }
 
-#[derive(Component)]
+impl Default for PilotType {
+    fn default() -> Self {
+        PilotType::Bot
+    }
+}
+
+#[derive(Component, Default)]
 struct Pilot {
     pilottype: PilotType,
     it: bool,
     // FIXME(skend): suppose bots do not have facing
     // as is the case right now. how would we use the
     // enum to handle this split?
-    facing: f32,
+    facing: Option<f32>,
     target: Option<Entity>,
 }
 
 impl Pilot {
     fn get_target_coords(&self, qtransform: &Query<&Transform>) -> Option<Vec2> {
-        if let Some(a_target) = self.get_target() {
+        if let Some(a_target) = self.target {
             let maybe_target = qtransform.get(a_target);
             if let Ok(target) = maybe_target {
                 return Some(target.translation.xy());
@@ -439,7 +445,7 @@ fn setup(
             Pilot {
                 pilottype: PilotType::Player, 
                 it: false,
-                facing: 0.0,
+                facing: Some(0.0),
                 target: None,
             },
             physics::Velocity(
@@ -507,6 +513,7 @@ fn setup(
                 pilottype: PilotType::Bot,
                 it: true,
                 target: None,
+                ..default()
             },
             Name::new("Antagonist"),
             Transform::from_xyz(50.0, 0.0, 0.0),
@@ -630,7 +637,9 @@ fn face_all(
 ) {
     for (mut facer, parent) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+            if let Some(player_facing) = player.facing {
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
+            }
         }
     }
 }
@@ -645,8 +654,10 @@ fn rotface_all(
     for (mut facer, parent, offset) in &mut facers_query {
         if let Ok(player) = player_query.get(parent.get()) {
             // we apply our intended offset from spawn to our new relative angle
-            facer.rotation = Quat::from_axis_angle(Vec3::Z, player.facing);
+            if let Some(player_facing) = player.facing {
+            facer.rotation = Quat::from_axis_angle(Vec3::Z, player_facing);
             facer.translation = facer.rotation * offset.0;
+            }
         }
     }
 }
@@ -787,7 +798,7 @@ fn move_player(
 
     // the ship faces whatever input the player last entered
     if direction != Vec3::ZERO {
-        play.facing = n_direction.y.atan2(n_direction.x);
+        play.facing = Some(n_direction.y.atan2(n_direction.x));
     }
 }
 
