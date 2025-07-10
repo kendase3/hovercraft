@@ -315,8 +315,7 @@ fn touch_ship(
                     {
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
-                        entity_commands
-                            .insert(Dude(ship_parent.get()));
+                        entity_commands.insert(Dude(ship_parent.get()));
                         // then the ship's parent is a player
                         if let Ok(_) = player_query.get(ship_parent.get()) {
                             entity_commands.insert(PlayerSub {});
@@ -670,18 +669,12 @@ fn aim_cannon(
     mut cannon: Query<(&mut Transform, &Dude), With<CannonModel>>,
     players: Query<&Player>,
     bots: Query<&Bot>,
-    player_transform: Query<&Transform, (With<Player>, Without<CannonModel>)>,
-    ship_transform: Query<
-        &Transform,
-        (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
-    >,
-    bot_location: Query<
-        &Transform,
-        (
-            With<Bot>,
-            (Without<Player>, Without<CannonModel>, Without<ShipModel>),
-        ),
-    >,
+    qtransform: Query<&Transform, Without<CannonModel>>,
+    // TODO(skend): may make the above without ship and then add a ship transform
+    //ship_transform: Query<
+    //    &Transform,
+    //    (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
+    //>,
 ) {
     // TODO(skend): for each cannon, have to find its target
     // TODO(skend): lettuce do the same idea of patriarch, but
@@ -690,9 +683,21 @@ fn aim_cannon(
     // things it should just memorize
     for (mut cannon_transform, dude) in cannon.iter_mut() {
         if let Ok(cur_player) = players.get(dude.0) {
-            info!("our cannon belonged to a player");
+            info!(
+                "our cannon belonged to a player and its target is {:?}",
+                cur_player.get_target()
+            );
+            if let Ok(player_t) = qtransform.get(dude.0) {
+                info!(
+                    "our cannon belonged to a player and its target location {:?}",
+                    player_t.translation.xy()
+                );
+            }
         } else if let Ok(cur_bot) = bots.get(dude.0) {
-            info!("our cannon belonged to a bot");
+            info!(
+                "our cannon belonged to a bot and its target is {:?}",
+                cur_bot.get_target()
+            );
         }
     }
 }
