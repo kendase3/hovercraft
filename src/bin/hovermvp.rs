@@ -47,10 +47,36 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 
-pub trait Targeting {
-    fn get_target(&self) -> Option<Entity>;
-    fn set_target(&mut self, entity: Entity);
-    // FIXME(skend): seems like a rather broad query
+struct PlayerTargeter {
+    target: Entity,
+}
+
+struct BotTargeter {
+    target: Entity,
+}
+
+enum Targeting {
+    PlayerTargeter(Player),
+    BotTargeter(Bot),
+}
+
+impl Targeting {
+    fn get_target(&self) -> Option<Entity> {
+        match self {
+            Targeting::PlayerTargeter(player) => player.target,
+            Targeting::BotTargeter(bot) => bot.target,
+        }
+    }
+    fn set_target(&mut self, entity: Entity) {
+        match self {
+            Targeting::PlayerTargeter(player) => {
+                player.target = Some(entity);
+            }
+            Targeting::BotTargeter(bot) => {
+                bot.target = Some(entity);
+            }
+        }
+    }
     fn get_target_coords(
         &self,
         qtransform: &Query<&Transform>,
@@ -62,25 +88,6 @@ pub trait Targeting {
             }
         }
         None
-    }
-}
-
-// TODO(skend): impl targeting for player
-impl Targeting for Player {
-    fn get_target(&self) -> Option<Entity> {
-        self.target
-    }
-    fn set_target(&mut self, entity: Entity) {
-        self.target = Some(entity);
-    }
-}
-
-impl Targeting for Bot {
-    fn get_target(&self) -> Option<Entity> {
-        self.target
-    }
-    fn set_target(&mut self, entity: Entity) {
-        self.target = Some(entity);
     }
 }
 
@@ -693,7 +700,7 @@ fn aim_cannon(
         let mut our_dude_xy: Option<Vec2> = None;
         // FIXME(skend): apparently i still have a bit to learn
         // about dyn in rust
-        let mut our_dude: Option<Box<dyn Targeting>> = None;
+        //let mut our_dude: Option<Box<dyn Targeting>> = None;
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_player) = players.get(dude.0) {
@@ -712,29 +719,28 @@ fn aim_cannon(
         }
         //if let Ok(cur_target) = qtransform.get(targeting.get_target()) {
         //    target_xy = Some(cur_target.translation.xy());
-       // }
+        // }
         if our_ship_xy == None || our_dude_xy == None || target_xy == None {
             warn!("Error in aim function!");
             if our_ship_xy == None {
-            warn!("our_ship_xy was none!");
+                warn!("our_ship_xy was none!");
             }
             if our_dude_xy == None {
-            warn!("our_dude_xy was none!");
+                warn!("our_dude_xy was none!");
             }
             if target_xy == None {
                 // FIXME(skend): error case
-            warn!("target_xy was none!");
+                warn!("target_xy was none!");
             }
             return;
         }
-        let delta_loc = our_dude_xy.unwrap() - target_xy.unwrap() + our_ship_xy.unwrap() + our_cannon_xy;
+        let delta_loc = our_dude_xy.unwrap() - target_xy.unwrap()
+            + our_ship_xy.unwrap()
+            + our_cannon_xy;
         let radians = delta_loc.y.atan2(delta_loc.x);
-    info!(
-        "the angle in degrees is {}",
-        radians * (180. / PI)
-    );
-    cannon_transform.rotation = Quat::from_rotation_z(radians)
-        * ship_transform.rotation.inverse();
+        info!("the angle in degrees is {}", radians * (180. / PI));
+        cannon_transform.rotation =
+            Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
     }
     // at the end of all this, we want to have:
     // - a cannon's transform to aim as our output
