@@ -687,26 +687,54 @@ fn aim_cannon(
     // for the shipmodel as well. then the cannon will not
     // have to go crawling every frame or whatever to find
     // things it should just memorize
-    let mut our_cannon_xy: Vec2;
-    let mut our_ship_xy: Vec2;
-    let mut our_dude_xy: Vec2;
-    let mut target_xy: Vec2;
     for (mut cannon_transform, dude, craft) in cannon.iter_mut() {
-        our_cannon_xy = cannon_transform.translation.xy();
+        let our_cannon_xy = cannon_transform.translation.xy();
+        let mut our_ship_xy: Option<Vec2> = None;
+        let mut our_dude_xy: Option<Vec2> = None;
+        // FIXME(skend): apparently i still have a bit to learn
+        // about dyn in rust
+        let mut our_dude: Option<dyn Targeting> = None;
+        let mut target_xy: Option<Vec2> = None;
+        let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_player) = players.get(dude.0) {
             if let Ok(player_t) = qtransform.get(dude.0) {
-                our_dude_xy = player_t.translation.xy();
+                our_dude_xy = Some(player_t.translation.xy());
             }
         } else if let Ok(cur_bot) = bots.get(dude.0) {
             if let Ok(bot_t) = qtransform.get(dude.0) {
-                our_dude_xy = bot_t.translation.xy();
+                our_dude_xy = Some(bot_t.translation.xy());
             }
         }
         if let Ok(cur_craft) = ships.get(craft.0) {
             if let Ok(craft_t) = qtransform.get(craft.0) {
-                our_ship_xy = craft_t.translation.xy();
+                our_ship_xy = Some(craft_t.translation.xy());
             }
         }
+        //if let Ok(cur_target) = qtransform.get(targeting.get_target()) {
+        //    target_xy = Some(cur_target.translation.xy());
+       // }
+        if our_ship_xy == None || our_dude_xy == None || target_xy == None {
+            warn!("Error in aim function!");
+            if our_ship_xy == None {
+            warn!("our_ship_xy was none!");
+            }
+            if our_dude_xy == None {
+            warn!("our_dude_xy was none!");
+            }
+            if target_xy == None {
+                // FIXME(skend): error case
+            warn!("target_xy was none!");
+            }
+            return;
+        }
+        let delta_loc = our_dude_xy.unwrap() - target_xy.unwrap() + our_ship_xy.unwrap() + our_cannon_xy;
+        let radians = delta_loc.y.atan2(delta_loc.x);
+    info!(
+        "the angle in degrees is {}",
+        radians * (180. / PI)
+    );
+    cannon_transform.rotation = Quat::from_rotation_z(radians)
+        * ship_transform.rotation.inverse();
     }
     // at the end of all this, we want to have:
     // - a cannon's transform to aim as our output
