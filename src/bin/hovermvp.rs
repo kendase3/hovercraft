@@ -109,6 +109,10 @@ struct BotSub;
 #[derive(Component)]
 struct Dude(Entity);
 
+// like dudes but for ships
+#[derive(Component)]
+struct Craft(Entity);
+
 #[derive(Component)]
 struct Bot {
     it: bool,
@@ -316,6 +320,7 @@ fn touch_ship(
                         entity_commands.insert(CannonModel {});
                         entity_commands.insert(Visibility::Visible);
                         entity_commands.insert(Dude(ship_parent.get()));
+                        entity_commands.insert(Craft(ship_gubbins));
                         // then the ship's parent is a player
                         if let Ok(_) = player_query.get(ship_parent.get()) {
                             entity_commands.insert(PlayerSub {});
@@ -666,9 +671,10 @@ fn rotface_all(
 // yeah the player one is no longer adjusting for the angle of its parent, or
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
-    mut cannon: Query<(&mut Transform, &Dude), With<CannonModel>>,
+    mut cannon: Query<(&mut Transform, &Dude, &Craft), With<CannonModel>>,
     players: Query<&Player>,
     bots: Query<&Bot>,
+    ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
     // TODO(skend): may make the above without ship and then add a ship transform
     //ship_transform: Query<
@@ -681,17 +687,25 @@ fn aim_cannon(
     // for the shipmodel as well. then the cannon will not
     // have to go crawling every frame or whatever to find
     // things it should just memorize
-    let cannon_xy: Vec2;
-    let target_xy: Vec2;
-    for (mut cannon_transform, dude) in cannon.iter_mut() {
+    let mut our_cannon_xy: Vec2;
+    let mut our_ship_xy: Vec2;
+    let mut our_dude_xy: Vec2;
+    let mut target_xy: Vec2;
+    for (mut cannon_transform, dude, craft) in cannon.iter_mut() {
+        our_cannon_xy = cannon_transform.translation.xy();
         if let Ok(cur_player) = players.get(dude.0) {
             if let Ok(player_t) = qtransform.get(dude.0) {
-                info!(
-                    "our cannon belonged to a player and its target location {:?}",
-                    player_t.translation.xy()
-                );
+                our_dude_xy = player_t.translation.xy();
             }
         } else if let Ok(cur_bot) = bots.get(dude.0) {
+            if let Ok(bot_t) = qtransform.get(dude.0) {
+                our_dude_xy = bot_t.translation.xy();
+            }
+        }
+        if let Ok(cur_craft) = ships.get(craft.0) {
+            if let Ok(craft_t) = qtransform.get(craft.0) {
+                our_ship_xy = craft_t.translation.xy();
+            }
         }
     }
     // at the end of all this, we want to have:
