@@ -676,6 +676,7 @@ fn aim_cannon(
     bots: Query<&Bot>,
     ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
+    //qtargeting: Query<&dyn Targeting>,
     // TODO(skend): may make the above without ship and then add a ship transform
     //ship_transform: Query<
     //    &Transform,
@@ -710,6 +711,13 @@ fn aim_cannon(
                 our_ship_xy = Some(craft_t.translation.xy());
             }
         }
+        // FIXME(skend): implement this somehow, maybe with enums
+        // and maybe i can use the enums slightly differently for it
+        // to fit my case well
+        //if let Ok(targeter) = qtargeting.get(dude.0) {
+        //    target_xy = targeter.get_target();
+        //}
+        
         //if let Ok(cur_target) = qtransform.get(targeting.get_target()) {
         //    target_xy = Some(cur_target.translation.xy());
        // }
