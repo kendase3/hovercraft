@@ -882,10 +882,6 @@ fn rotface_all(
     }
 }
 
-// FIXME(skend): i believe currently broken for both player and bot, let me check
-// if so, i'll fix the player case first.
-// yeah the player one is no longer adjusting for the angle of its parent, or
-// its grandparent or whatever. i will take a look.
 fn aim_cannon(
     mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
     pilots: Query<&Pilot>,
