@@ -709,17 +709,17 @@ fn handle_laser(
 
             // the act of actually updating the vertices looks a bit complicated too
             // i have 24 points, but i use a struct that has 32? maybe alpha value or something?
+            // things we can use to find success here:
+            // - pilot_entity
+            // laser_vertex_1..4
+            let mut mesh = qlasermesh.single_mut();
+            let mut actual_mesh = meshes.get_mut(mesh);
+            let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
+            // well we can get started i guess. let's make a face that's on the origin side
+            vertices[0] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
+                    .into();
         }
-    }
-
-    // things we can use to find success here:
-    // - pilot_entity
-    // laser_vertex_1..4
-    for mut mesh in qlasermesh.iter_mut() {
-        // hmm...how am i going to match up this mesh with the laser/dude/target i have?
-        // let's just put that problem off for now.
-        let actual_mesh = meshes.get_mut(mesh);
-        let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
     }
 }
 
