@@ -287,6 +287,9 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
+// TODO(skend): should the laser be a child of the cannon?
+// ultimately i want each cannon to be able to fire
+// it looks like i could make the laser outright in this function
 fn touch_laser(
     laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
     children: Query<&Children>,
@@ -309,6 +312,8 @@ fn touch_laser(
             }
         }
     }
+    // TODO(skend): here we can reparent the laser s.t. the cannon is its parent
+
     laser_initialized.0 = true;
 }
 
