@@ -326,6 +326,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
+    mut materials3: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -486,13 +487,17 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-            // FIXME(skend): make this good
+            let kewl_material = materials3.add(StandardMaterial {
+                base_color: Color::from(laser_color),
+                ..default()
+            });
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
-                //MeshMaterial3d(materials.add(StandardMaterial{ base_color: laser_color, ..default() })),
+                MeshMaterial3d(kewl_material),
                 Visibility::Hidden,
                 LargeLaser,
                 Name::new("Large Laser"),
+                Transform::default(),
             ));
         });
     let bot_target = meshes
