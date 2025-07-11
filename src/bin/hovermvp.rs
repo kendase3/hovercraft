@@ -645,7 +645,7 @@ fn handle_laser(
         let mut laser_dest: Option<Vec2> = None;
         let mut pilot_entity: Option<Entity> = None;
         if pilot.fire_large_laser {
-            info!("we noticed the laser was fired!");
+            //info!("we noticed the laser was fired!");
             // well then we will need to know where the laser is firing to
 
             // so we'll find our target
