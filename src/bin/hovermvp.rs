@@ -46,6 +46,7 @@ const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
+const LASER_WIDTH: f32 = 4.0;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -139,6 +140,9 @@ struct NotCannonModel;
 
 #[derive(Component)]
 struct NotchOffset(pub Vec3);
+
+#[derive(Component)]
+struct LargeLaser;
 
 #[derive(Resource, Default)]
 struct CannonInitialized(bool);
@@ -415,6 +419,9 @@ fn setup(
     };
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
+    // TODO(skend): make the color and shape for the laser
+    let laser_mesh = Cuboid::new(1.0, LASER_WIDTH, 1.0);
+    let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
@@ -478,6 +485,14 @@ fn setup(
                 Mesh2d(notch_circle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
+            ));
+            // FIXME(skend): make this good
+            parent.spawn((
+                Mesh3d(meshes.add(laser_mesh)),
+                //MeshMaterial3d(materials.add(StandardMaterial{ base_color: laser_color, ..default() })),
+                Visibility::Hidden,
+                LargeLaser,
+                Name::new("Large Laser"),
             ));
         });
     let bot_target = meshes
