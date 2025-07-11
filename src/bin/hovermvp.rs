@@ -593,9 +593,7 @@ fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
 }
 
-fn handle_laser(
-    mut qpilot: Query<&mut Pilot>
-) {
+fn handle_laser(mut qpilot: Query<&mut Pilot>, qtransform: Query<&Transform>) {
     for pilot in qpilot.iter_mut() {
         // TODO(skend): some details here around a timer
         // and which variables get activated on input
@@ -603,13 +601,38 @@ fn handle_laser(
         // First I want to see the laser!
         if pilot.fire_large_laser {
             // well then we will need to know where the laser is firing to
+
+            // so we'll find our target
+            if let Some(target) = pilot.target {
+                if let Ok(target_transform) = qtransform.get(target) {
+                    let target_xy = target_transform.translation.xy();
+                    // FIXME(skend): it's not clear the best way to get
+                    // the transform for our pilot in a way that's fast
+                    // and still lets me run lookups for the target
+
+                    // one idea is that there are so few pilots, if i call
+                    // transform with pilot, that's still a fast/small query.
+                    // I may need to eventually add a func to pilot that
+                    // gets the exact x/y offset for a given weapon it has.
+                    // In our example it would be large laser. So it would crawl
+                    // the ship offset and the large laser cannon offset, add them
+                    // to the Pilot offset, and return the value. I'm going to
+                    // want to do that a lot and it's annoying to do.
+                    // I believe I can set up all those links in the touch_ship
+                    // function.
+
+                    //if let Ok(our_transform) = qtransform.get(pilot) {
+                    //    let our_xy = our_transform.translation.xy();
+                    //}
+                }
+            }
+
             // then we'll need to find the angle to that place
             // then we'll need to find the angle perpendicular to that angle
             // one set of points of our rectangle thing will be at the origin
             // but perpendicular to the way the laser is firing at LASER_WIDTH distance
             // maybe the laser should just be 2d for now? i will try 3d and see if it's annoying
             // we can just give it a fixed LASER_HEIGHT, that shouldn't be a big deal
-
         }
     }
 }
