@@ -230,9 +230,9 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
-        .add_systems(Startup, (draw_map, (setup, setup_targets).chain()))
-        .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
-        .add_systems(PreUpdate, (touch_laser).run_if(need_laser_init))
+        .add_systems(Startup, (draw_map, (setup, init_targets).chain()))
+        .add_systems(PreUpdate, (init_ship).run_if(need_cannon_init))
+        .add_systems(PreUpdate, (init_laser).run_if(need_laser_init))
         .add_systems(
             Update,
             (
@@ -290,7 +290,7 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 // TODO(skend): should the laser be a child of the cannon?
 // ultimately i want each cannon to be able to fire
 // it looks like i could make the laser outright in this function
-fn touch_laser(
+fn init_laser(
     laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
     children: Query<&Children>,
     pilot_query: Query<&Pilot>,
@@ -302,6 +302,9 @@ fn touch_laser(
         let name = q_name.get(laser_entity);
         if let Ok(name_success) = name {
             //info!("cur name = {}", name_success);
+            // TODO(skend): i could index a ship's cannons
+            // i.e. laser0 looks for cannon0
+            // and then we map them one time in init_laser
             if name_success.as_str() == "laser" {
                 if let Some(mut entity_commands) =
                     commands.get_entity(laser_entity)
@@ -317,7 +320,7 @@ fn touch_laser(
     laser_initialized.0 = true;
 }
 
-fn touch_ship(
+fn init_ship(
     ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
     pilot_query: Query<&Pilot>,
@@ -611,7 +614,7 @@ fn setup(
     ));
 }
 
-fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
+fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
     let mut player_id: Option<Entity> = None;
     let mut bot_id: Option<Entity> = None;
     for (entity, pilot) in query.iter() {
@@ -656,6 +659,15 @@ fn handle_laser(
                             pilot_entity = Some(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
+                                // FIXME(skend): laser_origin also needs to
+                                // account for the ship transform and
+                                // the cannon transform
+                                //let delta_loc = target_xy - pilot_xy + ship_xy + cannon_xy
+                                // maybe every laser needs a component pointing at its cannon
+                                // and another pointing at its ship.
+                                // For what it's worth I think I have some other hacks
+                                // in here that dodge queries for now and rely
+                                // on there just being one laser or something.
                                 laser_origin =
                                     Some(pilot_transform.translation.xy());
                             }
@@ -702,7 +714,14 @@ fn handle_laser(
                 laser_vertex_2_polar,
                 laser_dest.unwrap(),
             );
-            // TODO(skend): now i need to like, get the laser that belongs to my pilot
+
+            // TODO(skend): now need to modify these vertices by the offsets of the pilot, the
+            // ship, and the cannon.
+            // right now i'm just using the laser itself? maybe double back and check what
+            // offset i am currently accounting for, because it does seem to generally
+            // move when the player and bot move. i think i am just accounting for target?
+
+            // get the laser that belongs to my pilot
             // and set its vertices
             // and toggle it visible
 
