@@ -69,6 +69,7 @@ struct Pilot {
     // enum to handle this split?
     facing: Option<f32>,
     target: Option<Entity>,
+    fire_large_laser: bool,
 }
 
 // is it actually fine to not have normal form
@@ -428,9 +429,9 @@ fn setup(
         .spawn((
             Pilot {
                 pilottype: PilotType::Player,
-                it: false,
-                facing: Some(0.0),
-                target: None,
+                ..default() //it: false,
+                            //facing: Some(0.0),
+                            //target: None,
             },
             Player,
             physics::Velocity(
@@ -508,8 +509,7 @@ fn setup(
             Pilot {
                 pilottype: PilotType::Bot,
                 it: true,
-                target: None,
-                facing: Some(0.0),
+                ..default()
             },
             Bot,
             Name::new("Antagonist"),
@@ -738,6 +738,9 @@ fn move_player(
     }
     if keys.any_pressed([KeyCode::KeyA]) {
         direction.x -= 1.0;
+    }
+    if keys.any_pressed([KeyCode::KeyR]) {
+        play.fire_large_laser = true;
     }
 
     let n_direction;
