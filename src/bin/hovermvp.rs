@@ -609,20 +609,6 @@ fn handle_laser(
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
-                    // FIXME(skend): it's not clear the best way to get
-                    // the transform for our pilot in a way that's fast
-                    // and still lets me run lookups for the target
-
-                    // one idea is that there are so few pilots, if i call
-                    // transform with pilot, that's still a fast/small query.
-                    // I may need to eventually add a func to pilot that
-                    // gets the exact x/y offset for a given weapon it has.
-                    // In our example it would be large laser. So it would crawl
-                    // the ship offset and the large laser cannon offset, add them
-                    // to the Pilot offset, and return the value. I'm going to
-                    // want to do that a lot and it's annoying to do.
-                    // I believe I can set up all those links in the touch_ship
-                    // function.
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
                             if let Ok(pilot_transform) = qtransform.get(entity)
@@ -632,14 +618,32 @@ fn handle_laser(
                             }
                         }
                     }
-
-                    //if let Ok(our_transform) = qtransform.get(pilot) {
-                    //    let our_xy = our_transform.translation.xy();
-                    //}
                 }
             }
+            // so now laser_origin and laser_dest are populated.
+            // TODO(skend): adjust for the ship and cannon offsets
+            // in fact maybe the above query makes more sense just looking for the cannon
+            // since the cannon links to the ship and the player as i recall
 
             // then we'll need to find the angle to that place
+            // not sure what made me decide to actually use my physics lib again
+            // it's more like a trig lib right now but i guess i was feeling hopeful at the time
+            let coordpair = physics::CoordPair {
+                center: laser_origin.unwrap(),
+                exterior: laser_dest.unwrap(),
+            };
+            let polar = physics::Polar::from(coordpair);
+            // we are going to plop some vertices along this angle
+            let maltheta = polar.theta + PI % (2. * PI);
+            let laser_vertex_1_polar = physics::Polar {
+                theta: maltheta,
+                r: LASER_WIDTH / 2.,
+            };
+            // and then we'll crap out its vec3
+            let laser_vertex_1_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_1_polar,
+                laser_origin.unwrap(),
+            );
             // then we'll need to find the angle perpendicular to that angle
             // one set of points of our rectangle thing will be at the origin
             // but perpendicular to the way the laser is firing at LASER_WIDTH distance
