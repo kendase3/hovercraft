@@ -632,10 +632,10 @@ fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
 }
 
 fn handle_laser(
-    mut qpilot: Query<&mut Pilot>,
+    qpilot: Query<&mut Pilot>,
     qtransform: Query<&Transform, With<Pilot>>,
     qentity: Query<Entity, With<Pilot>>,
-    mut qlaser: Query<(&mut LargeLaser, &DudeRef)>,
+    qlaser: Query<(&mut LargeLaser, &DudeRef)>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
@@ -714,8 +714,8 @@ fn handle_laser(
             // things we can use to find success here:
             // - pilot_entity
             // laser_vertex_1..4
-            let mut mesh = qlasermesh.single_mut();
-            let mut actual_mesh = meshes.get_mut(mesh).unwrap();
+            let mesh = qlasermesh.single_mut();
+            let actual_mesh = meshes.get_mut(mesh).unwrap();
             let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
             // well we can get started i guess. let's make a face that's on the origin side
             vertices[0] =
