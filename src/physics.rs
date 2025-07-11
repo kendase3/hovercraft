@@ -29,9 +29,10 @@ const NODES_PER_ORBIT: f32 = 40.;
 // how far ahead we look in terms of angle distance
 const RADIANS_AHEAD: f32 = 2. * PI / NODES_PER_ORBIT;
 
+#[derive(Copy, Clone, Default)]
 pub struct Polar {
-    r: f32,
-    theta: f32,
+    pub r: f32,
+    pub theta: f32,
 }
 
 impl From<CoordPair> for Polar {
@@ -48,8 +49,8 @@ impl From<CoordPair> for Polar {
 }
 
 pub struct CoordPair {
-    center: Vec2,
-    exterior: Vec2,
+    pub center: Vec2,
+    pub exterior: Vec2,
 }
 
 impl From<Polar> for Vec2 {
@@ -64,7 +65,7 @@ impl From<Polar> for Vec2 {
 
 // the stock polar will assume its reference point is 0
 // this function adds the offset of whatever the other point has
-fn polar_to_cartesean_plus_point(polar: Polar, center: Vec2) -> Vec2 {
+pub fn polar_to_cartesean_plus_point(polar: Polar, center: Vec2) -> Vec2 {
     let relative_cartesean = Vec2::from(polar);
     relative_cartesean + center
 }

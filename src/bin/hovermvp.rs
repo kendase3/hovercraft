@@ -46,6 +46,8 @@ const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
+const LASER_WIDTH: f32 = 4.0;
+const LASER_HEIGHT: f32 = 0.5;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -59,7 +61,7 @@ impl Default for PilotType {
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, PartialEq)]
 struct Pilot {
     pilottype: PilotType,
     it: bool,
@@ -68,6 +70,7 @@ struct Pilot {
     // enum to handle this split?
     facing: Option<f32>,
     target: Option<Entity>,
+    fire_large_laser: bool,
 }
 
 // is it actually fine to not have normal form
@@ -140,8 +143,14 @@ struct NotCannonModel;
 #[derive(Component)]
 struct NotchOffset(pub Vec3);
 
+#[derive(Component)]
+struct LargeLaser;
+
 #[derive(Resource, Default)]
 struct CannonInitialized(bool);
+
+#[derive(Resource, Default)]
+struct LaserInitialized(bool);
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
@@ -187,6 +196,14 @@ fn need_cannon_init(ci: Res<CannonInitialized>) -> bool {
     !ci.0
 }
 
+fn dont_need_laser_init(ci: Res<LaserInitialized>) -> bool {
+    ci.0
+}
+
+fn need_laser_init(ci: Res<LaserInitialized>) -> bool {
+    !ci.0
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -212,8 +229,10 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
+        .insert_resource(LaserInitialized(false))
         .add_systems(Startup, (draw_map, (setup, setup_targets).chain()))
         .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
+        .add_systems(PreUpdate, (touch_laser).run_if(need_laser_init))
         .add_systems(
             Update,
             (
@@ -227,6 +246,7 @@ fn main() {
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
+        .add_systems(Update, (handle_laser).run_if(dont_need_laser_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
@@ -267,13 +287,36 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
-// FIXME(skend): even with our design crutch
-// we will need to know whether to append PlayerSub
-// or BotSub component to the cannon.
-// We will need to crawl up the parents to see
-// which one we are. That sounds rather annoying to
-// implement and then debug but once it's done
-// it's done.
+// TODO(skend): should the laser be a child of the cannon?
+// ultimately i want each cannon to be able to fire
+// it looks like i could make the laser outright in this function
+fn touch_laser(
+    laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
+    children: Query<&Children>,
+    pilot_query: Query<&Pilot>,
+    q_name: Query<&Name>,
+    mut commands: Commands,
+    mut laser_initialized: ResMut<LaserInitialized>,
+) {
+    for (laser_entity, laser_parent) in laser_stuff.iter() {
+        let name = q_name.get(laser_entity);
+        if let Ok(name_success) = name {
+            //info!("cur name = {}", name_success);
+            if name_success.as_str() == "laser" {
+                if let Some(mut entity_commands) =
+                    commands.get_entity(laser_entity)
+                {
+                    entity_commands.insert(DudeRef(laser_parent.get()));
+                    info!("initialized a laser");
+                }
+            }
+        }
+    }
+    // TODO(skend): here we can reparent the laser s.t. the cannon is its parent
+
+    laser_initialized.0 = true;
+}
+
 fn touch_ship(
     ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
@@ -322,6 +365,7 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
+    mut materials3: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -415,14 +459,17 @@ fn setup(
     };
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
+    // TODO(skend): make the color and shape for the laser
+    let laser_mesh = Cuboid::new(1.0, LASER_WIDTH, 1.0);
+    let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
             Pilot {
                 pilottype: PilotType::Player,
-                it: false,
-                facing: Some(0.0),
-                target: None,
+                ..default() //it: false,
+                            //facing: Some(0.0),
+                            //target: None,
             },
             Player,
             physics::Velocity(
@@ -479,6 +526,19 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
+            let kewl_material = materials3.add(StandardMaterial {
+                base_color: Color::from(laser_color),
+                ..default()
+            });
+            // TODO(skend): add for bot too
+            parent.spawn((
+                Mesh3d(meshes.add(laser_mesh)),
+                MeshMaterial3d(kewl_material),
+                Visibility::Hidden,
+                LargeLaser,
+                Name::new("laser"),
+                Transform::default(),
+            ));
         });
     let bot_target = meshes
         .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
@@ -488,8 +548,7 @@ fn setup(
             Pilot {
                 pilottype: PilotType::Bot,
                 it: true,
-                target: None,
-                facing: Some(0.0),
+                ..default()
             },
             Bot,
             Name::new("Antagonist"),
@@ -568,6 +627,179 @@ fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
             pilot.target = bot_id;
         } else if pilot.pilottype == PilotType::Bot {
             pilot.target = player_id;
+        }
+    }
+}
+
+fn handle_laser(
+    mut qpilot: Query<&mut Pilot>,
+    qtransform: Query<&Transform, With<Pilot>>,
+    qentity: Query<Entity, With<Pilot>>,
+    mut qlaser: Query<(&mut LargeLaser, &DudeRef)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
+    mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
+) {
+    for pilot in qpilot.iter() {
+        let mut laser_origin: Option<Vec2> = None;
+        let mut laser_dest: Option<Vec2> = None;
+        let mut pilot_entity: Option<Entity> = None;
+        if pilot.fire_large_laser {
+            info!("we noticed the laser was fired!");
+            // well then we will need to know where the laser is firing to
+
+            // so we'll find our target
+            if let Some(target) = pilot.target {
+                if let Ok(target_transform) = qtransform.get(target) {
+                    laser_dest = Some(target_transform.translation.xy());
+                    for entity in qentity.iter() {
+                        if *qpilot.get(entity).unwrap() == *pilot {
+                            pilot_entity = Some(entity);
+                            if let Ok(pilot_transform) = qtransform.get(entity)
+                            {
+                                laser_origin =
+                                    Some(pilot_transform.translation.xy());
+                            }
+                        }
+                    }
+                }
+            }
+            let coordpair = physics::CoordPair {
+                center: laser_origin.unwrap(),
+                exterior: laser_dest.unwrap(),
+            };
+            let polar = physics::Polar::from(coordpair);
+            // we are going to plop some vertices along this angle
+            let maltheta = polar.theta + 0.5 * PI % (2. * PI);
+            // oddly PEMDAS really went my way on this one, very few () required
+            // maybe i don't even need those last ones but i'm too lazy
+            // to look up where % falls into the order of operations and i don't
+            // have it memorized
+            let maltheta2 = polar.theta - 0.5 * PI + 2. * PI % (2. * PI);
+            let laser_vertex_1_polar = physics::Polar {
+                theta: maltheta,
+                r: LASER_WIDTH / 2.,
+            };
+            let laser_vertex_2_polar = physics::Polar {
+                theta: maltheta2,
+                r: LASER_WIDTH / 2.,
+            };
+            // and then we'll crap out its vec2
+            let laser_vertex_1_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_1_polar,
+                laser_origin.unwrap(),
+            );
+            let laser_vertex_2_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_2_polar,
+                laser_origin.unwrap(),
+            );
+            // and then, if we take those same polar offsets from the destination,
+            // we get the other side of our rectangle
+            let laser_vertex_3_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_1_polar,
+                laser_dest.unwrap(),
+            );
+            let laser_vertex_4_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_2_polar,
+                laser_dest.unwrap(),
+            );
+            // TODO(skend): now i need to like, get the laser that belongs to my pilot
+            // and set its vertices
+            // and toggle it visible
+
+            // i now have a DudeRef on lasers
+
+            // the act of actually updating the vertices looks a bit complicated too
+            // i have 24 points, but i use a struct that has 32? maybe alpha value or something?
+            // things we can use to find success here:
+            // - pilot_entity
+            // laser_vertex_1..4
+            let mut mesh = qlasermesh.single_mut();
+            let mut actual_mesh = meshes.get_mut(mesh).unwrap();
+            let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
+            // well we can get started i guess. let's make a face that's on the origin side
+            vertices[0] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[1] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[2] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[3] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            // and just like that, we have our face at the origin with the normal headed toward the
+            // laser vector
+            // now we can make the top face
+            vertices[4] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[5] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[6] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[7] =
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
+                    .into();
+            // next we can make the face at the destination
+            vertices[8] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[9] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[10] =
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[11] =
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            // next we can make the face on the bottom
+            vertices[12] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[13] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[14] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[15] =
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            // then we can do the left side
+            vertices[16] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[17] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[18] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[19] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            // finally the right side
+            vertices[20] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[21] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[22] =
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[23] =
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+            let mut finally_laser_time = qlaservisibility.single_mut();
+            *finally_laser_time = Visibility::Visible;
         }
     }
 }
@@ -718,6 +950,9 @@ fn move_player(
     }
     if keys.any_pressed([KeyCode::KeyA]) {
         direction.x -= 1.0;
+    }
+    if keys.any_pressed([KeyCode::KeyR]) {
+        play.fire_large_laser = true;
     }
 
     let n_direction;
