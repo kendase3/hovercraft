@@ -737,13 +737,13 @@ fn handle_laser(
                 (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
                     .into();
             vertices[5] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[6] =
                 (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
                     .into();
-            vertices[7] =
+            vertices[6] =
                 (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
+                    .into();
+            vertices[7] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
                     .into();
             // next we can make the face at the destination
             vertices[8] =
