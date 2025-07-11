@@ -537,7 +537,6 @@ fn setup(
                 Visibility::Hidden,
                 LargeLaser,
                 Name::new("laser"),
-                Transform::default(),
             ));
         });
     let bot_target = meshes
