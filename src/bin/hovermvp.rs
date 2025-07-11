@@ -636,10 +636,13 @@ fn handle_laser(
     qtransform: Query<&Transform, With<Pilot>>,
     qentity: Query<Entity, With<Pilot>>,
     mut qlaser: Query<(&mut LargeLaser, &DudeRef)>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
+        let mut pilot_entity: Option<Entity> = None;
         if pilot.fire_large_laser {
             // well then we will need to know where the laser is firing to
 
@@ -649,6 +652,7 @@ fn handle_laser(
                     laser_dest = Some(target_transform.translation.xy());
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
+                            pilot_entity = Some(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
                                 laser_origin =
@@ -705,9 +709,17 @@ fn handle_laser(
 
             // the act of actually updating the vertices looks a bit complicated too
             // i have 24 points, but i use a struct that has 32? maybe alpha value or something?
-            // and then there's an AABB thing? i have to get it then run
-            // Aabb::compute(vertices_array) or similar
         }
+    }
+
+    // things we can use to find success here:
+    // - pilot_entity
+    // laser_vertex_1..4
+    for mut mesh in qlasermesh.iter_mut() {
+        // hmm...how am i going to match up this mesh with the laser/dude/target i have?
+        // let's just put that problem off for now.
+        let actual_mesh = meshes.get_mut(mesh);
+        let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
     }
 }
 
