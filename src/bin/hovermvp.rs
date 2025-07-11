@@ -78,21 +78,6 @@ struct Player;
 #[derive(Component)]
 struct Bot;
 
-impl Pilot {
-    fn get_target_coords(
-        &self,
-        qtransform: &Query<&Transform>,
-    ) -> Option<Vec2> {
-        if let Some(a_target) = self.target {
-            let maybe_target = qtransform.get(a_target);
-            if let Ok(target) = maybe_target {
-                return Some(target.translation.xy());
-            }
-        }
-        None
-    }
-}
-
 // FIXME(skend): design crutch i think
 // it does make lookups faster though
 #[derive(Component)]
@@ -337,7 +322,6 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
-    mut qpilots: Query<&mut Pilot>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -572,14 +556,14 @@ fn setup(
 fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
     let mut player_id: Option<Entity> = None;
     let mut bot_id: Option<Entity> = None;
-    for (entity, mut pilot) in query.iter_mut() {
+    for (entity, pilot) in query.iter() {
         if pilot.pilottype == PilotType::Player {
             player_id = Some(entity);
         } else if pilot.pilottype == PilotType::Bot {
             bot_id = Some(entity);
         }
     }
-    for (entity, mut pilot) in query.iter_mut() {
+    for (_, mut pilot) in query.iter_mut() {
         if pilot.pilottype == PilotType::Player {
             pilot.target = bot_id;
         } else if pilot.pilottype == PilotType::Bot {
@@ -672,22 +656,9 @@ fn rotface_all(
 // its grandparent or whatever. i will take a look.
 fn aim_cannon(
     mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
-    players: Query<&Pilot, (With<Player>, Without<Bot>)>,
-    bots: Query<&Pilot, (With<Bot>, Without<Player>)>,
     pilots: Query<&Pilot>,
-    ships: Query<&ShipModel>,
     qtransform: Query<&Transform, Without<CannonModel>>,
-    // TODO(skend): may make the above without ship and then add a ship transform
-    //ship_transform: Query<
-    //    &Transform,
-    //    (With<ShipModel>, (Without<Player>, Without<CannonModel>)),
-    //>,
 ) {
-    // TODO(skend): for each cannon, have to find its target
-    // TODO(skend): lettuce do the same idea of patriarch, but
-    // for the shipmodel as well. then the cannon will not
-    // have to go crawling every frame or whatever to find
-    // things it should just memorize
     for (mut cannon_transform, dude, craft) in cannon.iter_mut() {
         let our_cannon_xy = cannon_transform.translation.xy();
         let mut our_ship_xy: Option<Vec2> = None;
@@ -707,10 +678,8 @@ fn aim_cannon(
                 our_dude_xy = Some(pilot_t.translation.xy());
             }
         }
-        if let Ok(cur_craft) = ships.get(craft.0) {
-            if let Ok(craft_t) = qtransform.get(craft.0) {
-                our_ship_xy = Some(craft_t.translation.xy());
-            }
+        if let Ok(craft_t) = qtransform.get(craft.0) {
+            our_ship_xy = Some(craft_t.translation.xy());
         }
 
         if our_ship_xy == None || our_dude_xy == None || target_xy == None {
@@ -732,6 +701,11 @@ fn move_player(
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
+    let (mut accel, mut play) = players.single_mut();
+    // FIXME(skend): complete rework
+    // W now accelerates forward in the current direction
+    // A and D now modify theta's derivative, accelerating angularly that way
+    // and S now accelerates backward.
     let mut direction = Vec3::ZERO;
     if keys.any_pressed([KeyCode::KeyW]) {
         direction.y += 1.0;
@@ -746,7 +720,6 @@ fn move_player(
         direction.x -= 1.0;
     }
 
-    let (mut accel, mut play) = players.single_mut();
     let n_direction;
     if direction != Vec3::ZERO {
         n_direction = direction.normalize(); // likely unnecessary
