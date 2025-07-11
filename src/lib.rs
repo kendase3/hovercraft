@@ -1,2 +1,2 @@
-pub mod physics;
 pub mod laser;
+pub mod physics;
