@@ -717,6 +717,7 @@ fn handle_laser(
             let mesh = qlasermesh.single_mut();
             let actual_mesh = meshes.get_mut(mesh).unwrap();
             let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
+            // TODO(skend): make sure these are all CCW
             // well we can get started i guess. let's make a face that's on the origin side
             vertices[0] =
                 (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
@@ -725,10 +726,10 @@ fn handle_laser(
                 (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
                     .into();
             vertices[2] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
                     .into();
             vertices[3] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
                     .into();
             // and just like that, we have our face at the origin with the normal headed toward the
             // laser vector
@@ -740,49 +741,49 @@ fn handle_laser(
                 (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
                     .into();
             vertices[6] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
                     .into();
             vertices[7] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
                     .into();
             // next we can make the face at the destination
             vertices[8] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[9] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[10] =
                 (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
                     .into();
-            vertices[11] =
+            vertices[9] =
                 (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[10] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[11] =
+                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
                     .into();
             // next we can make the face on the bottom
             vertices[12] =
                 (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
                     .into();
             vertices[13] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[14] =
                 (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
                     .into();
-            vertices[15] =
+            vertices[14] =
                 (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[15] =
+                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
                     .into();
             // then we can do the left side
             vertices[16] =
                 (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
                     .into();
             vertices[17] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[18] =
                 (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
                     .into();
-            vertices[19] =
+            vertices[18] =
                 (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
+                    .into();
+            vertices[19] =
+                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
                     .into();
             // finally the right side
             vertices[20] =
@@ -792,10 +793,10 @@ fn handle_laser(
                 (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
                     .into();
             vertices[22] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
                     .into();
             vertices[23] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
+                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
                     .into();
             actual_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
             let mut finally_laser_time = qlaservisibility.single_mut();
