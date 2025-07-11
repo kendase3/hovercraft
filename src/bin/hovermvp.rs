@@ -149,6 +149,9 @@ struct LargeLaser;
 #[derive(Resource, Default)]
 struct CannonInitialized(bool);
 
+#[derive(Resource, Default)]
+struct LaserInitialized(bool);
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
     #[uniform(0)] // same
@@ -193,6 +196,14 @@ fn need_cannon_init(ci: Res<CannonInitialized>) -> bool {
     !ci.0
 }
 
+fn dont_need_laser_init(ci: Res<LaserInitialized>) -> bool {
+    ci.0
+}
+
+fn need_laser_init(ci: Res<LaserInitialized>) -> bool {
+    !ci.0
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -218,8 +229,10 @@ fn main() {
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
+        .insert_resource(LaserInitialized(false))
         .add_systems(Startup, (draw_map, (setup, setup_targets).chain()))
         .add_systems(PreUpdate, (touch_ship).run_if(need_cannon_init))
+        .add_systems(PreUpdate, (touch_laser).run_if(need_laser_init))
         .add_systems(
             Update,
             (
@@ -230,10 +243,10 @@ fn main() {
                 handle_tag,
                 camera_follow,
                 handle_target,
-                handle_laser,
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
+        .add_systems(Update, (handle_laser).run_if(dont_need_laser_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .add_systems(
@@ -274,13 +287,31 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
-// FIXME(skend): even with our design crutch
-// we will need to know whether to append PlayerSub
-// or BotSub component to the cannon.
-// We will need to crawl up the parents to see
-// which one we are. That sounds rather annoying to
-// implement and then debug but once it's done
-// it's done.
+fn touch_laser(
+    laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
+    children: Query<&Children>,
+    pilot_query: Query<&Pilot>,
+    q_name: Query<&Name>,
+    mut commands: Commands,
+    mut laser_initialized: ResMut<LaserInitialized>,
+) {
+    for (laser_entity, laser_parent) in laser_stuff.iter() {
+        let name = q_name.get(laser_entity);
+        if let Ok(name_success) = name {
+            //info!("cur name = {}", name_success);
+            if name_success.as_str() == "laser" {
+                if let Some(mut entity_commands) =
+                    commands.get_entity(laser_entity)
+                {
+                    entity_commands.insert(DudeRef(laser_parent.get()));
+                    info!("initialized a laser");
+                }
+            }
+        }
+    }
+    laser_initialized.0 = true;
+}
+
 fn touch_ship(
     ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
@@ -494,12 +525,13 @@ fn setup(
                 base_color: Color::from(laser_color),
                 ..default()
             });
+            // TODO(skend): add for bot too
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
                 MeshMaterial3d(kewl_material),
                 Visibility::Hidden,
                 LargeLaser,
-                Name::new("Large Laser"),
+                Name::new("laser"),
                 Transform::default(),
             ));
         });
@@ -598,7 +630,7 @@ fn handle_laser(
     mut qpilot: Query<&mut Pilot>,
     qtransform: Query<&Transform, With<Pilot>>,
     qentity: Query<Entity, With<Pilot>>,
-    mut qlaser: Query<&mut LargeLaser>,
+    mut qlaser: Query<(&mut LargeLaser, &DudeRef)>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
@@ -663,6 +695,13 @@ fn handle_laser(
             // TODO(skend): now i need to like, get the laser that belongs to my pilot
             // and set its vertices
             // and toggle it visible
+
+            // i now have a DudeRef on lasers
+
+            // the act of actually updating the vertices looks a bit complicated too
+            // i have 24 points, but i use a struct that has 32? maybe alpha value or something?
+            // and then there's an AABB thing? i have to get it then run
+            // Aabb::compute(vertices_array) or similar
         }
     }
 }
