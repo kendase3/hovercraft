@@ -593,22 +593,22 @@ fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
 }
 
-fn handle_laser(mut qpilot: Query<&mut Pilot>,
-                qtransform: Query<&Transform, With<Pilot>>,
-                qentity: Query<Entity, With<Pilot>>,
-                ) {
+fn handle_laser(
+    mut qpilot: Query<&mut Pilot>,
+    qtransform: Query<&Transform, With<Pilot>>,
+    qentity: Query<Entity, With<Pilot>>,
+    mut qlaser: Query<&mut LargeLaser>,
+) {
     for pilot in qpilot.iter() {
-        // TODO(skend): some details here around a timer
-        // and which variables get activated on input
-        // and which check the timer first TBD.
-        // First I want to see the laser!
+        let mut laser_origin: Option<Vec2> = None;
+        let mut laser_dest: Option<Vec2> = None;
         if pilot.fire_large_laser {
             // well then we will need to know where the laser is firing to
 
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
-                    let target_xy = target_transform.translation.xy();
+                    laser_dest = Some(target_transform.translation.xy());
                     // FIXME(skend): it's not clear the best way to get
                     // the transform for our pilot in a way that's fast
                     // and still lets me run lookups for the target
@@ -625,7 +625,11 @@ fn handle_laser(mut qpilot: Query<&mut Pilot>,
                     // function.
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
-
+                            if let Ok(pilot_transform) = qtransform.get(entity)
+                            {
+                                laser_origin =
+                                    Some(pilot_transform.translation.xy());
+                            }
                         }
                     }
 
