@@ -229,6 +229,7 @@ fn main() {
                 handle_tag,
                 camera_follow,
                 handle_target,
+                handle_laser,
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
@@ -588,6 +589,27 @@ fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
             pilot.target = bot_id;
         } else if pilot.pilottype == PilotType::Bot {
             pilot.target = player_id;
+        }
+    }
+}
+
+fn handle_laser(
+    mut qpilot: Query<&mut Pilot>
+) {
+    for pilot in qpilot.iter_mut() {
+        // TODO(skend): some details here around a timer
+        // and which variables get activated on input
+        // and which check the timer first TBD.
+        // First I want to see the laser!
+        if pilot.fire_large_laser {
+            // well then we will need to know where the laser is firing to
+            // then we'll need to find the angle to that place
+            // then we'll need to find the angle perpendicular to that angle
+            // one set of points of our rectangle thing will be at the origin
+            // but perpendicular to the way the laser is firing at LASER_WIDTH distance
+            // maybe the laser should just be 2d for now? i will try 3d and see if it's annoying
+            // we can just give it a fixed LASER_HEIGHT, that shouldn't be a big deal
+
         }
     }
 }
