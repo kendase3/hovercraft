@@ -505,7 +505,7 @@ fn setup(
                 pilottype: PilotType::Bot,
                 it: true,
                 target: None,
-                ..default()
+                facing: Some(0.0),
             },
             Bot,
             Name::new("Antagonist"),
@@ -692,14 +692,10 @@ fn aim_cannon(
         let our_cannon_xy = cannon_transform.translation.xy();
         let mut our_ship_xy: Option<Vec2> = None;
         let mut our_dude_xy: Option<Vec2> = None;
-        // FIXME(skend): apparently i still have a bit to learn
-        // about dyn in rust
-        //let mut our_dude: Option<Box<dyn Targeting>> = None;
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_pilot) = pilots.get(dude.0) {
             //info!("we found our pilot");
-            // FIXME(skend): our pilot apparently does _not_ have a target
             if let Some(cur_target) = cur_pilot.target {
                 //info!("our pilot has a target");
                 if let Ok(their_pilot_t) = qtransform.get(cur_target) {
@@ -771,6 +767,7 @@ fn move_bot(
     mut bot: Query<
         (
             &mut Transform,
+            &mut Pilot,
             &mut physics::Velocity,
             &mut physics::Acceleration,
         ),
@@ -782,7 +779,7 @@ fn move_bot(
     mut orbit_cache: ResMut<OrbitCache>,
 ) {
     // receive an x/y coordinate we're currently flying to
-    let (b_t, b_v, mut b_a) = bot.single_mut();
+    let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
     let p_t = player.single_mut();
 
     orbit_timer.0.tick(time.delta());
@@ -802,6 +799,9 @@ fn move_bot(
     // on our current velocity
     let accel_direction = (desired_move_vector - b_v.0.xy()).normalize();
     b_a.0 = accel_direction.extend(0.);
+
+    // update our facing
+    b_p.facing = Some(accel_direction.y.atan2(accel_direction.x));
 }
 
 fn camera_follow(
