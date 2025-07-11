@@ -60,7 +60,7 @@ impl Default for PilotType {
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, PartialEq)]
 struct Pilot {
     pilottype: PilotType,
     it: bool,
@@ -593,8 +593,11 @@ fn setup_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
 }
 
-fn handle_laser(mut qpilot: Query<&mut Pilot>, qtransform: Query<&Transform>) {
-    for pilot in qpilot.iter_mut() {
+fn handle_laser(mut qpilot: Query<&mut Pilot>,
+                qtransform: Query<&Transform, With<Pilot>>,
+                qentity: Query<Entity, With<Pilot>>,
+                ) {
+    for pilot in qpilot.iter() {
         // TODO(skend): some details here around a timer
         // and which variables get activated on input
         // and which check the timer first TBD.
@@ -620,6 +623,11 @@ fn handle_laser(mut qpilot: Query<&mut Pilot>, qtransform: Query<&Transform>) {
                     // want to do that a lot and it's annoying to do.
                     // I believe I can set up all those links in the touch_ship
                     // function.
+                    for entity in qentity.iter() {
+                        if *qpilot.get(entity).unwrap() == *pilot {
+
+                        }
+                    }
 
                     //if let Ok(our_transform) = qtransform.get(pilot) {
                     //    let our_xy = our_transform.translation.xy();
