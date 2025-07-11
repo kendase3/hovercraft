@@ -1,5 +1,7 @@
 --- plan ---
 
+if i am going to add large files, use https://git-lfs.com/
+
 it occurs to me the scene load logic may only fire if the scene _is not cached_. i may need to mess around renmaing the file just to force it to reload and fire the event
 
 how about a chunk is a 2x2 set of tiles so we have a many:1 situation to test initially
