@@ -81,8 +81,7 @@ struct Player;
 #[derive(Component)]
 struct Bot;
 
-// FIXME(skend): design crutch i think
-// it does make lookups faster though
+// for faster lookups. may not need depending on query setup
 #[derive(Component)]
 struct PlayerSub;
 
@@ -534,6 +533,9 @@ fn setup(
                 ..default()
             });
             // TODO(skend): add for bot too
+            // TODO(skend): i think this actually should be a child on the cannon.
+            // so spawning it would be a little weird/late
+            // seems like i may want an initial loading screen
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
                 MeshMaterial3d(kewl_material),
