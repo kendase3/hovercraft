@@ -29,6 +29,7 @@ const NODES_PER_ORBIT: f32 = 40.;
 // how far ahead we look in terms of angle distance
 const RADIANS_AHEAD: f32 = 2. * PI / NODES_PER_ORBIT;
 
+#[derive(Copy, Clone, Default)]
 pub struct Polar {
     pub r: f32,
     pub theta: f32,

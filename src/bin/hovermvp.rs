@@ -47,6 +47,7 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const LASER_WIDTH: f32 = 4.0;
+const LASER_HEIGHT: f32 = 0.5;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -620,35 +621,48 @@ fn handle_laser(
                     }
                 }
             }
-            // so now laser_origin and laser_dest are populated.
-            // TODO(skend): adjust for the ship and cannon offsets
-            // in fact maybe the above query makes more sense just looking for the cannon
-            // since the cannon links to the ship and the player as i recall
-
-            // then we'll need to find the angle to that place
-            // not sure what made me decide to actually use my physics lib again
-            // it's more like a trig lib right now but i guess i was feeling hopeful at the time
             let coordpair = physics::CoordPair {
                 center: laser_origin.unwrap(),
                 exterior: laser_dest.unwrap(),
             };
             let polar = physics::Polar::from(coordpair);
             // we are going to plop some vertices along this angle
-            let maltheta = polar.theta + PI % (2. * PI);
+            let maltheta = polar.theta + 0.5 * PI % (2. * PI);
+            // oddly PEMDAS really went my way on this one, very few () required
+            // maybe i don't even need those last ones but i'm too lazy
+            // to look up where % falls into the order of operations and i don't
+            // have it memorized
+            let maltheta2 = polar.theta - 0.5 * PI + 2. * PI % (2. * PI);
             let laser_vertex_1_polar = physics::Polar {
                 theta: maltheta,
                 r: LASER_WIDTH / 2.,
             };
-            // and then we'll crap out its vec3
+            let laser_vertex_2_polar = physics::Polar {
+                theta: maltheta2,
+                r: LASER_WIDTH / 2.,
+            };
+            // and then we'll crap out its vec2
             let laser_vertex_1_xy = physics::polar_to_cartesean_plus_point(
                 laser_vertex_1_polar,
                 laser_origin.unwrap(),
             );
-            // then we'll need to find the angle perpendicular to that angle
-            // one set of points of our rectangle thing will be at the origin
-            // but perpendicular to the way the laser is firing at LASER_WIDTH distance
-            // maybe the laser should just be 2d for now? i will try 3d and see if it's annoying
-            // we can just give it a fixed LASER_HEIGHT, that shouldn't be a big deal
+            let laser_vertex_2_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_2_polar,
+                laser_origin.unwrap(),
+            );
+            // and then, if we take those same polar offsets from the destination,
+            // we get the other side of our rectangle
+            let laser_vertex_3_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_1_polar,
+                laser_dest.unwrap(),
+            );
+            let laser_vertex_4_xy = physics::polar_to_cartesean_plus_point(
+                laser_vertex_2_polar,
+                laser_dest.unwrap(),
+            );
+            // TODO(skend): now i need to like, get the laser that belongs to my pilot
+            // and set its vertices
+            // and toggle it visible
         }
     }
 }
