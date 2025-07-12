@@ -759,21 +759,30 @@ fn handle_laser(
 
             // FIXME(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
-            let mesh = qlasermesh.get(pilot.laser.unwrap()).unwrap();
-            let actual_mesh = meshes.get_mut(mesh).unwrap();
-            let (laser_vertices, laser_indices, laser_uvs) =
-                laser::get_laser_vertices(real_laser_origin, real_laser_dest);
-            actual_mesh
-                .insert_attribute(Mesh::ATTRIBUTE_POSITION, laser_vertices);
-            actual_mesh.insert_indices(Indices::U32(laser_indices));
-            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
-            // need to fire more than once?
-            //actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
-            //actual_mesh.compute_smooth_normals();
-            actual_mesh.duplicate_vertices();
-            actual_mesh.compute_flat_normals();
-            let mut finally_laser_time = qlaservisibility.single_mut();
-            *finally_laser_time = Visibility::Visible;
+            if let Some(notmeshyet) = pilot.laser {
+                if let Ok(mesh) = qlasermesh.get(notmeshyet) {
+                    let actual_mesh = meshes.get_mut(mesh).unwrap();
+                    let (laser_vertices, laser_indices, laser_uvs) =
+                        laser::get_laser_vertices(
+                            real_laser_origin,
+                            real_laser_dest,
+                        );
+                    actual_mesh.insert_attribute(
+                        Mesh::ATTRIBUTE_POSITION,
+                        laser_vertices,
+                    );
+                    actual_mesh.insert_indices(Indices::U32(laser_indices));
+                    actual_mesh
+                        .insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
+                    // need to fire more than once?
+                    //actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
+                    //actual_mesh.compute_smooth_normals();
+                    actual_mesh.duplicate_vertices();
+                    actual_mesh.compute_flat_normals();
+                    let mut finally_laser_time = qlaservisibility.single_mut();
+                    *finally_laser_time = Visibility::Visible;
+                }
+            }
         }
     }
 }
