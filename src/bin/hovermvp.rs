@@ -655,7 +655,6 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
 }
 
-// it occurs to me that the laser should always originate at zero
 fn handle_laser(
     qpilot: Query<&mut Pilot>,
     mut qtransform: Query<&mut Transform>,
@@ -670,15 +669,11 @@ fn handle_laser(
         let mut laser_dest: Option<Vec2> = None;
         let mut pilot_entity: Option<Entity> = None;
         let mut inverse_pilot: Option<Quat> = None;
-        // for fun
         if pilot.fire_large_laser {
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
-                    //info!("laser dest = {:?}", laser_dest);
-                    // we learned that the pilot does in fact know it is 50 away
-                    // from us. which makes sense, thankfully.
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
                             pilot_entity = Some(entity);
@@ -697,7 +692,6 @@ fn handle_laser(
                                         + ship_transform.translation.xy()
                                         + cannon_transform.translation.xy(),
                                 );
-                                //info!("laser origin = {:?}", laser_origin);
                             }
                         }
                     }
@@ -706,10 +700,9 @@ fn handle_laser(
             let mut real_laser_origin = laser_origin.unwrap().clone();
             real_laser_origin.x = 0.;
             real_laser_origin.y = 0.;
-            // for what it's worth, in the problem case real_laser_dest
-            // appears to be giving the correct value.
+            // rework origin and dest relative to idea that origin is 0.0
+            // and dest is now relative to 0.0
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
-            info!("real laser dest: {:?}", real_laser_dest);
             let coordpair = physics::CoordPair {
                 center: real_laser_origin,
                 exterior: real_laser_dest,
@@ -749,13 +742,6 @@ fn handle_laser(
                 laser_vertex_2_polar,
                 real_laser_dest,
             );
-
-            // FIXME(skend): there's something here i think.
-            let mut laser_transform =
-                qtransform.get_mut(pilot.laser.unwrap()).unwrap();
-            // FIXME(skend): well this did not fix my problem.
-            //laser_transform.rotation =
-            //    Quat::from_rotation_z(polar.theta) * inverse_pilot.unwrap();
 
             // FIXME(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
