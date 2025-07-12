@@ -28,16 +28,17 @@ pub fn get_uvs() -> Vec<[f32; 2]> {
         [1.0, 1.0], // top-right of texture
         [0.0, 1.0], // top-left of texture
         // far
-        [0.0, 0.0], // bottom-left of texture
         [1.0, 0.0], // bottom-right of texture
         [1.0, 1.0], // top-right of texture
         [0.0, 1.0], // top-left of texture
+        [0.0, 0.0], // bottom-left of texture
         // top
+        [0.0, 1.0], // top-left of texture
         [0.0, 0.0], // bottom-left of texture
         [1.0, 0.0], // bottom-right of texture
         [1.0, 1.0], // top-right of texture
-        [0.0, 1.0], // top-left of texture
         // bottom
+        // FIXME(skend): skipped, no one will see it
         [0.0, 0.0], // bottom-left of texture
         [1.0, 0.0], // bottom-right of texture
         [1.0, 1.0], // top-right of texture
@@ -110,10 +111,12 @@ pub fn get_laser_vertices(
     );
 
     let coords: Vec<[f32; 3]> = vec![
+        // coords for near face
         laser_vertex_1_xy.extend(-1. * LASER_HEIGHT).into(), // near bottom left
         laser_vertex_2_xy.extend(-1. * LASER_HEIGHT).into(), // near bottom right
         laser_vertex_2_xy.extend(LASER_HEIGHT).into(),       // near top right
         laser_vertex_1_xy.extend(LASER_HEIGHT).into(),       // near top left
+        // coords for  far face
         laser_vertex_3_xy.extend(-1. * LASER_HEIGHT).into(), // far bottom left
         laser_vertex_4_xy.extend(-1. * LASER_HEIGHT).into(), // far bottom right
         laser_vertex_4_xy.extend(LASER_HEIGHT).into(),       // far top right
