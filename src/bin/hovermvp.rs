@@ -246,7 +246,7 @@ fn main() {
                 move_player,
                 face_all,
                 rotface_all,
-                //move_bot,
+                move_bot,
                 handle_tag,
                 camera_follow,
                 handle_target,
