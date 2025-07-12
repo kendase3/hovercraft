@@ -684,18 +684,18 @@ fn handle_laser(
                             pilot_entity = Some(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
-                                // FIXME(skend): laser_origin also needs to
-                                // account for the ship transform and
-                                // the cannon transform
-                                //let delta_loc = target_xy - pilot_xy + ship_xy + cannon_xy
-                                // maybe every laser needs a component pointing at its cannon
-                                // and another pointing at its ship.
-                                // For what it's worth I think I have some other hacks
-                                // in here that dodge queries for now and rely
-                                // on there just being one laser or something.
-                                laser_origin =
-                                    Some(pilot_transform.translation.xy());
-                                //if let Ok(ship_transform) = qtransform.get(pilot.ship.unwrap());
+                                // FIXME(skend): the rotations though
+                                let ship_transform = qtransform
+                                    .get(pilot.ship.unwrap())
+                                    .unwrap();
+                                let cannon_transform = qtransform
+                                    .get(pilot.cannon.unwrap())
+                                    .unwrap();
+                                laser_origin = Some(
+                                    pilot_transform.translation.xy()
+                                        + ship_transform.translation.xy()
+                                        + cannon_transform.translation.xy(),
+                                );
                             }
                         }
                     }
@@ -749,15 +749,14 @@ fn handle_laser(
 
             // FIXME(skend): i am not accounting for the rotations of the ships at all.
             /*
-            let delta_loc = target_xy.unwrap() - our_dude_xy.unwrap()
-            + our_ship_xy.unwrap()
-            + our_cannon_xy;
-        let radians = delta_loc.y.atan2(delta_loc.x);
-        //info!("the angle in degrees is {}", radians * (180. / PI));
-        cannon_transform.rotation =
-            Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
-            */
-
+                let delta_loc = target_xy.unwrap() - our_dude_xy.unwrap()
+                + our_ship_xy.unwrap()
+                + our_cannon_xy;
+            let radians = delta_loc.y.atan2(delta_loc.x);
+            //info!("the angle in degrees is {}", radians * (180. / PI));
+            cannon_transform.rotation =
+                Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
+                */
 
             // FIXME(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
