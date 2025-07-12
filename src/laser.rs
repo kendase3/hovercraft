@@ -21,37 +21,16 @@ pub fn get_new_laser() -> Mesh {
 }
 
 pub fn get_uvs() -> Vec<[f32; 2]> {
+    // what if we only care about how top and bottom look
     vec![
-        // near
-        [0.0, 0.0], // bottom-left of texture
-        [1.0, 0.0], // bottom-right of texture
         [1.0, 1.0], // top-right of texture
-        [0.0, 1.0], // top-left of texture
-        // far
         [1.0, 0.0], // bottom-right of texture
-        [1.0, 1.0], // top-right of texture
-        [0.0, 1.0], // top-left of texture
         [0.0, 0.0], // bottom-left of texture
-        // top
+        [0.0, 1.0], // top-left of texture
         [0.0, 1.0], // top-left of texture
         [0.0, 0.0], // bottom-left of texture
         [1.0, 0.0], // bottom-right of texture
-        [1.0, 1.0], // top-right of texture
-        // bottom
-        [1.0, 1.0], // top-right of texture
-        [0.0, 1.0], // top-left of texture
         [0.0, 0.0], // bottom-left of texture
-        [1.0, 0.0], // bottom-right of texture
-        // right
-        [0.0, 0.0], // bottom-left of texture
-        [1.0, 0.0], // bottom-right of texture
-        [1.0, 1.0], // top-right of texture
-        [0.0, 1.0], // top-left of texture
-        // left
-        [0.0, 0.0], // bottom-left of texture
-        [1.0, 0.0], // bottom-right of texture
-        [1.0, 1.0], // top-right of texture
-        [0.0, 1.0], // top-left of texture
     ]
 }
 
