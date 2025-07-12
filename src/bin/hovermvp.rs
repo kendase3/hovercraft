@@ -784,9 +784,9 @@ fn handle_laser(
                     actual_mesh
                         .insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
                     // need to fire more than once?
-                    actual_mesh.compute_smooth_normals();
-                    //actual_mesh.duplicate_vertices();
-                    //actual_mesh.compute_flat_normals();
+                    //actual_mesh.compute_smooth_normals();
+                    actual_mesh.duplicate_vertices();
+                    actual_mesh.compute_flat_normals();
                     let mut finally_laser_time = qlaservisibility.single_mut();
                     *finally_laser_time = Visibility::Visible;
                 }
