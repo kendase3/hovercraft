@@ -688,6 +688,7 @@ fn handle_laser(
                                 let ship_transform = qtransform
                                     .get(pilot.ship.unwrap())
                                     .unwrap();
+                                info!("ship rotation: {:?}", ship_transform.rotation);
                                 let cannon_transform = qtransform
                                     .get(pilot.cannon.unwrap())
                                     .unwrap();
