@@ -702,9 +702,13 @@ fn handle_laser(
                     }
                 }
             }
+            let mut real_laser_origin = laser_origin.unwrap().clone();
+            real_laser_origin.x = 0.;
+            real_laser_origin.y = 0.;
+            let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
             let coordpair = physics::CoordPair {
-                center: laser_origin.unwrap(),
-                exterior: laser_dest.unwrap(),
+                center: real_laser_origin,
+                exterior: real_laser_dest,
             };
             let polar = physics::Polar::from(coordpair);
             // we are going to plop some vertices along this angle
@@ -725,21 +729,21 @@ fn handle_laser(
             // and then we'll crap out its vec2
             let laser_vertex_1_xy = physics::polar_to_cartesean_plus_point(
                 laser_vertex_1_polar,
-                laser_origin.unwrap(),
+                real_laser_origin,
             );
             let laser_vertex_2_xy = physics::polar_to_cartesean_plus_point(
                 laser_vertex_2_polar,
-                laser_origin.unwrap(),
+                real_laser_origin,
             );
             // and then, if we take those same polar offsets from the destination,
             // we get the other side of our rectangle
             let laser_vertex_3_xy = physics::polar_to_cartesean_plus_point(
                 laser_vertex_1_polar,
-                laser_dest.unwrap(),
+                real_laser_dest,
             );
             let laser_vertex_4_xy = physics::polar_to_cartesean_plus_point(
                 laser_vertex_2_polar,
-                laser_dest.unwrap(),
+                real_laser_dest,
             );
 
             // FIXME(skend): there's something here i think.
