@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
 use std::f32::consts::PI;
 
-const LASER_WIDTH: f32 = 4.0;
+const LASER_WIDTH: f32 = 0.5;
 const LASER_HEIGHT: f32 = 0.5;
 
 pub fn get_new_laser() -> Mesh {
