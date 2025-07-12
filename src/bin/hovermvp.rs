@@ -655,6 +655,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
 }
 
+// it occurs to me that the laser should always originate at zero
 fn handle_laser(
     qpilot: Query<&mut Pilot>,
     mut qtransform: Query<&mut Transform>,
@@ -671,16 +672,12 @@ fn handle_laser(
         let mut inverse_pilot: Option<Quat> = None;
         // for fun
         if pilot.fire_large_laser {
-            //info!("we noticed the laser was fired!");
-            // well then we will need to know where the laser is firing to
-
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
                     // we learned that the pilot does in fact know it is 50 away
                     // from us. which makes sense, thankfully.
-                    info!("laser dest = {:?}", laser_dest);
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
                             pilot_entity = Some(entity);
@@ -688,14 +685,9 @@ fn handle_laser(
                             {
                                 inverse_pilot =
                                     Some(pilot_transform.rotation.inverse());
-                                // FIXME(skend): the rotations though
                                 let ship_transform = qtransform
                                     .get(pilot.ship.unwrap())
                                     .unwrap();
-                                info!(
-                                    "ship rotation: {:?}",
-                                    ship_transform.rotation
-                                );
                                 let cannon_transform = qtransform
                                     .get(pilot.cannon.unwrap())
                                     .unwrap();
