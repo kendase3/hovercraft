@@ -571,6 +571,7 @@ fn setup(
                 base_color_texture: Some(lol.clone()),
                 emissive: Color::srgb(0.0, 1., 1.).into(),
                 alpha_mode: AlphaMode::Blend,
+                unlit: true,
                 ..default()
             });
             // TODO(skend): add for bot too
