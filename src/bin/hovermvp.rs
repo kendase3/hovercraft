@@ -461,11 +461,7 @@ fn setup(
     };
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
-    // TODO(skend): make the color and shape for the laser
     let laser_mesh = laser::get_new_laser();
-    // FIXME(skend): i need valid but zeroed-out contents for vertices and indices
-    // for ^
-    // i can make a func in laser:: return it.
     let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
