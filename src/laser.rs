@@ -21,37 +21,16 @@ pub fn get_new_laser() -> Mesh {
 }
 
 pub fn get_uvs() -> Vec<[f32; 2]> {
+    // what if we only care about how top and bottom look
     vec![
-        // near
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [1.0, 0.0],
-        [0.0, 0.0],
-        // far
-        [1.0, 1.0],
-        [0.0, 1.0],
-        [0.0, 0.0],
-        [1.0, 0.0],
-        // top
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [1.0, 0.0],
-        [0.0, 0.0],
-        // bottom
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [1.0, 0.0],
-        [0.0, 0.0],
-        // right
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [1.0, 0.0],
-        [0.0, 0.0],
-        // left
-        [0.0, 1.0],
-        [1.0, 1.0],
-        [1.0, 0.0],
-        [0.0, 0.0],
+        [1.0, 1.0], // top-right of texture
+        [1.0, 0.0], // bottom-right of texture
+        [0.0, 0.0], // bottom-left of texture
+        [0.0, 1.0], // top-left of texture
+        [0.0, 1.0], // top-left of texture
+        [0.0, 0.0], // bottom-left of texture
+        [1.0, 0.0], // bottom-right of texture
+        [0.0, 0.0], // bottom-left of texture
     ]
 }
 
@@ -110,14 +89,14 @@ pub fn get_laser_vertices(
     );
 
     let coords: Vec<[f32; 3]> = vec![
-        laser_vertex_1_xy.extend(-1. * LASER_HEIGHT).into(), // near bottom left
-        laser_vertex_2_xy.extend(-1. * LASER_HEIGHT).into(), // near bottom right
-        laser_vertex_2_xy.extend(LASER_HEIGHT).into(),       // near top right
-        laser_vertex_1_xy.extend(LASER_HEIGHT).into(),       // near top left
-        laser_vertex_3_xy.extend(-1. * LASER_HEIGHT).into(), // far bottom left
-        laser_vertex_4_xy.extend(-1. * LASER_HEIGHT).into(), // far bottom right
-        laser_vertex_4_xy.extend(LASER_HEIGHT).into(),       // far top right
-        laser_vertex_3_xy.extend(LASER_HEIGHT).into(),       // far top left
+        laser_vertex_1_xy.extend(-1. * LASER_HEIGHT).into(), // 0, near bottom left
+        laser_vertex_2_xy.extend(-1. * LASER_HEIGHT).into(), // 1, near bottom right
+        laser_vertex_2_xy.extend(LASER_HEIGHT).into(), // 2, near top right
+        laser_vertex_1_xy.extend(LASER_HEIGHT).into(), // 3, near top left
+        laser_vertex_3_xy.extend(-1. * LASER_HEIGHT).into(), // 4, far bottom left
+        laser_vertex_4_xy.extend(-1. * LASER_HEIGHT).into(), // 5, far bottom right
+        laser_vertex_4_xy.extend(LASER_HEIGHT).into(), // 6, far top right
+        laser_vertex_3_xy.extend(LASER_HEIGHT).into(), // 7, far top left
     ];
 
     (coords, get_indices(), get_uvs())

@@ -490,6 +490,7 @@ fn setup(
     ));
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let planet_color = Color::srgb(0.0, 1.0, 0.0);
+    //let lol: Handle<Image> = asset_server.load("textures/lol.png");
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -566,6 +567,15 @@ fn setup(
                 Visibility::Visible,
             ));
             let kewl_material = materials4.add(LaserMaterial {});
+            /*
+            let kewl_material = materials3.add(StandardMaterial {
+                base_color_texture: Some(lol.clone()),
+                emissive: Color::srgb(0.0, 1., 1.).into(),
+                alpha_mode: AlphaMode::Blend,
+                unlit: true,
+                ..default()
+            });
+            */
             // TODO(skend): add for bot too
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
@@ -757,23 +767,32 @@ fn handle_laser(
                 real_laser_dest,
             );
 
-            // FIXME(skend): no unwrap for this. technically a user could hit it early
+            // NB(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
-            let mesh = qlasermesh.get(pilot.laser.unwrap()).unwrap();
-            let actual_mesh = meshes.get_mut(mesh).unwrap();
-            let (laser_vertices, laser_indices, laser_uvs) =
-                laser::get_laser_vertices(real_laser_origin, real_laser_dest);
-            actual_mesh
-                .insert_attribute(Mesh::ATTRIBUTE_POSITION, laser_vertices);
-            actual_mesh.insert_indices(Indices::U32(laser_indices));
-            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
-            // need to fire more than once?
-            //actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
-            //actual_mesh.compute_smooth_normals();
-            actual_mesh.duplicate_vertices();
-            actual_mesh.compute_flat_normals();
-            let mut finally_laser_time = qlaservisibility.single_mut();
-            *finally_laser_time = Visibility::Visible;
+            if let Some(notmeshyet) = pilot.laser {
+                if let Ok(mesh) = qlasermesh.get(notmeshyet) {
+                    // this unwrap almost certainly fine
+                    let actual_mesh = meshes.get_mut(mesh).unwrap();
+                    let (laser_vertices, laser_indices, laser_uvs) =
+                        laser::get_laser_vertices(
+                            real_laser_origin,
+                            real_laser_dest,
+                        );
+                    actual_mesh.insert_attribute(
+                        Mesh::ATTRIBUTE_POSITION,
+                        laser_vertices,
+                    );
+                    actual_mesh.insert_indices(Indices::U32(laser_indices));
+                    actual_mesh
+                        .insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
+                    // need to fire more than once?
+                    //actual_mesh.compute_smooth_normals();
+                    actual_mesh.duplicate_vertices();
+                    actual_mesh.compute_flat_normals();
+                    let mut finally_laser_time = qlaservisibility.single_mut();
+                    *finally_laser_time = Visibility::Visible;
+                }
+            }
         }
     }
 }
