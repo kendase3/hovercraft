@@ -18,7 +18,7 @@ use hovercraft::physics;
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
-use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
+use bevy::render::mesh::{Indices, Mesh};
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
@@ -48,7 +48,6 @@ const PLANET_COORDS: (f32, f32, f32) = (-50.0, 50.0, 0.0);
 const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
-const LASER_WIDTH: f32 = 4.0;
 const BOT_START_OFFSET: f32 = 50.;
 
 #[derive(Component, PartialEq)]
@@ -314,7 +313,6 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 // it looks like i could make the laser outright in this function
 fn init_laser(
     laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
-    children: Query<&Children>,
     mut pilot_query: Query<&mut Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
@@ -402,7 +400,8 @@ fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
-    mut materials3: ResMut<Assets<StandardMaterial>>,
+    // will likely use soon
+    //mut materials3: ResMut<Assets<StandardMaterial>>,
     mut materials4: ResMut<Assets<LaserMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
@@ -498,9 +497,8 @@ fn setup(
     };
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
-    // TODO(skend): make the color and shape for the laser
-    let laser_mesh = Cuboid::new(1.0, LASER_WIDTH, 1.0);
-    let laser_color = Color::srgb(0.0, 0.9, 1.0);
+    let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
+    //let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
@@ -680,18 +678,15 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 
 fn handle_laser(
     qpilot: Query<&mut Pilot>,
-    mut qtransform: Query<&mut Transform>,
+    qtransform: Query<&mut Transform>,
     qentity: Query<Entity, With<Pilot>>,
-    qlaser: Query<(&mut LargeLaser, &DudeRef)>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
+    qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
-        let mut pilot_entity: Option<Entity> = None;
-        let mut inverse_pilot: Option<Quat> = None;
         if pilot.fire_large_laser {
             // so we'll find our target
             if let Some(target) = pilot.target {
@@ -699,11 +694,8 @@ fn handle_laser(
                     laser_dest = Some(target_transform.translation.xy());
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
-                            pilot_entity = Some(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
-                                inverse_pilot =
-                                    Some(pilot_transform.rotation.inverse());
                                 let ship_transform = qtransform
                                     .get(pilot.ship.unwrap())
                                     .unwrap();
@@ -726,45 +718,6 @@ fn handle_laser(
             // rework origin and dest relative to idea that origin is 0.0
             // and dest is now relative to 0.0
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
-            let coordpair = physics::CoordPair {
-                center: real_laser_origin,
-                exterior: real_laser_dest,
-            };
-            let polar = physics::Polar::from(coordpair);
-            // we are going to plop some vertices along this angle
-            let maltheta = (polar.theta + 0.5 * PI) % (2. * PI);
-            // oddly PEMDAS really went my way on this one, very few () required
-            // maybe i don't even need those last ones but i'm too lazy
-            // to look up where % falls into the order of operations and i don't
-            // have it memorized
-            let maltheta2 = (polar.theta - 0.5 * PI + 2. * PI) % (2. * PI);
-            let laser_vertex_1_polar = physics::Polar {
-                theta: maltheta,
-                r: LASER_WIDTH / 2.,
-            };
-            let laser_vertex_2_polar = physics::Polar {
-                theta: maltheta2,
-                r: LASER_WIDTH / 2.,
-            };
-            // and then we'll crap out its vec2
-            let laser_vertex_1_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_1_polar,
-                real_laser_origin,
-            );
-            let laser_vertex_2_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_2_polar,
-                real_laser_origin,
-            );
-            // and then, if we take those same polar offsets from the destination,
-            // we get the other side of our rectangle
-            let laser_vertex_3_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_1_polar,
-                real_laser_dest,
-            );
-            let laser_vertex_4_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_2_polar,
-                real_laser_dest,
-            );
 
             // NB(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
