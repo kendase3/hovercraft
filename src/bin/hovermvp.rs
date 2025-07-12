@@ -48,6 +48,7 @@ const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const LASER_WIDTH: f32 = 4.0;
 const LASER_HEIGHT: f32 = 0.5;
+const BOT_START_OFFSET: f32 = 50.;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -573,7 +574,7 @@ fn setup(
             },
             Bot,
             Name::new("Antagonist"),
-            Transform::from_xyz(50.0, 0.0, 0.0),
+            Transform::from_xyz(BOT_START_OFFSET, 0., 0.),
             Visibility::Hidden,
             physics::Velocity(
                 Vec3::new(0., 0., 0.),
