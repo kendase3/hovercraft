@@ -38,11 +38,10 @@ pub fn get_uvs() -> Vec<[f32; 2]> {
         [1.0, 0.0], // bottom-right of texture
         [1.0, 1.0], // top-right of texture
         // bottom
-        // FIXME(skend): skipped, no one will see it
-        [0.0, 0.0], // bottom-left of texture
-        [1.0, 0.0], // bottom-right of texture
         [1.0, 1.0], // top-right of texture
         [0.0, 1.0], // top-left of texture
+        [0.0, 0.0], // bottom-left of texture
+        [1.0, 0.0], // bottom-right of texture
         // right
         [0.0, 0.0], // bottom-left of texture
         [1.0, 0.0], // bottom-right of texture
