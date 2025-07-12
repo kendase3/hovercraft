@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use hovercraft::laser;
 use hovercraft::physics;
 
+use bevy::asset::RenderAssetUsages;
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
+use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
@@ -462,7 +465,10 @@ fn setup(
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     // TODO(skend): make the color and shape for the laser
-    let laser_mesh = Cuboid::new(1.0, LASER_WIDTH, 1.0);
+    let laser_mesh = Mesh::new(
+        PrimitiveTopology::TriangleList,
+        RenderAssetUsages::RENDER_WORLD,
+    );
     let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
@@ -677,43 +683,8 @@ fn handle_laser(
                     }
                 }
             }
-            let coordpair = physics::CoordPair {
-                center: laser_origin.unwrap(),
-                exterior: laser_dest.unwrap(),
-            };
-            let polar = physics::Polar::from(coordpair);
-            // we are going to plop some vertices along this angle
-            let maltheta = polar.theta + 0.5 * PI % (2. * PI);
-            // oddly PEMDAS really went my way on this one, very few () required
-            // maybe i don't even need those last ones but i'm too lazy
-            // to look up where % falls into the order of operations and i don't
-            // have it memorized
-            let maltheta2 = polar.theta - 0.5 * PI + 2. * PI % (2. * PI);
-            let laser_vertex_1_polar = physics::Polar {
-                theta: maltheta,
-                r: LASER_WIDTH / 2.,
-            };
-            let laser_vertex_2_polar = physics::Polar {
-                theta: maltheta2,
-                r: LASER_WIDTH / 2.,
-            };
-            // and then we'll crap out its vec2
-            let laser_vertex_1_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_1_polar,
+            let (laser_vertices, laser_indices) = laser::get_laser_vertices(
                 laser_origin.unwrap(),
-            );
-            let laser_vertex_2_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_2_polar,
-                laser_origin.unwrap(),
-            );
-            // and then, if we take those same polar offsets from the destination,
-            // we get the other side of our rectangle
-            let laser_vertex_3_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_1_polar,
-                laser_dest.unwrap(),
-            );
-            let laser_vertex_4_xy = physics::polar_to_cartesean_plus_point(
-                laser_vertex_2_polar,
                 laser_dest.unwrap(),
             );
 
@@ -729,96 +700,12 @@ fn handle_laser(
 
             // i now have a DudeRef on lasers
 
-            // the act of actually updating the vertices looks a bit complicated too
-            // i have 24 points, but i use a struct that has 32? maybe alpha value or something?
-            // things we can use to find success here:
-            // - pilot_entity
-            // laser_vertex_1..4
             let mesh = qlasermesh.single_mut();
             let actual_mesh = meshes.get_mut(mesh).unwrap();
-            let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
             // TODO(skend): make sure these are all CCW
-            // well we can get started i guess. let's make a face that's on the origin side
-            vertices[0] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[1] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[2] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[3] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
-                    .into();
-            // and just like that, we have our face at the origin with the normal headed toward the
-            // laser vector
-            // now we can make the top face
-            vertices[4] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[5] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[6] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[7] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
-                    .into();
-            // next we can make the face at the destination
-            vertices[8] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[9] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[10] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[11] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
-                    .into();
-            // next we can make the face on the bottom
-            vertices[12] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[13] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[14] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[15] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            // then we can do the left side
-            vertices[16] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[17] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[18] =
-                (laser_vertex_3_xy.x, laser_vertex_3_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[19] =
-                (laser_vertex_1_xy.x, laser_vertex_1_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            // finally the right side
-            vertices[20] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, LASER_HEIGHT)
-                    .into();
-            vertices[21] =
-                (laser_vertex_2_xy.x, laser_vertex_2_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[22] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, -1. * LASER_HEIGHT)
-                    .into();
-            vertices[23] =
-                (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
-                    .into();
-            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+            actual_mesh
+                .insert_attribute(Mesh::ATTRIBUTE_POSITION, laser_vertices);
+            actual_mesh.insert_indices(Indices::U32(laser_indices));
             //actual_mesh.compute_smooth_normals();
             actual_mesh.duplicate_vertices();
             actual_mesh.compute_flat_normals();
