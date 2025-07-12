@@ -686,12 +686,16 @@ fn handle_laser(
                             pilot_entity = Some(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
-                                inverse_pilot = Some(pilot_transform.rotation.inverse());
+                                inverse_pilot =
+                                    Some(pilot_transform.rotation.inverse());
                                 // FIXME(skend): the rotations though
                                 let ship_transform = qtransform
                                     .get(pilot.ship.unwrap())
                                     .unwrap();
-                                info!("ship rotation: {:?}", ship_transform.rotation);
+                                info!(
+                                    "ship rotation: {:?}",
+                                    ship_transform.rotation
+                                );
                                 let cannon_transform = qtransform
                                     .get(pilot.cannon.unwrap())
                                     .unwrap();
@@ -700,6 +704,7 @@ fn handle_laser(
                                         + ship_transform.translation.xy()
                                         + cannon_transform.translation.xy(),
                                 );
+                                info!("laser origin = {:?}", laser_origin);
                             }
                         }
                     }
@@ -711,12 +716,12 @@ fn handle_laser(
             };
             let polar = physics::Polar::from(coordpair);
             // we are going to plop some vertices along this angle
-            let maltheta = polar.theta + 0.5 * PI % (2. * PI);
+            let maltheta = (polar.theta + 0.5 * PI) % (2. * PI);
             // oddly PEMDAS really went my way on this one, very few () required
             // maybe i don't even need those last ones but i'm too lazy
             // to look up where % falls into the order of operations and i don't
             // have it memorized
-            let maltheta2 = polar.theta - 0.5 * PI + 2. * PI % (2. * PI);
+            let maltheta2 = (polar.theta - 0.5 * PI + 2. * PI) % (2. * PI);
             let laser_vertex_1_polar = physics::Polar {
                 theta: maltheta,
                 r: LASER_WIDTH / 2.,
@@ -746,7 +751,8 @@ fn handle_laser(
             );
 
             // FIXME(skend): there's something here i think.
-            let mut laser_transform = qtransform.get_mut(pilot.laser.unwrap()).unwrap();
+            let mut laser_transform =
+                qtransform.get_mut(pilot.laser.unwrap()).unwrap();
             // FIXME(skend): well this did not fix my problem.
             laser_transform.rotation =
                 Quat::from_rotation_z(polar.theta) * inverse_pilot.unwrap();
