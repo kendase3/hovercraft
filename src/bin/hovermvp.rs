@@ -676,6 +676,7 @@ fn handle_laser(
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
+                    //info!("laser dest = {:?}", laser_dest);
                     // we learned that the pilot does in fact know it is 50 away
                     // from us. which makes sense, thankfully.
                     for entity in qentity.iter() {
@@ -696,7 +697,7 @@ fn handle_laser(
                                         + ship_transform.translation.xy()
                                         + cannon_transform.translation.xy(),
                                 );
-                                info!("laser origin = {:?}", laser_origin);
+                                //info!("laser origin = {:?}", laser_origin);
                             }
                         }
                     }
@@ -706,6 +707,7 @@ fn handle_laser(
             real_laser_origin.x = 0.;
             real_laser_origin.y = 0.;
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
+            info!("real laser dest: {:?}", real_laser_dest);
             let coordpair = physics::CoordPair {
                 center: real_laser_origin,
                 exterior: real_laser_dest,
