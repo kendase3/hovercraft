@@ -177,6 +177,19 @@ impl Material2d for TargetMaterial {
     }
 }
 
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct LaserMaterial {}
+
+impl Material for LaserMaterial {
+    fn fragment_shader() -> ShaderRef {
+        "shaders/animate.wgsl".into()
+    }
+    // required for transparency
+    //fn alpha_mode(&self) -> AlphaMode {
+    //    AlphaMode::Blend
+    //}
+}
+
 // rather than perpetually compute the destination, we'll cache it and only check a few times a
 // second
 #[derive(Resource, Default)]
@@ -236,6 +249,7 @@ fn main() {
                 }),
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
+        .add_plugins(MaterialPlugin::<LaserMaterial>::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
@@ -390,6 +404,7 @@ fn setup(
     mut materials: ResMut<Assets<ColorMaterial>>,
     mut materials2: ResMut<Assets<TargetMaterial>>,
     mut materials3: ResMut<Assets<StandardMaterial>>,
+    mut materials4: ResMut<Assets<LaserMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     commands.spawn(TagReady { ready: true });
@@ -550,10 +565,7 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-            let kewl_material = materials3.add(StandardMaterial {
-                base_color: Color::from(laser_color),
-                ..default()
-            });
+            let kewl_material = materials4.add(LaserMaterial {});
             // TODO(skend): add for bot too
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
@@ -749,13 +761,14 @@ fn handle_laser(
             // before these are assigned.
             let mesh = qlasermesh.get(pilot.laser.unwrap()).unwrap();
             let actual_mesh = meshes.get_mut(mesh).unwrap();
-            let (laser_vertices, laser_indices) =
+            let (laser_vertices, laser_indices, laser_uvs) =
                 laser::get_laser_vertices(real_laser_origin, real_laser_dest);
             actual_mesh
                 .insert_attribute(Mesh::ATTRIBUTE_POSITION, laser_vertices);
             actual_mesh.insert_indices(Indices::U32(laser_indices));
+            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
             // need to fire more than once?
-            actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
+            //actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
             //actual_mesh.compute_smooth_normals();
             actual_mesh.duplicate_vertices();
             actual_mesh.compute_flat_normals();
