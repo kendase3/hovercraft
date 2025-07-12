@@ -49,7 +49,6 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const LASER_WIDTH: f32 = 4.0;
-const LASER_HEIGHT: f32 = 0.5;
 const BOT_START_OFFSET: f32 = 50.;
 
 #[derive(Component, PartialEq)]

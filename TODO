@@ -1,6 +1,7 @@
 --- plan ---
 
-made a lot of good laser progress today
+now that we've shown we can get _a_ shader to work, it's time to get a shader that at least looks a little like a laser to work.
+it's also time to resize the laser, ideally just extracting information from blender about the cannon width.
 
 https://bevy.org/examples/shaders/custom-shader-instancing/
 ^ use that to make my map draw faster
