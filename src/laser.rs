@@ -1,5 +1,3 @@
 use crate::physics;
 
-fn kewlfunc() {
-
-}
+fn kewlfunc() {}

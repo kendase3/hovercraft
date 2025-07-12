@@ -71,6 +71,12 @@ struct Pilot {
     facing: Option<f32>,
     target: Option<Entity>,
     fire_large_laser: bool,
+    // TODO(skend): eventually i can turn this into a dict
+    // of weapons, where looking up large laser returns
+    // both the entity of the cannon and the laser itself.
+    // For now let's proof of concept it more simply.
+    cannon: Option<Entity>,
+    laser: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -292,7 +298,7 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn init_laser(
     laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
     children: Query<&Children>,
-    pilot_query: Query<&Pilot>,
+    mut pilot_query: Query<&mut Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut laser_initialized: ResMut<LaserInitialized>,
@@ -305,6 +311,11 @@ fn init_laser(
             // i.e. laser0 looks for cannon0
             // and then we map them one time in init_laser
             if name_success.as_str() == "laser" {
+                // first we'll set up the laser link from the pilot
+                let mut pilot =
+                    pilot_query.get_mut(laser_parent.get()).unwrap();
+                pilot.laser = Some(laser_entity);
+                // then we'll go about setting up the laser itself
                 if let Some(mut entity_commands) =
                     commands.get_entity(laser_entity)
                 {
@@ -322,7 +333,7 @@ fn init_laser(
 fn init_ship(
     ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
     children: Query<&Children>,
-    pilot_query: Query<&Pilot>,
+    mut pilot_query: Query<&mut Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
@@ -332,6 +343,12 @@ fn init_ship(
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
                 if name_success.as_str() == "cannon" {
+                    // first update the pilot's cannon link
+                    let mut pilot =
+                        pilot_query.get_mut(ship_parent.get()).unwrap();
+                    pilot.cannon = Some(entity);
+
+                    // then do the work for the cannon itself
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
@@ -723,18 +740,9 @@ fn handle_laser(
             // offset i am currently accounting for, because it does seem to generally
             // move when the player and bot move. i think i am just accounting for target?
 
-            // get the laser that belongs to my pilot
-            // and set its vertices
-            // and toggle it visible
-
-            // i now have a DudeRef on lasers
-
-            // the act of actually updating the vertices looks a bit complicated too
-            // i have 24 points, but i use a struct that has 32? maybe alpha value or something?
-            // things we can use to find success here:
-            // - pilot_entity
-            // laser_vertex_1..4
-            let mesh = qlasermesh.single_mut();
+            //let mesh = qlasermesh.single_mut();
+            // FIXME(skend): no unwrap for this.
+            let mesh = qlasermesh.get(pilot.laser.unwrap()).unwrap();
             let actual_mesh = meshes.get_mut(mesh).unwrap();
             let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
             // TODO(skend): make sure these are all CCW
