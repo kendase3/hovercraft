@@ -567,7 +567,12 @@ fn setup(
                 Visibility::Visible,
             ));
             //let kewl_material = materials4.add(LaserMaterial {});
-            let kewl_material = materials3.add(StandardMaterial {base_color_texture: Some(lol.clone()), ..default()});
+            let kewl_material = materials3.add(StandardMaterial {
+                base_color_texture: Some(lol.clone()),
+                emissive: Color::srgb(0.0, 1., 1.).into(),
+                alpha_mode: AlphaMode::Blend,
+                ..default()
+            });
             // TODO(skend): add for bot too
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
