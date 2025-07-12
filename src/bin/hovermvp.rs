@@ -78,6 +78,7 @@ struct Pilot {
     // For now let's proof of concept it more simply.
     cannon: Option<Entity>,
     laser: Option<Entity>,
+    ship: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -348,6 +349,7 @@ fn init_ship(
                     let mut pilot =
                         pilot_query.get_mut(ship_parent.get()).unwrap();
                     pilot.cannon = Some(entity);
+                    pilot.ship = Some(ship_gubbins);
 
                     // then do the work for the cannon itself
                     if let Some(mut entity_commands) =
@@ -655,7 +657,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 
 fn handle_laser(
     qpilot: Query<&mut Pilot>,
-    qtransform: Query<&Transform, With<Pilot>>,
+    qtransform: Query<&Transform>,
     qentity: Query<Entity, With<Pilot>>,
     qlaser: Query<(&mut LargeLaser, &DudeRef)>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -674,6 +676,9 @@ fn handle_laser(
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
+                    // we learned that the pilot does in fact know it is 50 away
+                    // from us. which makes sense, thankfully.
+                    info!("laser dest = {:?}", laser_dest);
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
                             pilot_entity = Some(entity);
@@ -690,6 +695,7 @@ fn handle_laser(
                                 // on there just being one laser or something.
                                 laser_origin =
                                     Some(pilot_transform.translation.xy());
+                                //if let Ok(ship_transform) = qtransform.get(pilot.ship.unwrap());
                             }
                         }
                     }
