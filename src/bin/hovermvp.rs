@@ -490,6 +490,7 @@ fn setup(
     ));
     let triangle_color = Color::srgb(0.0, 1.0, 1.0);
     let planet_color = Color::srgb(0.0, 1.0, 0.0);
+    let lol: Handle<Image> = asset_server.load("textures/lol.png");
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
@@ -565,7 +566,8 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-            let kewl_material = materials4.add(LaserMaterial {});
+            //let kewl_material = materials4.add(LaserMaterial {});
+            let kewl_material = materials3.add(StandardMaterial {base_color_texture: Some(lol.clone()), ..default()});
             // TODO(skend): add for bot too
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
