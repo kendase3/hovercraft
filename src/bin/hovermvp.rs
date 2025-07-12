@@ -244,7 +244,7 @@ fn main() {
                 move_player,
                 face_all,
                 rotface_all,
-                move_bot,
+                //move_bot,
                 handle_tag,
                 camera_follow,
                 handle_target,
@@ -740,8 +740,20 @@ fn handle_laser(
             // offset i am currently accounting for, because it does seem to generally
             // move when the player and bot move. i think i am just accounting for target?
 
-            //let mesh = qlasermesh.single_mut();
-            // FIXME(skend): no unwrap for this.
+            // FIXME(skend): i am not accounting for the rotations of the ships at all.
+            /*
+            let delta_loc = target_xy.unwrap() - our_dude_xy.unwrap()
+            + our_ship_xy.unwrap()
+            + our_cannon_xy;
+        let radians = delta_loc.y.atan2(delta_loc.x);
+        //info!("the angle in degrees is {}", radians * (180. / PI));
+        cannon_transform.rotation =
+            Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
+            */
+
+
+            // FIXME(skend): no unwrap for this. technically a user could hit it early
+            // before these are assigned.
             let mesh = qlasermesh.get(pilot.laser.unwrap()).unwrap();
             let actual_mesh = meshes.get_mut(mesh).unwrap();
             let mut vertices: Vec<[f32; 3]> = vec![[0., 0., 0.]; 24];
@@ -827,6 +839,8 @@ fn handle_laser(
                 (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
                     .into();
             actual_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+            // need to fire more than once?
+            actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
             //actual_mesh.compute_smooth_normals();
             actual_mesh.duplicate_vertices();
             actual_mesh.compute_flat_normals();
