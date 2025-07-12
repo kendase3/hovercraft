@@ -13,10 +13,12 @@
 // limitations under the License.
 
 use hovercraft::physics;
+use hovercraft::laser;
 
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
+use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
@@ -829,7 +831,9 @@ fn handle_laser(
             vertices[23] =
                 (laser_vertex_4_xy.x, laser_vertex_4_xy.y, LASER_HEIGHT)
                     .into();
-            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, vertices);
+            let (srs_vertices, srs_indices) = laser::get_laser_vertices(real_laser_origin, real_laser_dest);
+            actual_mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, srs_vertices);
+            actual_mesh.insert_indices(Indices::U32(srs_indices));
             // need to fire more than once?
             actual_mesh.remove_attribute(Mesh::ATTRIBUTE_UV_0);
             //actual_mesh.compute_smooth_normals();
