@@ -134,13 +134,11 @@ struct ShipModel;
 
 // we have to add this component after initial load
 // because it's a child in the glb
-// FIXME(skend): should just call cannon and ship? it's not like there's a non-model version of
-// these
 #[derive(Component)]
-struct CannonModel;
+struct Cannon;
 
 #[derive(Component)]
-struct NotCannonModel;
+struct NotCannon;
 
 #[derive(Component)]
 struct NotchOffset(pub Vec3);
@@ -189,7 +187,6 @@ impl FromWorld for OrbitTimer {
     }
 }
 
-// FIXME(skend): surely there's a way to just have one of these
 fn dont_need_cannon_init(ci: Res<CannonInitialized>) -> bool {
     ci.0
 }
@@ -338,7 +335,7 @@ fn init_ship(
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
-                        entity_commands.insert(CannonModel {});
+                        entity_commands.insert(Cannon {});
                         entity_commands.insert(Visibility::Visible);
                         entity_commands.insert(DudeRef(ship_parent.get()));
                         entity_commands.insert(Craft(ship_gubbins));
@@ -357,7 +354,7 @@ fn init_ship(
                     if let Some(mut entity_commands) =
                         commands.get_entity(entity)
                     {
-                        entity_commands.insert(NotCannonModel {});
+                        entity_commands.insert(NotCannon {});
                     }
                 }
             }
@@ -465,10 +462,7 @@ fn setup(
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     // TODO(skend): make the color and shape for the laser
-    let laser_mesh = Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD,
-    );
+    let laser_mesh = laser::get_new_laser();
     // FIXME(skend): i need valid but zeroed-out contents for vertices and indices
     // for ^
     // i can make a func in laser:: return it.
@@ -797,9 +791,9 @@ fn rotface_all(
 }
 
 fn aim_cannon(
-    mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<CannonModel>>,
+    mut cannon: Query<(&mut Transform, &DudeRef, &Craft), With<Cannon>>,
     pilots: Query<&Pilot>,
-    qtransform: Query<&Transform, Without<CannonModel>>,
+    qtransform: Query<&Transform, Without<Cannon>>,
 ) {
     for (mut cannon_transform, dude, craft) in cannon.iter_mut() {
         let our_cannon_xy = cannon_transform.translation.xy();
@@ -889,7 +883,7 @@ fn move_bot(
             &mut physics::Velocity,
             &mut physics::Acceleration,
         ),
-        (With<Bot>, Without<Player>, Without<CannonModel>),
+        (With<Bot>, Without<Player>, Without<Cannon>),
     >,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
