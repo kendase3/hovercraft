@@ -757,10 +757,11 @@ fn handle_laser(
                 real_laser_dest,
             );
 
-            // FIXME(skend): no unwrap for this. technically a user could hit it early
+            // NB(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
             if let Some(notmeshyet) = pilot.laser {
                 if let Ok(mesh) = qlasermesh.get(notmeshyet) {
+                    // this unwrap almost certainly fine
                     let actual_mesh = meshes.get_mut(mesh).unwrap();
                     let (laser_vertices, laser_indices, laser_uvs) =
                         laser::get_laser_vertices(
