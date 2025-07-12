@@ -657,7 +657,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 
 fn handle_laser(
     qpilot: Query<&mut Pilot>,
-    qtransform: Query<&Transform>,
+    mut qtransform: Query<&mut Transform>,
     qentity: Query<Entity, With<Pilot>>,
     qlaser: Query<(&mut LargeLaser, &DudeRef)>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -668,6 +668,8 @@ fn handle_laser(
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
         let mut pilot_entity: Option<Entity> = None;
+        let mut inverse_pilot: Option<Quat> = None;
+        // for fun
         if pilot.fire_large_laser {
             //info!("we noticed the laser was fired!");
             // well then we will need to know where the laser is firing to
@@ -684,6 +686,7 @@ fn handle_laser(
                             pilot_entity = Some(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
+                                inverse_pilot = Some(pilot_transform.rotation.inverse());
                                 // FIXME(skend): the rotations though
                                 let ship_transform = qtransform
                                     .get(pilot.ship.unwrap())
@@ -742,22 +745,11 @@ fn handle_laser(
                 laser_dest.unwrap(),
             );
 
-            // TODO(skend): now need to modify these vertices by the offsets of the pilot, the
-            // ship, and the cannon.
-            // right now i'm just using the laser itself? maybe double back and check what
-            // offset i am currently accounting for, because it does seem to generally
-            // move when the player and bot move. i think i am just accounting for target?
-
-            // FIXME(skend): i am not accounting for the rotations of the ships at all.
-            /*
-                let delta_loc = target_xy.unwrap() - our_dude_xy.unwrap()
-                + our_ship_xy.unwrap()
-                + our_cannon_xy;
-            let radians = delta_loc.y.atan2(delta_loc.x);
-            //info!("the angle in degrees is {}", radians * (180. / PI));
-            cannon_transform.rotation =
-                Quat::from_rotation_z(radians) * ship_transform.rotation.inverse();
-                */
+            // FIXME(skend): there's something here i think.
+            let mut laser_transform = qtransform.get_mut(pilot.laser.unwrap()).unwrap();
+            // FIXME(skend): well this did not fix my problem.
+            laser_transform.rotation =
+                Quat::from_rotation_z(polar.theta) * inverse_pilot.unwrap();
 
             // FIXME(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
