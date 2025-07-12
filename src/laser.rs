@@ -20,10 +20,45 @@ pub fn get_new_laser() -> Mesh {
     ret
 }
 
+pub fn get_uvs() -> Vec<[f32; 2]> {
+    vec![
+        // near
+        [0.0, 1.0],
+        [1.0, 1.0],
+        [1.0, 0.0],
+        [0.0, 0.0],
+        // far
+        [1.0, 1.0],
+        [0.0, 1.0],
+        [0.0, 0.0],
+        [1.0, 0.0],
+        // top
+        [0.0, 1.0],
+        [1.0, 1.0],
+        [1.0, 0.0],
+        [0.0, 0.0],
+        // bottom
+        [0.0, 1.0],
+        [1.0, 1.0],
+        [1.0, 0.0],
+        [0.0, 0.0],
+        // right
+        [0.0, 1.0],
+        [1.0, 1.0],
+        [1.0, 0.0],
+        [0.0, 0.0],
+        // left
+        [0.0, 1.0],
+        [1.0, 1.0],
+        [1.0, 0.0],
+        [0.0, 0.0],
+    ]
+}
+
 pub fn get_laser_vertices(
     laser_origin: Vec2,
     laser_dest: Vec2,
-) -> (Vec<[f32; 3]>, Vec<u32>) {
+) -> (Vec<[f32; 3]>, Vec<u32>, Vec<[f32; 2]>) {
     let coordpair = physics::CoordPair {
         center: laser_origin,
         exterior: laser_dest,
@@ -82,5 +117,5 @@ pub fn get_laser_vertices(
         1, 5, 6, 1, 5, 2, // right face triangles
         4, 0, 3, 4, 3, 7, // left face triangles
     ];
-    (coords, indices)
+    (coords, indices, get_uvs())
 }
