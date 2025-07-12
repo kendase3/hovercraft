@@ -706,6 +706,8 @@ fn handle_laser(
             let mut real_laser_origin = laser_origin.unwrap().clone();
             real_laser_origin.x = 0.;
             real_laser_origin.y = 0.;
+            // for what it's worth, in the problem case real_laser_dest
+            // appears to be giving the correct value.
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
             info!("real laser dest: {:?}", real_laser_dest);
             let coordpair = physics::CoordPair {
@@ -752,8 +754,8 @@ fn handle_laser(
             let mut laser_transform =
                 qtransform.get_mut(pilot.laser.unwrap()).unwrap();
             // FIXME(skend): well this did not fix my problem.
-            laser_transform.rotation =
-                Quat::from_rotation_z(polar.theta) * inverse_pilot.unwrap();
+            //laser_transform.rotation =
+            //    Quat::from_rotation_z(polar.theta) * inverse_pilot.unwrap();
 
             // FIXME(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
