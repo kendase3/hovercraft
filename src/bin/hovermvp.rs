@@ -425,19 +425,12 @@ fn setup(
         is_playing: false,
     });
     // would not animations also be fun?
-    let explosion_animation: SceneRoot = SceneRoot(
-        asset_server.load(
-            GltfAssetLabel::Animation(0)
-                .from_asset("models/gubbins2explosion.glb"),
-        ),
+    let mut animation_graph = AnimationGraph::new();
+                        animation_graph.add_clip(
+        asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/gubbinsexplodes01.glb")),
+        1.0,
+        animation_graph.root,
     );
-    commands.spawn((
-        SceneBundle {
-            scene: explosion_animation,
-            ..default()
-        },
-        GubbinsExplodes,
-    ));
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
@@ -720,6 +713,7 @@ fn handle_laser(
     mut laser_sound: ResMut<LaserSound>,
     mut animations: ResMut<Assets<AnimationClip>>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
+    mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
@@ -787,6 +781,10 @@ fn handle_laser(
                                 .with_volume(Volume::new(0.5)),
                         });
                         laser_sound.is_playing = true;
+                        // there's just one for now thankfully
+                        for graph in graphs.iter_mut() {
+
+                        }
                         // that was fun! now we're done!
                         // except that the gubbins should
                         // explode now that we have fired
@@ -794,6 +792,12 @@ fn handle_laser(
                         // so the player understands
                         // its raw power
 
+                        // we are just not calling it a player in a videogame, sorry
+                        // that term is deeply overloaded. an animation player
+                        // is instead a wiggler.
+                        for mut wiggler in qwiggler.iter_mut() {
+                        wiggler.play(0.into()).repeat();
+                        }
                     }
                 }
             }
