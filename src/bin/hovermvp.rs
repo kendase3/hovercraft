@@ -129,6 +129,11 @@ struct TagCooldownTimer {
 #[derive(Component)]
 struct Warp;
 
+// i feel like i have a very reasonable number of marking components
+// at this point
+#[derive(Component)]
+struct GubbinsExplodes;
+
 // whether or not the cooldown is ready for a tag to happen
 #[derive(Component)]
 struct TagReady {
@@ -420,10 +425,19 @@ fn setup(
         is_playing: false,
     });
     // would not animations also be fun?
-    let explosion_animation: Handle<Gltf> = asset_server.load(
-        GltfAssetLabel::Animation(0)
-            .from_asset("models/gubbins2explosion.glb"),
+    let explosion_animation: SceneRoot = SceneRoot(
+        asset_server.load(
+            GltfAssetLabel::Animation(0)
+                .from_asset("models/gubbins2explosion.glb"),
+        ),
     );
+    commands.spawn((
+        SceneBundle {
+            scene: explosion_animation,
+            ..default()
+        },
+        GubbinsExplodes,
+    ));
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
@@ -704,6 +718,7 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
+    mut qanimation: Query<&mut AnimationPlayer, With<GubbinsExplodes>>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
@@ -771,6 +786,12 @@ fn handle_laser(
                                 .with_volume(Volume::new(0.5)),
                         });
                         laser_sound.is_playing = true;
+                        // that was fun! now we're done!
+                        // except that the gubbins should
+                        // explode now that we have fired
+                        // our weird-looking laser at it
+                        // so the player understands
+                        // its raw power
                     }
                 }
             }
