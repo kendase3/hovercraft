@@ -12,21 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use bevy::core_pipeline::bloom::Bloom;
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
+use bevy::render::camera::ScalingMode;
 use bevy::window::PresentMode;
+
+const CAMERA_DEFAULT_SIZE: f32 = 100.;
 
 #[derive(Component)]
 struct Player;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
+        .add_plugins(
+            DefaultPlugins
+                .set(WindowPlugin {
                     primary_window: Some(Window {
                         // fill whole browser window
                         fit_canvas_to_parent: true,
-                        // FIXME(skend): tab still does stuff sadly
-                        // there's a javascript hack or i can wait for them to fix it
                         // don't listen to keyboard shortcuts like F keys, ctrl+R
                         prevent_default_event_handling: false,
                         present_mode: PresentMode::AutoNoVsync,
@@ -38,18 +42,18 @@ fn main() {
                     level: bevy::log::Level::INFO,
                     ..default()
                 }),
-            )
-            .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
-            .add_systems(Startup, setup)
-            .add_systems(Update, move_player)
-            .run();
+        )
+        .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
+        .add_systems(Startup, setup)
+        .add_systems(Update, move_player)
+        .run();
 }
 
 fn setup(
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    /*
     commands.spawn((
         Camera2d,
         Camera {
@@ -71,18 +75,17 @@ fn setup(
     commands.spawn((
         Player,
         Name::new("kewlplayer"),
-        Mesh2d(player),
+        Mesh2d(player_mesh),
         MeshMaterial2d(materials.add(player_color)),
         // you could put it somewhere special if you wanted
         Transform::default(),
-        */
+    ));
 }
 
 fn move_player(
     mut players: Query<&mut Transform, With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
-    ) {
-    /*
+) {
     // we happen to know the query will just return one thing
     let mut player_transform = players.single_mut();
     let mut direction = Vec3::ZERO;
@@ -100,5 +103,4 @@ fn move_player(
     }
     let move_speed = 2.0;
     player_transform.translation += direction * move_speed;
-    */
 }
