@@ -1,5 +1,17 @@
 --- plan ---
 
+i want to at least look into training AI via reinforcement learning how to play my 1v1 game. it seems like tch-rs binds the C++ bindings from pytorch into rust. so i would just have to find a way for my game to run headless. or maybe i should have the AI actually read screen renders?  i don't know enough about it yet.
+
+https://bevy.org/examples/animation/animated-mesh/
+
+supposedly i can add a 'realize instances' node at the end to make real nodes the glb can then see and import
+
+it turns out trying to export a geometry node animation to glb is a huge pain. i tried exporting to alembic and back, which did seem to do something productive, but in the end importing the .glb back into blender and hitting play revealed the animation was lost.
+
+when i open up the .glb file, an animation is there but i do not see any explosion happening.
+
+blender's cell fracture add-on is first-party and will let me model explosion animations
+
 now that we've shown we can get _a_ shader to work, it's time to get a shader that at least looks a little like a laser to work.
 it's also time to resize the laser, ideally just extracting information from blender about the cannon width.
 
@@ -79,6 +91,17 @@ how to configure models in blender:
 model facing x+
 top facing z+
 +Y up unchecked
+
+--- notes on exporting animations from blender into bevy ---
+use the cell fracture extension, can look it up in f3 after selecting the objects you want to fracture
+set the 3d cursor in the place you want your explosion to emit from
+select all the bits
+use 's' to scale out away from the 3d cursor
+i had to much about with some options in the 3d viewpoint currently in the upper center of blender UI
+i also had to change the 'options' in the far right, lower part of the upper rim GUI to only move the pieces on scale, not actually scale them.
+then i made keyframes at intervals.
+then i exported to glb with some sensible selections.
+then i both imported the whole scene and the actual animation, and applied the animation to the scene.
 
 --- weird bevy bugs ---
 you basically just have to rename a glb file each time you change it. otherwise it will reload the stale file until you like sleep or reboot your computer. even cargo clean or deleting target/ doesn't do it. weird.
