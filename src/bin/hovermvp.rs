@@ -15,6 +15,7 @@
 use hovercraft::laser;
 use hovercraft::physics;
 
+use bevy::animation::{AnimationClip, AnimationPlayer};
 use bevy::audio::Volume;
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
@@ -418,6 +419,11 @@ fn setup(
         sound: bloo_sound,
         is_playing: false,
     });
+    // would not animations also be fun?
+    let explosion_animation: Handle<Gltf> = asset_server.load(
+        GltfAssetLabel::Animation(0)
+            .from_asset("models/gubbins2explosion.glb"),
+    );
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
