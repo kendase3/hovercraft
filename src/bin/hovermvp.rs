@@ -718,7 +718,8 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
-    mut qanimation: Query<&mut AnimationPlayer, With<GubbinsExplodes>>,
+    mut animations: ResMut<Assets<AnimationClip>>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
@@ -792,6 +793,7 @@ fn handle_laser(
                         // our weird-looking laser at it
                         // so the player understands
                         // its raw power
+
                     }
                 }
             }
