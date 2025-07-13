@@ -15,6 +15,7 @@
 use hovercraft::laser;
 use hovercraft::physics;
 
+use bevy::audio::Volume;
 use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
@@ -152,6 +153,12 @@ struct NotchOffset(pub Vec3);
 
 #[derive(Component)]
 struct LargeLaser;
+
+#[derive(Resource)]
+struct LaserSound {
+    pub sound: Handle<AudioSource>,
+    pub is_playing: bool,
+}
 
 #[derive(Resource, Default)]
 struct CannonInitialized(bool);
@@ -405,6 +412,12 @@ fn setup(
     mut materials4: ResMut<Assets<LaserMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
+    // audio imports
+    let bloo_sound = asset_server.load("sounds/laser.ogg");
+    commands.insert_resource(LaserSound {
+        sound: bloo_sound,
+        is_playing: false,
+    });
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
@@ -683,6 +696,8 @@ fn handle_laser(
     mut meshes: ResMut<Assets<Mesh>>,
     qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
+    mut commands: Commands,
+    mut laser_sound: ResMut<LaserSound>,
 ) {
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
@@ -743,6 +758,14 @@ fn handle_laser(
                     actual_mesh.compute_flat_normals();
                     let mut finally_laser_time = qlaservisibility.single_mut();
                     *finally_laser_time = Visibility::Visible;
+                    if !laser_sound.is_playing {
+                        commands.spawn(AudioBundle {
+                            source: AudioPlayer(laser_sound.sound.clone()),
+                            settings: PlaybackSettings::ONCE
+                                .with_volume(Volume::new(0.5)),
+                        });
+                        laser_sound.is_playing = true;
+                    }
                 }
             }
         }
