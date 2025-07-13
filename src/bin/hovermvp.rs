@@ -359,6 +359,8 @@ fn init_ship(
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
+    mut materials4: ResMut<Assets<LaserMaterial>>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     for (ship_gubbins, ship_parent) in &ship_stuff {
         for entity in children.iter_descendants(ship_gubbins) {
@@ -387,6 +389,29 @@ fn init_ship(
                                 entity_commands.insert(BotSub {});
                             }
                             cannon_initialized.0 = true;
+                            // lettuce make the laser here
+                            let kewl_material =
+                                materials4.add(LaserMaterial {});
+                            // TODO(skend): add for bot too
+                            // TODO(skend): i think this actually should be a child on the cannon.
+                            // so spawning it would be a little weird/late
+                            // seems like i may want an initial loading screen
+                            // FIXME(skend): need to get the cannon as a parent
+                            let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
+
+                            let laser_guy = commands
+                                .spawn((
+                                    Mesh3d(meshes.add(laser_mesh)),
+                                    MeshMaterial3d(kewl_material),
+                                    Visibility::Hidden,
+                                    LargeLaser,
+                                    Name::new("laser"),
+                                ))
+                                .id();
+                            // set cannon as the parent of the laser
+                            commands
+                                .entity(entity)
+                                .insert_children(0, &[laser_guy]);
                         }
                     }
                 } else {
@@ -409,7 +434,6 @@ fn setup(
     mut materials2: ResMut<Assets<TargetMaterial>>,
     // will likely use soon
     //mut materials3: ResMut<Assets<StandardMaterial>>,
-    mut materials4: ResMut<Assets<LaserMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
     // audio imports
@@ -510,7 +534,6 @@ fn setup(
     };
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
-    let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
     //let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
@@ -575,27 +598,6 @@ fn setup(
                 Mesh2d(notch_circle),
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
-            ));
-            let kewl_material = materials4.add(LaserMaterial {});
-            /*
-            let kewl_material = materials3.add(StandardMaterial {
-                base_color_texture: Some(lol.clone()),
-                emissive: Color::srgb(0.0, 1., 1.).into(),
-                alpha_mode: AlphaMode::Blend,
-                unlit: true,
-                ..default()
-            });
-            */
-            // TODO(skend): add for bot too
-            // TODO(skend): i think this actually should be a child on the cannon.
-            // so spawning it would be a little weird/late
-            // seems like i may want an initial loading screen
-            parent.spawn((
-                Mesh3d(meshes.add(laser_mesh)),
-                MeshMaterial3d(kewl_material),
-                Visibility::Hidden,
-                LargeLaser,
-                Name::new("laser"),
             ));
         });
     let bot_target = meshes
