@@ -22,18 +22,6 @@ use std::f32::consts::PI;
 const LASER_WIDTH: f32 = 0.5;
 const LASER_HEIGHT: f32 = 0.5;
 
-pub fn get_new_laser() -> Mesh {
-    let mut ret = Mesh::new(
-        PrimitiveTopology::TriangleList,
-        RenderAssetUsages::RENDER_WORLD,
-    );
-    let coords: Vec<[f32; 3]> = vec![[0., 0., 0.]; 8];
-    let indices: Vec<u32> = vec![0; 36];
-    ret.insert_attribute(Mesh::ATTRIBUTE_POSITION, coords);
-    ret.insert_indices(Indices::U32(indices));
-    ret
-}
-
 pub fn get_uvs() -> Vec<[f32; 2]> {
     // what if we only care about how top and bottom look
     vec![
