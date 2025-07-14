@@ -90,6 +90,17 @@ model facing x+
 top facing z+
 +Y up unchecked
 
+--- notes on exporting animations from blender into bevy ---
+use the cell fracture extension, can look it up in f3 after selecting the objects you want to fracture
+set the 3d cursor in the place you want your explosion to emit from
+select all the bits
+use 's' to scale out away from the 3d cursor
+i had to much about with some options in the 3d viewpoint currently in the upper center of blender UI
+i also had to change the 'options' in the far right, lower part of the upper rim GUI to only move the pieces on scale, not actually scale them.
+then i made keyframes at intervals.
+then i exported to glb with some sensible selections.
+then i both imported the whole scene and the actual animation, and applied the animation to the scene.
+
 --- weird bevy bugs ---
 you basically just have to rename a glb file each time you change it. otherwise it will reload the stale file until you like sleep or reboot your computer. even cargo clean or deleting target/ doesn't do it. weird.
 
