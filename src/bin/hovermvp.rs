@@ -426,8 +426,10 @@ fn setup(
     });
     // would not animations also be fun?
     let mut animation_graph = AnimationGraph::new();
-                        animation_graph.add_clip(
-        asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/gubbinsexplodes01.glb")),
+    animation_graph.add_clip(
+        asset_server.load(
+            GltfAssetLabel::Animation(0).from_asset("models/gubbins03.glb"),
+        ),
         1.0,
         animation_graph.root,
     );
@@ -782,8 +784,9 @@ fn handle_laser(
                         });
                         laser_sound.is_playing = true;
                         // there's just one for now thankfully
+                        info!("before things go wrong");
                         for graph in graphs.iter_mut() {
-
+                            info!("we found our animation graph!");
                         }
                         // that was fun! now we're done!
                         // except that the gubbins should
@@ -796,7 +799,8 @@ fn handle_laser(
                         // that term is deeply overloaded. an animation player
                         // is instead a wiggler.
                         for mut wiggler in qwiggler.iter_mut() {
-                        wiggler.play(0.into()).repeat();
+                            info!("playing explosion animation!");
+                            wiggler.play(0.into()).repeat();
                         }
                     }
                 }
