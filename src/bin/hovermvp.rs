@@ -21,6 +21,7 @@ use bevy::color::palettes::basic::PURPLE;
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::render::mesh::{Indices, Mesh};
+use bevy::scene::SceneInstanceReady;
 use bevy::sprite::{AlphaMode2d, Material2d, Material2dPlugin};
 use bevy::window::PresentMode;
 use bevy::{core_pipeline::bloom::Bloom, prelude::*, text::FontSmoothing};
@@ -407,6 +408,31 @@ fn init_ship(
         }
     }
 }
+// temp
+#[derive(Component)]
+struct AnimationToPlay {
+    graph_handle: Handle<AnimationGraph>,
+    index: AnimationNodeIndex,
+}
+
+fn play_animation_when_ready(
+    trigger: Trigger<SceneInstanceReady>,
+    mut commands: Commands,
+    children: Query<&Children>,
+    animations_to_play: Query<&AnimationToPlay>,
+    mut wigglers: Query<&mut AnimationPlayer>,
+) {
+    if let Ok(animation_to_play) = animations_to_play.get(trigger.entity()) {
+        for child in children.iter_descendants(trigger.entity()) {
+            if let Ok(mut wiggler) = wigglers.get_mut(child) {
+                wiggler.play(animation_to_play.index).repeat();
+                commands.entity(child).insert(AnimationGraphHandle(
+                    animation_to_play.graph_handle.clone(),
+                ));
+            }
+        }
+    }
+}
 
 fn setup(
     mut commands: Commands,
@@ -426,15 +452,23 @@ fn setup(
         is_playing: false,
     });
     // would not animations also be fun?
-    let (graph, animation_index) = AnimationGraph::from_clip(
-        asset_server.load(
-            GltfAssetLabel::Animation(0).from_asset("models/gubbins06.glb"),
-        ),
+    let (graph, animation_index) =
+        AnimationGraph::from_clip(asset_server.load(
+            GltfAssetLabel::Animation(0).from_asset("models/gubbins08.glb"),
+        ));
+    let graph_handle = graphs.add(graph);
+    info!("animation index is {:?}", animation_index);
+    let animation_to_play = AnimationToPlay {
+        graph_handle,
+        index: animation_index,
+    };
+    let animation_scene = SceneRoot(
+        asset_server
+            .load(GltfAssetLabel::Scene(0).from_asset("models/gubbins08.glb")),
     );
-    let mut player = AnimationPlayer::default();
-    player.play(animation_index).repeat();
-
-    commands.spawn((AnimationGraphHandle(graphs.add(graph)), player));
+    commands
+        .spawn((animation_to_play, animation_scene))
+        .observe(play_animation_when_ready);
 
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
@@ -802,7 +836,7 @@ fn handle_laser(
                         // is instead a wiggler.
                         for mut wiggler in qwiggler.iter_mut() {
                             info!("playing explosion animation!");
-                            wiggler.play(0.into()).repeat();
+                            wiggler.play(1.into()).repeat();
                         }
                     }
                 }

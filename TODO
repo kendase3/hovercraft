@@ -1,5 +1,7 @@
 --- plan ---
 
+https://bevy.org/examples/animation/animated-mesh/
+
 supposedly i can add a 'realize instances' node at the end to make real nodes the glb can then see and import
 
 it turns out trying to export a geometry node animation to glb is a huge pain. i tried exporting to alembic and back, which did seem to do something productive, but in the end importing the .glb back into blender and hitting play revealed the animation was lost.
