@@ -417,6 +417,7 @@ fn setup(
     //mut materials3: ResMut<Assets<StandardMaterial>>,
     mut materials4: ResMut<Assets<LaserMaterial>>,
     asset_server: Res<AssetServer>,
+    mut graphs: ResMut<Assets<AnimationGraph>>,
 ) {
     // audio imports
     let bloo_sound = asset_server.load("sounds/laser.ogg");
@@ -425,14 +426,16 @@ fn setup(
         is_playing: false,
     });
     // would not animations also be fun?
-    let mut animation_graph = AnimationGraph::new();
-    animation_graph.add_clip(
+    let (graph, animation_index) = AnimationGraph::from_clip(
         asset_server.load(
             GltfAssetLabel::Animation(0).from_asset("models/gubbins03.glb"),
         ),
-        1.0,
-        animation_graph.root,
     );
+    let mut player = AnimationPlayer::default();
+    player.play(animation_index).repeat();
+
+    commands.spawn((AnimationGraphHandle(graphs.add(graph)), player));
+
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
