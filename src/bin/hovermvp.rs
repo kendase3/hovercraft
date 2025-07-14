@@ -428,7 +428,7 @@ fn setup(
     // would not animations also be fun?
     let (graph, animation_index) = AnimationGraph::from_clip(
         asset_server.load(
-            GltfAssetLabel::Animation(0).from_asset("models/gubbins03.glb"),
+            GltfAssetLabel::Animation(0).from_asset("models/gubbins06.glb"),
         ),
     );
     let mut player = AnimationPlayer::default();
@@ -787,10 +787,9 @@ fn handle_laser(
                         });
                         laser_sound.is_playing = true;
                         // there's just one for now thankfully
-                        info!("before things go wrong");
-                        for graph in graphs.iter_mut() {
-                            info!("we found our animation graph!");
-                        }
+                        //for graph in graphs.iter_mut() {
+                        //    info!("we found our animation graph!");
+                        //}
                         // that was fun! now we're done!
                         // except that the gubbins should
                         // explode now that we have fired

@@ -1,5 +1,11 @@
 --- plan ---
 
+supposedly i can add a 'realize instances' node at the end to make real nodes the glb can then see and import
+
+it turns out trying to export a geometry node animation to glb is a huge pain. i tried exporting to alembic and back, which did seem to do something productive, but in the end importing the .glb back into blender and hitting play revealed the animation was lost.
+
+when i open up the .glb file, an animation is there but i do not see any explosion happening.
+
 blender's cell fracture add-on is first-party and will let me model explosion animations
 
 now that we've shown we can get _a_ shader to work, it's time to get a shader that at least looks a little like a laser to work.
