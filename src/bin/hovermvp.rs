@@ -454,7 +454,8 @@ fn setup(
     // would not animations also be fun?
     let (graph, animation_index) =
         AnimationGraph::from_clip(asset_server.load(
-            GltfAssetLabel::Animation(0).from_asset("models/gubbinsexplodes.glb"),
+            //GltfAssetLabel::Animation(0).from_asset("models/gubbinsexplodes.glb"),
+            GltfAssetLabel::Animation(0).from_asset("models/gnat2explosion.glb"),
         ));
     let graph_handle = graphs.add(graph);
     info!("animation index is {:?}", animation_index);
@@ -464,7 +465,8 @@ fn setup(
     };
     let animation_scene = SceneRoot(
         asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset("models/gubbinsexplodes.glb")),
+            //.load(GltfAssetLabel::Scene(0).from_asset("models/gubbinsexplodes.glb")),
+            .load(GltfAssetLabel::Scene(0).from_asset("models/gnat2explosion.glb")),
     );
     commands
         .spawn((animation_to_play, animation_scene))
