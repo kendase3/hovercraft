@@ -52,6 +52,8 @@ const NOTCH_OUTER_SIZE: f32 = 5.;
 const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const BOT_START_OFFSET: f32 = 50.;
+const GNAT_EXPLODE_PATH: &str = "models/gnat2explosion.glb";
+const GUBBINS_EXPLODE_PATH: &str = "models/gubbinsexplodes.glb";
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -454,8 +456,7 @@ fn setup(
     // would not animations also be fun?
     let (graph, animation_index) =
         AnimationGraph::from_clip(asset_server.load(
-            //GltfAssetLabel::Animation(0).from_asset("models/gubbinsexplodes.glb"),
-            GltfAssetLabel::Animation(0).from_asset("models/gnat2explosion.glb"),
+            GltfAssetLabel::Animation(0).from_asset(GNAT_EXPLODE_PATH),
         ));
     let graph_handle = graphs.add(graph);
     info!("animation index is {:?}", animation_index);
@@ -465,8 +466,7 @@ fn setup(
     };
     let animation_scene = SceneRoot(
         asset_server
-            //.load(GltfAssetLabel::Scene(0).from_asset("models/gubbinsexplodes.glb")),
-            .load(GltfAssetLabel::Scene(0).from_asset("models/gnat2explosion.glb")),
+            .load(GltfAssetLabel::Scene(0).from_asset(GNAT_EXPLODE_PATH)),
     );
     commands
         .spawn((animation_to_play, animation_scene))
