@@ -53,7 +53,9 @@ const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const BOT_START_OFFSET: f32 = 50.;
 const GNAT_EXPLODE_PATH: &str = "models/gnat2explosion.glb";
-const GUBBINS_EXPLODE_PATH: &str = "models/gubbinsexplodes.glb";
+const GUBBINS_EXPLODE_PATH: &str = "models/gubbins2explosion.glb";
+const GNAT_PATH: &str = "models/gnat2_6.glb";
+const GUBBINS_PATH: &str = "models/gubbins2.glb";
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -131,11 +133,6 @@ struct TagCooldownTimer {
 // a planetary body like a planet, asteroid field, a location you can warp to
 #[derive(Component)]
 struct Warp;
-
-// i feel like i have a very reasonable number of marking components
-// at this point
-#[derive(Component)]
-struct GubbinsExplodes;
 
 // whether or not the cooldown is ready for a tag to happen
 #[derive(Component)]
@@ -456,7 +453,7 @@ fn setup(
     // would not animations also be fun?
     let (graph, animation_index) =
         AnimationGraph::from_clip(asset_server.load(
-            GltfAssetLabel::Animation(0).from_asset(GNAT_EXPLODE_PATH),
+            GltfAssetLabel::Animation(0).from_asset(GUBBINS_EXPLODE_PATH),
         ));
     let graph_handle = graphs.add(graph);
     info!("animation index is {:?}", animation_index);
@@ -466,7 +463,7 @@ fn setup(
     };
     let animation_scene = SceneRoot(
         asset_server
-            .load(GltfAssetLabel::Scene(0).from_asset(GNAT_EXPLODE_PATH)),
+            .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
     commands
         .spawn((animation_to_play, animation_scene))
@@ -590,9 +587,10 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gnat2_6.glb"),
-                )),
+                SceneRoot(
+                    asset_server
+                        .load(GltfAssetLabel::Scene(0).from_asset(GNAT_PATH)),
+                ),
                 // NB(skend): notably does nothing
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
@@ -752,8 +750,8 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
-    mut animations: ResMut<Assets<AnimationClip>>,
-    mut graphs: ResMut<Assets<AnimationGraph>>,
+    //animations: Res<Assets<AnimationClip>>,
+    //mut graphs: ResMut<Assets<AnimationGraph>>,
     mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
     for pilot in qpilot.iter() {

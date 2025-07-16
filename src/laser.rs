@@ -14,9 +14,7 @@
 
 use crate::physics;
 
-use bevy::asset::RenderAssetUsages;
 use bevy::prelude::*;
-use bevy::render::mesh::{Indices, Mesh, PrimitiveTopology};
 use std::f32::consts::PI;
 
 const LASER_WIDTH: f32 = 0.5;
