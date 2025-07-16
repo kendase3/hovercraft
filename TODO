@@ -1,5 +1,7 @@
 --- plan ---
 
+i want to at least look into training AI via reinforcement learning how to play my 1v1 game. it seems like tch-rs binds the C++ bindings from pytorch into rust. so i would just have to find a way for my game to run headless. or maybe i should have the AI actually read screen renders?  i don't know enough about it yet.
+
 https://bevy.org/examples/animation/animated-mesh/
 
 supposedly i can add a 'realize instances' node at the end to make real nodes the glb can then see and import
