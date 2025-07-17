@@ -68,15 +68,11 @@ pub fn get_laser_vertices(
     };
     let mut polar = physics::Polar::from(coordpair);
     // handle idea that the laser can only fire so far
-    //polar = bound_on_range(polar);
     if polar.r > LASER_RANGE {
         polar = bound_on_range(polar);
         laser_dest =
             physics::polar_to_cartesean_plus_point(polar, laser_origin);
     }
-    // also need to update laser_dest
-    // laser_dest = ...
-    // ^ maybe it's easier to just if/else the whole thing
     let maltheta = polar.theta + 0.5 * PI % (2. * PI);
     // oddly PEMDAS really went my way on this one, very few () required
     // maybe i don't even need those last ones but i'm too lazy
