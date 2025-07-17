@@ -15,10 +15,12 @@
 use crate::physics;
 
 use bevy::prelude::*;
+use std::cmp::min;
 use std::f32::consts::PI;
 
 const LASER_WIDTH: f32 = 0.5;
 const LASER_HEIGHT: f32 = 0.5;
+const LASER_RANGE: f32 = 200.;
 
 pub fn get_uvs() -> Vec<[f32; 2]> {
     // what if we only care about how top and bottom look
@@ -45,15 +47,36 @@ pub fn get_indices() -> Vec<u32> {
     ]
 }
 
+pub fn bound_on_range(polar_in: physics::Polar) -> physics::Polar {
+    // TODO(skend): this is when we discover whether it is a hit or not
+    // though it would not be too wasteful to just compare the two values
+    // separately at another time
+    let new_radius = f32::min(polar_in.r, LASER_RANGE);
+    physics::Polar {
+        theta: polar_in.theta,
+        r: new_radius,
+    }
+}
+
 pub fn get_laser_vertices(
     laser_origin: Vec2,
-    laser_dest: Vec2,
+    mut laser_dest: Vec2,
 ) -> (Vec<[f32; 3]>, Vec<u32>, Vec<[f32; 2]>) {
     let coordpair = physics::CoordPair {
         center: laser_origin,
         exterior: laser_dest,
     };
-    let polar = physics::Polar::from(coordpair);
+    let mut polar = physics::Polar::from(coordpair);
+    // handle idea that the laser can only fire so far
+    //polar = bound_on_range(polar);
+    if polar.r > LASER_RANGE {
+        polar = bound_on_range(polar);
+        laser_dest =
+            physics::polar_to_cartesean_plus_point(polar, laser_origin);
+    }
+    // also need to update laser_dest
+    // laser_dest = ...
+    // ^ maybe it's easier to just if/else the whole thing
     let maltheta = polar.theta + 0.5 * PI % (2. * PI);
     // oddly PEMDAS really went my way on this one, very few () required
     // maybe i don't even need those last ones but i'm too lazy
