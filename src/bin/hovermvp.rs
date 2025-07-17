@@ -86,6 +86,7 @@ struct Pilot {
     cannon: Option<Entity>,
     laser: Option<Entity>,
     ship: Option<Entity>,
+    dead: bool,
 }
 
 // is it actually fine to not have normal form
@@ -128,6 +129,16 @@ struct Target;
 #[derive(Component)]
 struct TagCooldownTimer {
     timer: Timer,
+}
+
+#[derive(Component)]
+struct LaserCooldownTimer {
+    timer: Timer,
+}
+// whether or not the cooldown is ready for a laser to happen
+#[derive(Component)]
+struct LaserReady {
+    ready: bool,
 }
 
 // a planetary body like a planet, asteroid field, a location you can warp to
@@ -470,9 +481,13 @@ fn setup(
         .observe(play_animation_when_ready);
 
     commands.spawn(TagReady { ready: true });
+    commands.spawn(LaserReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
+    });
+    commands.spawn(LaserCooldownTimer {
+        timer: Timer::from_seconds(4.0, TimerMode::Once),
     });
     commands.spawn((
         DirectionalLight {
@@ -754,6 +769,7 @@ fn handle_laser(
     //mut graphs: ResMut<Assets<AnimationGraph>>,
     mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
+    // FIXME(skend): each pilot will need their own laser timer
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
@@ -840,6 +856,10 @@ fn handle_laser(
                     }
                 }
             }
+            // hide the laser
+        } else {
+            let mut laser_time_over = qlaservisibility.single_mut();
+            *laser_time_over = Visibility::Hidden;
         }
     }
 }
@@ -968,7 +988,11 @@ fn move_player(
     mut players: Query<(&mut Acceleration, &mut Pilot), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
+    mut qlasertimer: Query<&mut LaserCooldownTimer>,
+    mut qlaserready: Query<&mut LaserReady>,
 ) {
+    let mut lasertimer = qlasertimer.single_mut();
+    let mut laserready = qlaserready.single_mut();
     let (mut accel, mut play) = players.single_mut();
     // FIXME(skend): complete rework
     // W now accelerates forward in the current direction
@@ -987,8 +1011,16 @@ fn move_player(
     if keys.any_pressed([KeyCode::KeyA]) {
         direction.x -= 1.0;
     }
-    if keys.any_pressed([KeyCode::KeyR]) {
-        play.fire_large_laser = true;
+    // FIXME(skend): need to check the laser timer
+    // the logic should really go:
+    // if the timer is finished, end the fire_large_laser state
+    // and also if the key is pressed, start it again
+    lasertimer.timer.tick(time.delta());
+    if lasertimer.timer.finished() {
+        play.fire_large_laser = false;
+        if keys.any_pressed([KeyCode::KeyR]) {
+            play.fire_large_laser = true;
+        }
     }
 
     let n_direction;
