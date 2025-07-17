@@ -130,12 +130,6 @@ struct TagCooldownTimer {
     timer: Timer,
 }
 
-#[derive(Component)]
-struct LaserTiming {
-    still_firing_timer: Timer,
-    can_fire_again_timer: Timer,
-}
-
 // a planetary body like a planet, asteroid field, a location you can warp to
 #[derive(Component)]
 struct Warp;
@@ -480,10 +474,6 @@ fn setup(
     commands.spawn(TagCooldownTimer {
         timer: Timer::from_seconds(1.0, TimerMode::Once),
     });
-    commands.spawn(LaserTiming {
-        still_firing_timer: Timer::from_seconds(1.0, TimerMode::Once),
-        can_fire_again_timer: Timer::from_seconds(1.0, TimerMode::Once),
-    });
     commands.spawn((
         DirectionalLight {
             shadows_enabled: true,
@@ -763,25 +753,11 @@ fn handle_laser(
     //animations: Res<Assets<AnimationClip>>,
     //mut graphs: ResMut<Assets<AnimationGraph>>,
     mut qwiggler: Query<&mut AnimationPlayer>,
-    mut qlasertiming: Query<&mut LaserTiming>,
-    time: Res<Time>,
 ) {
-    let mut lasertiming = qlasertiming.single_mut();
-    let tdelta = time.delta();
-    lasertiming.still_firing_timer.tick(tdelta);
-    lasertiming.can_fire_again_timer.tick(tdelta);
-    let mut ready_to_fire = false;
-    let mut still_firing = true;
-    if lasertiming.still_firing_timer.finished() {
-        still_firing = false;
-    }
-    if lasertiming.can_fire_again_timer.finished() {
-        ready_to_fire = true;
-    }
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
-        if pilot.fire_large_laser && ready_to_fire {
+        if pilot.fire_large_laser {
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
@@ -837,17 +813,13 @@ fn handle_laser(
                     actual_mesh.compute_flat_normals();
                     let mut finally_laser_time = qlaservisibility.single_mut();
                     *finally_laser_time = Visibility::Visible;
-                    lasertiming.can_fire_again_timer.reset();
-                    lasertiming.still_firing_timer.reset();
                     if !laser_sound.is_playing {
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
                             settings: PlaybackSettings::ONCE
                                 .with_volume(Volume::new(0.5)),
                         });
-                        // TODO(skend): after 5 seconds, set this to false
                         laser_sound.is_playing = true;
-
                         // there's just one for now thankfully
                         //for graph in graphs.iter_mut() {
                         //    info!("we found our animation graph!");
@@ -868,10 +840,6 @@ fn handle_laser(
                     }
                 }
             }
-        } else if still_firing == false {
-            laser_sound.is_playing = false;
-            let mut finally_laser_time = qlaservisibility.single_mut();
-            *finally_laser_time = Visibility::Hidden;
         }
     }
 }
