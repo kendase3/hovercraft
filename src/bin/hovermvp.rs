@@ -80,6 +80,7 @@ struct Pilot {
     target: Option<Entity>,
     needs_start_fire_large_laser: bool,
     still_firing_large_laser: bool,
+    laser_timer: Option<Timer>,
     // TODO(skend): eventually i can turn this into a dict
     // of weapons, where looking up large laser returns
     // both the entity of the cannon and the laser itself.
@@ -751,6 +752,7 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
+    time: Res<Time>,
 ) {
     let mut pilots_to_mark: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
@@ -813,6 +815,7 @@ fn handle_laser(
                     actual_mesh.compute_flat_normals();
                     let mut finally_laser_time = qlaservisibility.single_mut();
                     *finally_laser_time = Visibility::Visible;
+                    // FIXME(skend): unify this with the visual aspect in pilot
                     if !laser_sound.is_playing {
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
@@ -846,6 +849,28 @@ fn handle_laser(
         let mut p = cur_pilot.unwrap();
         p.needs_start_fire_large_laser = false;
         p.still_firing_large_laser = true;
+        // we need to reset our laser timer
+        if p.laser_timer.is_none() {
+            p.laser_timer = Some(Timer::from_seconds(laser::LASER_DURATION, TimerMode::Once));
+        } else {
+            p.laser_timer.as_mut().unwrap().reset();
+        }
+    }
+    // then we can iterate over all the pilots and see if their timers are up
+    // make the laser invisible, set the bools appropriately
+    for mut pilot in qpilot.iter_mut() {
+        let mut finished = false;
+        if let Some(lt) = pilot.laser_timer.as_mut() {
+            lt.tick(time.delta());
+            if lt.finished() {
+                finished = true;
+            }
+        }
+        if finished {
+            // get our laser and hide it
+            let mut finally_laser_time = qlaservisibility.single_mut();
+            *finally_laser_time = Visibility::Hidden;
+        }
     }
 }
 

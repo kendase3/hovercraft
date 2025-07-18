@@ -18,9 +18,10 @@ use bevy::prelude::*;
 use std::cmp::min;
 use std::f32::consts::PI;
 
-const LASER_WIDTH: f32 = 0.5;
-const LASER_HEIGHT: f32 = 0.5;
-const LASER_RANGE: f32 = 200.;
+pub const LASER_WIDTH: f32 = 0.5;
+pub const LASER_HEIGHT: f32 = 0.5;
+pub const LASER_RANGE: f32 = 200.;
+pub const LASER_DURATION: f32 = 5.;
 
 pub fn get_uvs() -> Vec<[f32; 2]> {
     // what if we only care about how top and bottom look
