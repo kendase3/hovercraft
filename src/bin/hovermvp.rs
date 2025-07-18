@@ -758,16 +758,20 @@ fn handle_laser(
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
-        // FIXME(skend): this may be still_firing
-        warn!("SKEND: needs = {}, still = {}", pilot.needs_start_fire_large_laser, pilot.still_firing_large_laser);
-        if pilot.needs_start_fire_large_laser || pilot.still_firing_large_laser {
+        if pilot.needs_start_fire_large_laser || pilot.still_firing_large_laser
+        {
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
-                            pilots_to_mark.push(entity);
+                            // we will do special logic later if we just started firing
+                            // we do it later for borrowing reasons
+                            // sorry : (
+                            if pilot.needs_start_fire_large_laser {
+                                pilots_to_mark.push(entity);
+                            }
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
                                 let ship_transform = qtransform
@@ -853,7 +857,10 @@ fn handle_laser(
         p.still_firing_large_laser = true;
         // we need to reset our laser timer
         if p.laser_timer.is_none() {
-            p.laser_timer = Some(Timer::from_seconds(laser::LASER_DURATION, TimerMode::Once));
+            p.laser_timer = Some(Timer::from_seconds(
+                laser::LASER_DURATION,
+                TimerMode::Once,
+            ));
         } else {
             p.laser_timer.as_mut().unwrap().reset();
         }
@@ -873,6 +880,7 @@ fn handle_laser(
             let mut finally_laser_time = qlaservisibility.single_mut();
             *finally_laser_time = Visibility::Hidden;
             pilot.still_firing_large_laser = false;
+            laser_sound.is_playing = false;
         }
     }
 }
