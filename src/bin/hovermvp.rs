@@ -78,7 +78,9 @@ struct Pilot {
     // enum to handle this split?
     facing: Option<f32>,
     target: Option<Entity>,
+    // FIXME(skend): rework this to be firing_large_laser
     fire_large_laser: bool,
+    laser_may_fire: bool,
     // TODO(skend): eventually i can turn this into a dict
     // of weapons, where looking up large laser returns
     // both the entity of the cannon and the laser itself.
@@ -86,6 +88,21 @@ struct Pilot {
     cannon: Option<Entity>,
     laser: Option<Entity>,
     ship: Option<Entity>,
+}
+
+// ideally the pilot should handle all the timer logic etc.
+// We will just pass in the time resource.
+// managing the state of the laser has become too complicated
+// with the sound, the cooldown, the cuboid itself etc.
+// TODO(skend): add high level laser interaction functions here
+// and data members on pilot to support it.
+impl Pilot {
+    fn laser_ready(&self) -> bool {
+        self.laser_may_fire
+    }
+    fn set_laser_ready(&mut self) {
+        self.laser_may_fire = true;
+    }
 }
 
 // is it actually fine to not have normal form
@@ -343,6 +360,8 @@ fn init_laser(
                 let mut pilot =
                     pilot_query.get_mut(laser_parent.get()).unwrap();
                 pilot.laser = Some(laser_entity);
+                // we'll also set up the laser firing logic to be ready to fire
+                pilot.laser_may_fire = true;
                 // then we'll go about setting up the laser itself
                 if let Some(mut entity_commands) =
                     commands.get_entity(laser_entity)
@@ -354,7 +373,6 @@ fn init_laser(
         }
     }
     // TODO(skend): here we can reparent the laser s.t. the cannon is its parent
-
     laser_initialized.0 = true;
 }
 
