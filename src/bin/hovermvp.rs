@@ -743,7 +743,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 }
 
 fn handle_laser(
-    qpilot: Query<&mut Pilot>,
+    mut qpilot: Query<&mut Pilot>,
     qtransform: Query<&mut Transform>,
     qentity: Query<Entity, With<Pilot>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -752,6 +752,7 @@ fn handle_laser(
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
 ) {
+    let mut pilots_to_mark: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
@@ -762,6 +763,7 @@ fn handle_laser(
                     laser_dest = Some(target_transform.translation.xy());
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
+                            pilots_to_mark.push(entity);
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
                                 let ship_transform = qtransform
@@ -833,11 +835,17 @@ fn handle_laser(
                         // to the laser bit. we will just mark the target dead
                         // and another function will read that a pilot is dead
                         // and play the animation/replace the model accordingly.
-
                     }
                 }
             }
         }
+    }
+    // well that's one way to dodge the double-borrow
+    for pilot_entity in pilots_to_mark.iter() {
+        let cur_pilot = qpilot.get_mut(*pilot_entity);
+        let mut p = cur_pilot.unwrap();
+        p.needs_start_fire_large_laser = false;
+        p.still_firing_large_laser = true;
     }
 }
 
