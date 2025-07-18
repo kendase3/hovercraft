@@ -88,6 +88,7 @@ struct Pilot {
     cannon: Option<Entity>,
     laser: Option<Entity>,
     ship: Option<Entity>,
+    dead: bool,
 }
 
 // is it actually fine to not have normal form
@@ -755,6 +756,7 @@ fn handle_laser(
     time: Res<Time>,
 ) {
     let mut pilots_to_mark: Vec<Entity> = Vec::new();
+    let mut pilots_to_kill: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
@@ -801,6 +803,9 @@ fn handle_laser(
             // pilot and notify them
             let target_is_dead =
                 laser::hits(real_laser_origin, real_laser_dest);
+            if let Some(target) = pilot.target {
+                pilots_to_kill.push(target);
+            }
 
             // NB(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
@@ -869,6 +874,10 @@ fn handle_laser(
         } else {
             p.laser_timer.as_mut().unwrap().reset();
         }
+    }
+    for pilot_entity in pilots_to_kill.iter() {
+        let mut p = qpilot.get_mut(*pilot_entity).unwrap();
+        p.dead = true;
     }
     // then we can iterate over all the pilots and see if their timers are up
     // make the laser invisible, set the bools appropriately
