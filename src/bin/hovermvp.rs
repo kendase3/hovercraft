@@ -78,7 +78,9 @@ struct Pilot {
     // enum to handle this split?
     facing: Option<f32>,
     target: Option<Entity>,
-    fire_large_laser: bool,
+    needs_start_fire_large_laser: bool,
+    still_firing_large_laser: bool,
+    laser_timer: Option<Timer>,
     // TODO(skend): eventually i can turn this into a dict
     // of weapons, where looking up large laser returns
     // both the entity of the cannon and the laser itself.
@@ -742,7 +744,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 }
 
 fn handle_laser(
-    qpilot: Query<&mut Pilot>,
+    mut qpilot: Query<&mut Pilot>,
     qtransform: Query<&mut Transform>,
     qentity: Query<Entity, With<Pilot>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -750,20 +752,26 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
-    //animations: Res<Assets<AnimationClip>>,
-    //mut graphs: ResMut<Assets<AnimationGraph>>,
-    mut qwiggler: Query<&mut AnimationPlayer>,
+    time: Res<Time>,
 ) {
+    let mut pilots_to_mark: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
-        if pilot.fire_large_laser {
+        if pilot.needs_start_fire_large_laser || pilot.still_firing_large_laser
+        {
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
                     laser_dest = Some(target_transform.translation.xy());
                     for entity in qentity.iter() {
                         if *qpilot.get(entity).unwrap() == *pilot {
+                            // we will do special logic later if we just started firing
+                            // we do it later for borrowing reasons
+                            // sorry : (
+                            if pilot.needs_start_fire_large_laser {
+                                pilots_to_mark.push(entity);
+                            }
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
                                 let ship_transform = qtransform
@@ -813,6 +821,7 @@ fn handle_laser(
                     actual_mesh.compute_flat_normals();
                     let mut finally_laser_time = qlaservisibility.single_mut();
                     *finally_laser_time = Visibility::Visible;
+                    // FIXME(skend): unify this with the visual aspect in pilot
                     if !laser_sound.is_playing {
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
@@ -831,20 +840,53 @@ fn handle_laser(
                         // so the player understands
                         // its raw power
 
-                        // we are just not calling it a player in a videogame, sorry
-                        // that term is deeply overloaded. an animation player
-                        // is instead a wiggler.
-                        //for mut wiggler in qwiggler.iter_mut() {
-                        //    wiggler.play(1.into()).repeat();
-                        //}
+                        // TODO(skend): actually that logic is secondary
+                        // to the laser bit. we will just mark the target dead
+                        // and another function will read that a pilot is dead
+                        // and play the animation/replace the model accordingly.
                     }
                 }
             }
         }
     }
+    // well that's one way to dodge the double-borrow
+    for pilot_entity in pilots_to_mark.iter() {
+        let cur_pilot = qpilot.get_mut(*pilot_entity);
+        let mut p = cur_pilot.unwrap();
+        p.needs_start_fire_large_laser = false;
+        p.still_firing_large_laser = true;
+        // we need to reset our laser timer
+        if p.laser_timer.is_none() {
+            p.laser_timer = Some(Timer::from_seconds(
+                laser::LASER_DURATION,
+                TimerMode::Once,
+            ));
+        } else {
+            p.laser_timer.as_mut().unwrap().reset();
+        }
+    }
+    // then we can iterate over all the pilots and see if their timers are up
+    // make the laser invisible, set the bools appropriately
+    for mut pilot in qpilot.iter_mut() {
+        let mut finished = false;
+        if let Some(lt) = pilot.laser_timer.as_mut() {
+            lt.tick(time.delta());
+            if lt.finished() {
+                finished = true;
+            }
+        }
+        if finished {
+            // get our laser and hide it
+            let mut finally_laser_time = qlaservisibility.single_mut();
+            *finally_laser_time = Visibility::Hidden;
+            pilot.still_firing_large_laser = false;
+            laser_sound.is_playing = false;
+        }
+    }
 }
 
-// generally handle tagging state changes
+// TODO(skend): this will actually become the collision/draw logic
+// see i knew there was a good reason i kept it for like two weeks
 fn handle_tag(
     mut proclamation: Query<&mut Visibility, With<Proclamation>>,
     mut bot: Query<(&mut Pilot, &mut Transform), (With<Bot>, Without<Player>)>,
@@ -988,7 +1030,9 @@ fn move_player(
         direction.x -= 1.0;
     }
     if keys.any_pressed([KeyCode::KeyR]) {
-        play.fire_large_laser = true;
+        if !play.still_firing_large_laser {
+            play.needs_start_fire_large_laser = true;
+        }
     }
 
     let n_direction;
