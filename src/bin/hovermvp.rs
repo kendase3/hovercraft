@@ -57,7 +57,7 @@ const GUBBINS_EXPLODE_PATH: &str = "models/gubbins2explosion.glb";
 const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
 
-#[derive(Component, PartialEq)]
+#[derive(Component, PartialEq, Copy, Clone)]
 enum PilotType {
     Player,
     Bot,
@@ -69,7 +69,7 @@ impl Default for PilotType {
     }
 }
 
-#[derive(Component, Default, PartialEq)]
+#[derive(Component, Default, PartialEq, Copy, Clone)]
 struct Pilot {
     pilottype: PilotType,
     it: bool,
@@ -90,9 +90,7 @@ struct Pilot {
 
 impl Pilot {
     // a hypothetical function we want to do on the pilot and modify it
-    fn kewlfunc(&mut self) {
-
-    }
+    fn kewlfunc(&mut self) {}
 }
 
 // is it actually fine to not have normal form
@@ -754,7 +752,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 // they should contain a bunch of entity links for things like
 // the transforms for their ships and cannons.
 fn handle_laser(
-    qpilot: Query<&mut Pilot>,
+    mut qpilot: Query<&mut Pilot>,
     qtransform: Query<&mut Transform>,
     qentity: Query<Entity, With<Pilot>>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -766,16 +764,22 @@ fn handle_laser(
     //mut graphs: ResMut<Assets<AnimationGraph>>,
     mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
-    for pilot in qpilot.iter() {
-        let mut laser_origin: Option<Vec2> = None;
-        let mut laser_dest: Option<Vec2> = None;
-        if pilot.fire_large_laser {
-            // so we'll find our target
-            if let Some(target) = pilot.target {
-                if let Ok(target_transform) = qtransform.get(target) {
-                    laser_dest = Some(target_transform.translation.xy());
-                    for entity in qentity.iter() {
-                        if *qpilot.get(entity).unwrap() == *pilot {
+    // FIXME(skend): we borrow mut to call kewlfunc...and suddenly it breaks our borrow abstraction
+    for entity in qentity.iter() {
+        let mut entity_pilot;
+        {
+            entity_pilot = qpilot.get(entity).unwrap().clone();
+        }
+        for mut pilot in qpilot.iter_mut() {
+            pilot.kewlfunc();
+            let mut laser_origin: Option<Vec2> = None;
+            let mut laser_dest: Option<Vec2> = None;
+            if pilot.fire_large_laser {
+                // so we'll find our target
+                if let Some(target) = pilot.target {
+                    if let Ok(target_transform) = qtransform.get(target) {
+                        laser_dest = Some(target_transform.translation.xy());
+                        if entity_pilot == *pilot {
                             if let Ok(pilot_transform) = qtransform.get(entity)
                             {
                                 let ship_transform = qtransform
@@ -793,61 +797,64 @@ fn handle_laser(
                         }
                     }
                 }
-            }
-            let mut real_laser_origin = laser_origin.unwrap().clone();
-            real_laser_origin.x = 0.;
-            real_laser_origin.y = 0.;
-            // rework origin and dest relative to idea that origin is 0.0
-            // and dest is now relative to 0.0
-            let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
+                let mut real_laser_origin = laser_origin.unwrap().clone();
+                real_laser_origin.x = 0.;
+                real_laser_origin.y = 0.;
+                // rework origin and dest relative to idea that origin is 0.0
+                // and dest is now relative to 0.0
+                let real_laser_dest =
+                    laser_dest.unwrap() - laser_origin.unwrap();
 
-            // NB(skend): no unwrap for this. technically a user could hit it early
-            // before these are assigned.
-            if let Some(notmeshyet) = pilot.laser {
-                if let Ok(mesh) = qlasermesh.get(notmeshyet) {
-                    // this unwrap almost certainly fine
-                    let actual_mesh = meshes.get_mut(mesh).unwrap();
-                    let (laser_vertices, laser_indices, laser_uvs) =
-                        laser::get_laser_vertices(
-                            real_laser_origin,
-                            real_laser_dest,
+                // NB(skend): no unwrap for this. technically a user could hit it early
+                // before these are assigned.
+                if let Some(notmeshyet) = pilot.laser {
+                    if let Ok(mesh) = qlasermesh.get(notmeshyet) {
+                        // this unwrap almost certainly fine
+                        let actual_mesh = meshes.get_mut(mesh).unwrap();
+                        let (laser_vertices, laser_indices, laser_uvs) =
+                            laser::get_laser_vertices(
+                                real_laser_origin,
+                                real_laser_dest,
+                            );
+                        actual_mesh.insert_attribute(
+                            Mesh::ATTRIBUTE_POSITION,
+                            laser_vertices,
                         );
-                    actual_mesh.insert_attribute(
-                        Mesh::ATTRIBUTE_POSITION,
-                        laser_vertices,
-                    );
-                    actual_mesh.insert_indices(Indices::U32(laser_indices));
-                    actual_mesh
-                        .insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
-                    // need to fire more than once?
-                    //actual_mesh.compute_smooth_normals();
-                    actual_mesh.duplicate_vertices();
-                    actual_mesh.compute_flat_normals();
-                    let mut finally_laser_time = qlaservisibility.single_mut();
-                    *finally_laser_time = Visibility::Visible;
-                    if !laser_sound.is_playing {
-                        commands.spawn(AudioBundle {
-                            source: AudioPlayer(laser_sound.sound.clone()),
-                            settings: PlaybackSettings::ONCE
-                                .with_volume(Volume::new(0.5)),
-                        });
-                        laser_sound.is_playing = true;
-                        // there's just one for now thankfully
-                        //for graph in graphs.iter_mut() {
-                        //    info!("we found our animation graph!");
-                        //}
-                        // that was fun! now we're done!
-                        // except that the gubbins should
-                        // explode now that we have fired
-                        // our weird-looking laser at it
-                        // so the player understands
-                        // its raw power
+                        actual_mesh
+                            .insert_indices(Indices::U32(laser_indices));
+                        actual_mesh
+                            .insert_attribute(Mesh::ATTRIBUTE_UV_0, laser_uvs);
+                        // need to fire more than once?
+                        //actual_mesh.compute_smooth_normals();
+                        actual_mesh.duplicate_vertices();
+                        actual_mesh.compute_flat_normals();
+                        let mut finally_laser_time =
+                            qlaservisibility.single_mut();
+                        *finally_laser_time = Visibility::Visible;
+                        if !laser_sound.is_playing {
+                            commands.spawn(AudioBundle {
+                                source: AudioPlayer(laser_sound.sound.clone()),
+                                settings: PlaybackSettings::ONCE
+                                    .with_volume(Volume::new(0.5)),
+                            });
+                            laser_sound.is_playing = true;
+                            // there's just one for now thankfully
+                            //for graph in graphs.iter_mut() {
+                            //    info!("we found our animation graph!");
+                            //}
+                            // that was fun! now we're done!
+                            // except that the gubbins should
+                            // explode now that we have fired
+                            // our weird-looking laser at it
+                            // so the player understands
+                            // its raw power
 
-                        // we are just not calling it a player in a videogame, sorry
-                        // that term is deeply overloaded. an animation player
-                        // is instead a wiggler.
-                        for mut wiggler in qwiggler.iter_mut() {
-                            wiggler.play(1.into()).repeat();
+                            // we are just not calling it a player in a videogame, sorry
+                            // that term is deeply overloaded. an animation player
+                            // is instead a wiggler.
+                            for mut wiggler in qwiggler.iter_mut() {
+                                wiggler.play(1.into()).repeat();
+                            }
                         }
                     }
                 }
