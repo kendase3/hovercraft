@@ -100,8 +100,13 @@ impl Pilot {
     fn laser_ready(&self) -> bool {
         self.laser_may_fire
     }
-    fn set_laser_ready(&mut self) {
-        self.laser_may_fire = true;
+    fn set_laser_ready(&mut self, value: bool) {
+        self.laser_may_fire = value;
+    }
+    fn try_shoot_laser(&mut self, qtransform: &mut Query<&mut Transform>) {
+        if self.laser_ready() {
+            self.set_laser_ready(false);
+        }
     }
 }
 
@@ -760,8 +765,8 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
 }
 
 fn handle_laser(
-    qpilot: Query<&mut Pilot>,
-    qtransform: Query<&mut Transform>,
+    mut qpilot: Query<&mut Pilot>,
+    mut qtransform: Query<&mut Transform>,
     qentity: Query<Entity, With<Pilot>>,
     mut meshes: ResMut<Assets<Mesh>>,
     qlasermesh: Query<&Mesh3d, With<LargeLaser>>,
@@ -772,7 +777,8 @@ fn handle_laser(
     //mut graphs: ResMut<Assets<AnimationGraph>>,
     mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
-    for pilot in qpilot.iter() {
+    for mut pilot in qpilot.iter_mut() {
+        pilot.try_shoot_laser(&mut qtransform);
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
         if pilot.fire_large_laser {
