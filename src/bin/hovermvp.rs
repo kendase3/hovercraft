@@ -797,6 +797,11 @@ fn handle_laser(
             // and dest is now relative to 0.0
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
 
+            // TODO(skend): that is all well and good, but i need to get the target's
+            // pilot and notify them
+            let target_is_dead =
+                laser::hits(real_laser_origin, real_laser_dest);
+
             // NB(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
             if let Some(notmeshyet) = pilot.laser {
