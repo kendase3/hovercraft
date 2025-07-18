@@ -88,6 +88,13 @@ struct Pilot {
     ship: Option<Entity>,
 }
 
+impl Pilot {
+    // a hypothetical function we want to do on the pilot and modify it
+    fn kewlfunc(&mut self) {
+
+    }
+}
+
 // is it actually fine to not have normal form
 // if it makes lookups faster? now i have
 // learned how to fix later if i must
@@ -741,6 +748,11 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
 }
 
+// FIXME(skend): there are too many lookups here.
+// we should be able to access the data we need through
+// the course of the game through the pilots themselves.
+// they should contain a bunch of entity links for things like
+// the transforms for their ships and cannons.
 fn handle_laser(
     qpilot: Query<&mut Pilot>,
     qtransform: Query<&mut Transform>,
