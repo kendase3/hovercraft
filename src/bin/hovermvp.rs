@@ -758,7 +758,9 @@ fn handle_laser(
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
-        if pilot.needs_start_fire_large_laser {
+        // FIXME(skend): this may be still_firing
+        warn!("SKEND: needs = {}, still = {}", pilot.needs_start_fire_large_laser, pilot.still_firing_large_laser);
+        if pilot.needs_start_fire_large_laser || pilot.still_firing_large_laser {
             // so we'll find our target
             if let Some(target) = pilot.target {
                 if let Ok(target_transform) = qtransform.get(target) {
@@ -870,6 +872,7 @@ fn handle_laser(
             // get our laser and hide it
             let mut finally_laser_time = qlaservisibility.single_mut();
             *finally_laser_time = Visibility::Hidden;
+            pilot.still_firing_large_laser = false;
         }
     }
 }
