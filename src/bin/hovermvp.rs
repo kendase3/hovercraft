@@ -834,9 +834,9 @@ fn handle_laser(
                         // we are just not calling it a player in a videogame, sorry
                         // that term is deeply overloaded. an animation player
                         // is instead a wiggler.
-                        for mut wiggler in qwiggler.iter_mut() {
-                            wiggler.play(1.into()).repeat();
-                        }
+                        //for mut wiggler in qwiggler.iter_mut() {
+                        //    wiggler.play(1.into()).repeat();
+                        //}
                     }
                 }
             }
