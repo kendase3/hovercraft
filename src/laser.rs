@@ -59,6 +59,14 @@ pub fn bound_on_range(polar_in: physics::Polar) -> physics::Polar {
     }
 }
 
+// does the laser hit?
+pub fn hits(center: Vec2, exterior: Vec2) -> bool {
+    let coordpair = physics::CoordPair { center, exterior };
+    let polar = physics::Polar::from(coordpair);
+    // it hits if it's in range
+    polar.r < LASER_RANGE
+}
+
 pub fn get_laser_vertices(
     laser_origin: Vec2,
     mut laser_dest: Vec2,

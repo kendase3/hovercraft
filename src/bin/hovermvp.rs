@@ -88,6 +88,9 @@ struct Pilot {
     cannon: Option<Entity>,
     laser: Option<Entity>,
     ship: Option<Entity>,
+    // TODO(skend): make an enum
+    dead: bool,
+    just_died: bool,
 }
 
 // is it actually fine to not have normal form
@@ -323,9 +326,6 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
-// TODO(skend): should the laser be a child of the cannon?
-// ultimately i want each cannon to be able to fire
-// it looks like i could make the laser outright in this function
 fn init_laser(
     laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
     mut pilot_query: Query<&mut Pilot>,
@@ -384,7 +384,7 @@ fn init_ship(
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
-                        entity_commands.insert(Visibility::Visible);
+                        entity_commands.insert(Visibility::Inherited);
                         entity_commands.insert(DudeRef(ship_parent.get()));
                         entity_commands.insert(Craft(ship_gubbins));
                         if let Ok(pilot) = pilot_query.get(ship_parent.get()) {
@@ -414,19 +414,28 @@ fn init_ship(
 struct AnimationToPlay {
     graph_handle: Handle<AnimationGraph>,
     index: AnimationNodeIndex,
+    ready: bool,
 }
 
-fn play_animation_when_ready(
+// does not play animation, but does setup once
+// animation is loaded
+fn mark_animation_ready(
     trigger: Trigger<SceneInstanceReady>,
+    mut animations_to_play: Query<&mut AnimationToPlay>,
     mut commands: Commands,
     children: Query<&Children>,
-    animations_to_play: Query<&AnimationToPlay>,
-    mut wigglers: Query<&mut AnimationPlayer>,
+    mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
+    if let Ok(mut animation_to_play) =
+        animations_to_play.get_mut(trigger.entity())
+    {
+        animation_to_play.ready = true;
+    }
     if let Ok(animation_to_play) = animations_to_play.get(trigger.entity()) {
         for child in children.iter_descendants(trigger.entity()) {
-            if let Ok(mut wiggler) = wigglers.get_mut(child) {
-                wiggler.play(animation_to_play.index).repeat();
+            if let Ok(mut wiggler) = qwiggler.get_mut(child) {
+                //wiggler.play(animation_to_play.index).repeat();
+                // this part must be important. maybe i could do it during setup.
                 commands.entity(child).insert(AnimationGraphHandle(
                     animation_to_play.graph_handle.clone(),
                 ));
@@ -462,15 +471,13 @@ fn setup(
     let animation_to_play = AnimationToPlay {
         graph_handle,
         index: animation_index,
+        ready: false,
     };
     let animation_scene = SceneRoot(
         asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
-    commands
-        .spawn((animation_to_play, animation_scene))
-        .observe(play_animation_when_ready);
-
+    // used later in bot
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
@@ -539,7 +546,6 @@ fn setup(
     ));
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
-    // sin and cos same for 45 case
     let kewlangle = 30.;
     let shrinker = 0.15;
     let triangle_sin =
@@ -677,9 +683,11 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gubbins2.glb"),
-                )),
+                SceneRoot(
+                    asset_server.load(
+                        GltfAssetLabel::Scene(0).from_asset(GUBBINS_PATH),
+                    ),
+                ),
                 // NB(skend): notably does nothing
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
@@ -701,6 +709,13 @@ fn setup(
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
+            parent
+                .spawn((
+                    animation_to_play,
+                    animation_scene,
+                    Visibility::Hidden,
+                ))
+                .observe(mark_animation_ready);
         });
 
     // kind of like a notification at the top of the screen
@@ -755,6 +770,7 @@ fn handle_laser(
     time: Res<Time>,
 ) {
     let mut pilots_to_mark: Vec<Entity> = Vec::new();
+    let mut pilots_to_kill: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
         let mut laser_origin: Option<Vec2> = None;
         let mut laser_dest: Option<Vec2> = None;
@@ -797,6 +813,15 @@ fn handle_laser(
             // and dest is now relative to 0.0
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
 
+            let target_is_dead =
+                laser::hits(real_laser_origin, real_laser_dest);
+            // only do this when the laser starts firing
+            if pilot.needs_start_fire_large_laser && target_is_dead {
+                if let Some(target) = pilot.target {
+                    pilots_to_kill.push(target);
+                }
+            }
+
             // NB(skend): no unwrap for this. technically a user could hit it early
             // before these are assigned.
             if let Some(notmeshyet) = pilot.laser {
@@ -829,21 +854,6 @@ fn handle_laser(
                                 .with_volume(Volume::new(0.5)),
                         });
                         laser_sound.is_playing = true;
-                        // there's just one for now thankfully
-                        //for graph in graphs.iter_mut() {
-                        //    info!("we found our animation graph!");
-                        //}
-                        // that was fun! now we're done!
-                        // except that the gubbins should
-                        // explode now that we have fired
-                        // our weird-looking laser at it
-                        // so the player understands
-                        // its raw power
-
-                        // TODO(skend): actually that logic is secondary
-                        // to the laser bit. we will just mark the target dead
-                        // and another function will read that a pilot is dead
-                        // and play the animation/replace the model accordingly.
                     }
                 }
             }
@@ -864,6 +874,12 @@ fn handle_laser(
         } else {
             p.laser_timer.as_mut().unwrap().reset();
         }
+    }
+    for pilot_entity in pilots_to_kill.iter() {
+        let mut p = qpilot.get_mut(*pilot_entity).unwrap();
+        p.dead = true;
+        // TODO(skend): make livingness an enum
+        p.just_died = true;
     }
     // then we can iterate over all the pilots and see if their timers are up
     // make the laser invisible, set the bools appropriately
@@ -1051,6 +1067,12 @@ fn move_player(
     }
 }
 
+// FIXME(skend): on a lot of these initial functions i made i didn't understand
+// how to use get with outer classes to look up inner classes. as such i have
+// quite a few particularly heinous, large, disjoint query sets like this.
+// i should rework this stuff to have simple queries: one for transforms, one for visibilities,
+// etc.
+// Then I could just use get() with the pointers i'll have stored from the outer classes
 fn move_bot(
     mut bot: Query<
         (
@@ -1061,13 +1083,70 @@ fn move_bot(
         ),
         (With<Bot>, Without<Player>, Without<CannonModel>),
     >,
-    mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
+    mut qshipvis: Query<&mut Visibility, With<ShipModel>>,
+    qshipt: Query<
+        &Transform,
+        (
+            With<ShipModel>,
+            Without<AnimationToPlay>,
+            Without<Player>,
+            Without<Bot>,
+        ),
+    >,
+    mut qexplosionvis: Query<
+        &mut Visibility,
+        (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
+    >,
+    mut qexplosiont: Query<
+        &mut Transform,
+        (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
+    >,
+    mut player: Query<
+        &mut Transform,
+        (With<Player>, Without<Bot>, Without<AnimationToPlay>),
+    >,
+    mut qanimation: Query<&mut AnimationToPlay>,
+    mut qwiggler: Query<&mut AnimationPlayer>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
 ) {
     // receive an x/y coordinate we're currently flying to
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
+    if b_p.dead {
+        if b_p.just_died {
+            b_p.just_died = false;
+            // run special logic like hide the default model
+            let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
+            *ship_vis = Visibility::Hidden;
+            // run special logic to reveal the exploding ship model
+            // TODO(skend): give the pilot a ref to its exploding model for lookup
+            // right now there's only one so we'll shortcut it.
+            let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
+            let mut explode_t = qexplosiont.single_mut();
+            explode_t.rotation = shipt.rotation;
+            let mut explode_vis = qexplosionvis.single_mut();
+            *explode_vis = Visibility::Visible;
+
+            // run special logic to begin the animation
+            // TODO(skend): eventually i will have more than one of these and will have to look up
+            // the right one
+            let anim = qanimation.single_mut();
+            //let mut wiggler = wigglers.get_mut(anim.
+            //let mut wiggler = qwiggler.single_mut();
+            //wiggler.play(anim.index).repeat();
+            for (mut wiggler) in qwiggler.iter_mut() {
+                // what if we just blast all the animations
+                // disconcertingly, that did not work.
+                //wiggler.play(anim.index).repeat();
+                wiggler.play(anim.index);
+            }
+
+            // run special logic to start a timer to also then mark the exploded ship invisible
+        }
+        // it's dead so it does not do the normal stuff
+        return;
+    }
     let p_t = player.single_mut();
 
     orbit_timer.0.tick(time.delta());
