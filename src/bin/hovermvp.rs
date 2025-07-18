@@ -417,6 +417,9 @@ struct AnimationToPlay {
     index: AnimationNodeIndex,
 }
 
+// FIXME(skend): we can just have this triggered function set a bool somewhere
+// and the actual logic can be part of another function, or fire
+// at a different time/rate.
 fn play_animation_when_ready(
     trigger: Trigger<SceneInstanceReady>,
     mut commands: Commands,
