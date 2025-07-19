@@ -88,6 +88,7 @@ struct Pilot {
     cannon: Option<Entity>,
     laser: Option<Entity>,
     ship: Option<Entity>,
+    // TODO(skend): make an enum
     dead: bool,
 }
 
@@ -705,6 +706,7 @@ fn setup(
                 Facing,
                 ShipModel,
             ));
+            // TODO(skend): spawn the death animation as hidden here
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
