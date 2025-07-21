@@ -90,6 +90,7 @@ struct Pilot {
     ship: Option<Entity>,
     // TODO(skend): make an enum
     dead: bool,
+    just_died: bool,
 }
 
 // is it actually fine to not have normal form
@@ -911,6 +912,8 @@ fn handle_laser(
     for pilot_entity in pilots_to_kill.iter() {
         let mut p = qpilot.get_mut(*pilot_entity).unwrap();
         p.dead = true;
+        // TODO(skend): make livingness an enum
+        p.just_died = true;
     }
     // then we can iterate over all the pilots and see if their timers are up
     // make the laser invisible, set the bools appropriately
@@ -1116,7 +1119,11 @@ fn move_bot(
     // receive an x/y coordinate we're currently flying to
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
     if b_p.dead {
-        warn!("bot is dead!");
+        if b_p.just_died {
+            warn!("bot just died!");
+            b_p.just_died = false;
+            // run special logic like hide the default model
+        }
         // it's dead so it does not do the normal stuff
         return;
     }
