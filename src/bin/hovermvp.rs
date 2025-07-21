@@ -416,11 +416,23 @@ fn init_ship(
 struct AnimationToPlay {
     graph_handle: Handle<AnimationGraph>,
     index: AnimationNodeIndex,
+    ready: bool,
 }
 
 // FIXME(skend): we can just have this triggered function set a bool somewhere
 // and the actual logic can be part of another function, or fire
 // at a different time/rate.
+//
+fn mark_animation_ready(
+    trigger: Trigger<SceneInstanceReady>,
+    mut animations_to_play: Query<&mut AnimationToPlay>,
+) {
+    if let Ok(mut animation_to_play) =
+        animations_to_play.get_mut(trigger.entity())
+    {
+        animation_to_play.ready = true;
+    }
+}
 fn play_animation_when_ready(
     trigger: Trigger<SceneInstanceReady>,
     mut commands: Commands,
@@ -478,14 +490,15 @@ fn setup(
     let animation_to_play = AnimationToPlay {
         graph_handle,
         index: animation_index,
+        ready: false,
     };
     let animation_scene = SceneRoot(
         asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
     commands
-        .spawn((animation_to_play, animation_scene))
-        .observe(play_animation_when_ready);
+        .spawn((animation_to_play, animation_scene, Visibility::Hidden))
+        .observe(mark_animation_ready);
 
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
