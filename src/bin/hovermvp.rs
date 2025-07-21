@@ -1118,8 +1118,27 @@ fn move_bot(
         (With<Bot>, Without<Player>, Without<CannonModel>),
     >,
     mut qshipvis: Query<&mut Visibility, With<ShipModel>>,
-    mut qexplosionvis: Query<&mut Visibility, (With<AnimationToPlay>, Without<ShipModel>)>,
-    mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
+    qshipt: Query<
+        &Transform,
+        (
+            With<ShipModel>,
+            Without<AnimationToPlay>,
+            Without<Player>,
+            Without<Bot>,
+        ),
+    >,
+    mut qexplosionvis: Query<
+        &mut Visibility,
+        (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
+    >,
+    mut qexplosiont: Query<
+        &mut Transform,
+        (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
+    >,
+    mut player: Query<
+        &mut Transform,
+        (With<Player>, Without<Bot>, Without<AnimationToPlay>),
+    >,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
@@ -1138,6 +1157,9 @@ fn move_bot(
             // run special logic to reveal the exploding ship model
             // TODO(skend): give the pilot a ref to its exploding model for lookup
             // right now there's only one so we'll shortcut it.
+            let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
+            let mut explode_t = qexplosiont.single_mut();
+            explode_t.rotation = shipt.rotation;
             let mut explode_vis = qexplosionvis.single_mut();
             *explode_vis = Visibility::Visible;
 
