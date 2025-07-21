@@ -837,8 +837,11 @@ fn handle_laser(
             // pilot and notify them
             let target_is_dead =
                 laser::hits(real_laser_origin, real_laser_dest);
-            if let Some(target) = pilot.target {
-                pilots_to_kill.push(target);
+            // only do this when the laser starts firing
+            if pilot.needs_start_fire_large_laser {
+                if let Some(target) = pilot.target {
+                    pilots_to_kill.push(target);
+                }
             }
 
             // NB(skend): no unwrap for this. technically a user could hit it early
@@ -913,6 +916,9 @@ fn handle_laser(
         let mut p = qpilot.get_mut(*pilot_entity).unwrap();
         p.dead = true;
         // TODO(skend): make livingness an enum
+        // FIXME(skend): we just keep killing the target the entire time
+        // the laser is firing, instead of when it just started firing.
+        warn!("we killed the bot just now!");
         p.just_died = true;
     }
     // then we can iterate over all the pilots and see if their timers are up
@@ -1121,7 +1127,9 @@ fn move_bot(
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
     if b_p.dead {
         if b_p.just_died {
-            warn!("bot just died!");
+            // this is returning true...but i set it to fasle.
+            // oh something else is setting it true again.
+            warn!("bot just died! value = {}", b_p.just_died);
             b_p.just_died = false;
             // run special logic like hide the default model
             let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
