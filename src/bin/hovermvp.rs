@@ -818,7 +818,7 @@ fn handle_laser(
             let target_is_dead =
                 laser::hits(real_laser_origin, real_laser_dest);
             // only do this when the laser starts firing
-            if pilot.needs_start_fire_large_laser {
+            if pilot.needs_start_fire_large_laser && target_is_dead {
                 if let Some(target) = pilot.target {
                     pilots_to_kill.push(target);
                 }
