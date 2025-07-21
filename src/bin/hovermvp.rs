@@ -496,10 +496,7 @@ fn setup(
         asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
-    commands
-        .spawn((animation_to_play, animation_scene, Visibility::Hidden))
-        .observe(mark_animation_ready);
-
+    // used later in bot
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
     commands.spawn(TagCooldownTimer {
@@ -731,6 +728,13 @@ fn setup(
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
+            parent
+                .spawn((
+                    animation_to_play,
+                    animation_scene,
+                    Visibility::Hidden,
+                ))
+                .observe(mark_animation_ready);
         });
 
     // kind of like a notification at the top of the screen
@@ -1111,6 +1115,11 @@ fn move_bot(
 ) {
     // receive an x/y coordinate we're currently flying to
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
+    if b_p.dead {
+        warn!("bot is dead!");
+        // it's dead so it does not do the normal stuff
+        return;
+    }
     let p_t = player.single_mut();
 
     orbit_timer.0.tick(time.delta());
