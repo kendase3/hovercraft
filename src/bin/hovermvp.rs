@@ -1145,6 +1145,8 @@ fn move_bot(
         &mut Transform,
         (With<Player>, Without<Bot>, Without<AnimationToPlay>),
     >,
+    mut qanimation: Query<&mut AnimationToPlay>,
+    mut qwiggler: Query<&mut AnimationPlayer>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
@@ -1153,8 +1155,6 @@ fn move_bot(
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
     if b_p.dead {
         if b_p.just_died {
-            // this is returning true...but i set it to fasle.
-            // oh something else is setting it true again.
             warn!("bot just died! value = {}", b_p.just_died);
             b_p.just_died = false;
             // run special logic like hide the default model
@@ -1170,6 +1170,11 @@ fn move_bot(
             *explode_vis = Visibility::Visible;
 
             // run special logic to begin the animation
+            // TODO(skend): eventually i will have more than one of these and will have to look up
+            // the right one
+            let mut anim = qanimation.single_mut();
+            //let mut wiggler = wigglers.get_mut(anim.
+            let mut wiggler = qwiggler.single_mut();
 
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
