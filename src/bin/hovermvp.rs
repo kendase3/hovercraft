@@ -460,6 +460,7 @@ fn play_animation_when_ready(
         for child in children.iter_descendants(trigger.entity()) {
             if let Ok(mut wiggler) = wigglers.get_mut(child) {
                 wiggler.play(animation_to_play.index).repeat();
+                // this part must be important. maybe i could do it during setup.
                 commands.entity(child).insert(AnimationGraphHandle(
                     animation_to_play.graph_handle.clone(),
                 ));
@@ -1167,7 +1168,10 @@ fn move_bot(
             //let mut wiggler = wigglers.get_mut(anim.
             //let mut wiggler = qwiggler.single_mut();
             //wiggler.play(anim.index).repeat();
-            for (wiggler, parent) in qwiggler.iter_mut() {
+            for (mut wiggler, parent) in qwiggler.iter_mut() {
+                // what if we just blast all the animations
+                // disconcertingly, that did not work.
+                wiggler.play(anim.index).repeat();
                 let parent_id = parent.get();
                 if let Ok(enjoy) = qenjoy.get(parent_id) {
                     warn!("SKEND: we found our animation!");
