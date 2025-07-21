@@ -1111,6 +1111,7 @@ fn move_bot(
         ),
         (With<Bot>, Without<Player>, Without<CannonModel>),
     >,
+    mut qshipvis: Query<&mut Visibility, With<ShipModel>>,
     mut player: Query<&mut Transform, (With<Player>, Without<Bot>)>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
@@ -1123,6 +1124,9 @@ fn move_bot(
             warn!("bot just died!");
             b_p.just_died = false;
             // run special logic like hide the default model
+            let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
+            //ship_vis = &Visibility::Hidden;
+            *ship_vis = Visibility::Hidden;
         }
         // it's dead so it does not do the normal stuff
         return;
