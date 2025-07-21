@@ -431,35 +431,19 @@ struct AnimationToEnjoy;
 fn mark_animation_ready(
     trigger: Trigger<SceneInstanceReady>,
     mut animations_to_play: Query<&mut AnimationToPlay>,
+    mut commands: Commands,
+    children: Query<&Children>,
+    mut qwiggler: Query<&mut AnimationPlayer>,
 ) {
     if let Ok(mut animation_to_play) =
         animations_to_play.get_mut(trigger.entity())
     {
         animation_to_play.ready = true;
     }
-}
-fn play_animation_when_ready(
-    trigger: Trigger<SceneInstanceReady>,
-    mut commands: Commands,
-    children: Query<&Children>,
-    animations_to_play: Query<&AnimationToPlay>,
-    mut qlocation_of_animation: Query<&mut Transform, With<AnimationToPlay>>,
-    qlocation_of_bot: Query<(&Transform, &Pilot)>,
-    mut wigglers: Query<&mut AnimationPlayer>,
-) {
-    // first lettuce find the location of the bot
-    let mut bot_location: Option<Vec3> = None;
-    for (transform, pilot) in qlocation_of_bot.iter() {
-        if pilot.pilottype == PilotType::Bot {
-            bot_location = Some(transform.translation);
-        }
-    }
-    let mut animation_location = qlocation_of_animation.single_mut();
-    animation_location.translation = bot_location.unwrap();
     if let Ok(animation_to_play) = animations_to_play.get(trigger.entity()) {
         for child in children.iter_descendants(trigger.entity()) {
-            if let Ok(mut wiggler) = wigglers.get_mut(child) {
-                wiggler.play(animation_to_play.index).repeat();
+            if let Ok(mut wiggler) = qwiggler.get_mut(child) {
+                //wiggler.play(animation_to_play.index).repeat();
                 // this part must be important. maybe i could do it during setup.
                 commands.entity(child).insert(AnimationGraphHandle(
                     animation_to_play.graph_handle.clone(),
