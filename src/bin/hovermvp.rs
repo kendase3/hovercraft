@@ -1107,6 +1107,12 @@ fn move_player(
     }
 }
 
+// FIXME(skend): on a lot of these initial functions i made i didn't understand
+// how to use get with outer classes to look up inner classes. as such i have
+// quite a few particularly heinous, large, disjoint query sets like this.
+// i should rework this stuff to have simple queries: one for transforms, one for visibilities,
+// etc.
+// Then I could just use get() with the pointers i'll have stored from the outer classes
 fn move_bot(
     mut bot: Query<
         (
