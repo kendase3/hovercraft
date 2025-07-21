@@ -387,7 +387,7 @@ fn init_ship(
                         commands.get_entity(entity)
                     {
                         entity_commands.insert(CannonModel {});
-                        entity_commands.insert(Visibility::Visible);
+                        entity_commands.insert(Visibility::Inherited);
                         entity_commands.insert(DudeRef(ship_parent.get()));
                         entity_commands.insert(Craft(ship_gubbins));
                         if let Ok(pilot) = pilot_query.get(ship_parent.get()) {
