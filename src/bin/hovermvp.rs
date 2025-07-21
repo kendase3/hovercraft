@@ -1133,8 +1133,12 @@ fn move_bot(
             b_p.just_died = false;
             // run special logic like hide the default model
             let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
-            //ship_vis = &Visibility::Hidden;
             *ship_vis = Visibility::Hidden;
+            // run special logic to reveal the exploding ship model
+
+            // run special logic to begin the animation
+
+            // run special logic to start a timer to also then mark the exploded ship invisible
         }
         // it's dead so it does not do the normal stuff
         return;
