@@ -1175,6 +1175,7 @@ fn move_bot(
             let mut anim = qanimation.single_mut();
             //let mut wiggler = wigglers.get_mut(anim.
             let mut wiggler = qwiggler.single_mut();
+            wiggler.play(anim.index).repeat();
 
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
