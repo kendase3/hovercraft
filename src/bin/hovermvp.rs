@@ -326,9 +326,6 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 */
 
-// TODO(skend): should the laser be a child of the cannon?
-// ultimately i want each cannon to be able to fire
-// it looks like i could make the laser outright in this function
 fn init_laser(
     laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
     mut pilot_query: Query<&mut Pilot>,
@@ -420,14 +417,8 @@ struct AnimationToPlay {
     ready: bool,
 }
 
-// yet another marker component for now
-#[derive(Component)]
-struct AnimationToEnjoy;
-
-// FIXME(skend): we can just have this triggered function set a bool somewhere
-// and the actual logic can be part of another function, or fire
-// at a different time/rate.
-//
+// does not play animation, but does setup once
+// animation is loaded
 fn mark_animation_ready(
     trigger: Trigger<SceneInstanceReady>,
     mut animations_to_play: Query<&mut AnimationToPlay>,
@@ -555,7 +546,6 @@ fn setup(
     ));
     // load some meshes, colors and fonts used by the player and bot
     // TODO(skend): organize / split this up
-    // sin and cos same for 45 case
     let kewlangle = 30.;
     let shrinker = 0.15;
     let triangle_sin =
@@ -693,9 +683,11 @@ fn setup(
         ))
         .with_children(|parent| {
             parent.spawn((
-                SceneRoot(asset_server.load(
-                    GltfAssetLabel::Scene(0).from_asset("models/gubbins2.glb"),
-                )),
+                SceneRoot(
+                    asset_server.load(
+                        GltfAssetLabel::Scene(0).from_asset(GUBBINS_PATH),
+                    ),
+                ),
                 // NB(skend): notably does nothing
                 Transform {
                     translation: Vec3::new(0., 0., 0.),
@@ -706,7 +698,6 @@ fn setup(
                 Facing,
                 ShipModel,
             ));
-            // TODO(skend): spawn the death animation as hidden here
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
@@ -723,7 +714,6 @@ fn setup(
                     animation_to_play,
                     animation_scene,
                     Visibility::Hidden,
-                    AnimationToEnjoy,
                 ))
                 .observe(mark_animation_ready);
         });
@@ -823,8 +813,8 @@ fn handle_laser(
             // and dest is now relative to 0.0
             let real_laser_dest = laser_dest.unwrap() - laser_origin.unwrap();
 
-            // TODO(skend): that is all well and good, but i need to get the target's
-            // pilot and notify them
+            // FIXME(skend): looks like i left this logic unplugged...
+            // does that mean i have no max range for death checks?
             let target_is_dead =
                 laser::hits(real_laser_origin, real_laser_dest);
             // only do this when the laser starts firing
@@ -891,9 +881,6 @@ fn handle_laser(
         let mut p = qpilot.get_mut(*pilot_entity).unwrap();
         p.dead = true;
         // TODO(skend): make livingness an enum
-        // FIXME(skend): we just keep killing the target the entire time
-        // the laser is firing, instead of when it just started firing.
-        warn!("we killed the bot just now!");
         p.just_died = true;
     }
     // then we can iterate over all the pilots and see if their timers are up
@@ -1121,8 +1108,7 @@ fn move_bot(
         (With<Player>, Without<Bot>, Without<AnimationToPlay>),
     >,
     mut qanimation: Query<&mut AnimationToPlay>,
-    mut qwiggler: Query<(&mut AnimationPlayer, &Parent)>,
-    qenjoy: Query<&AnimationToEnjoy>,
+    mut qwiggler: Query<&mut AnimationPlayer>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
@@ -1131,7 +1117,6 @@ fn move_bot(
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
     if b_p.dead {
         if b_p.just_died {
-            warn!("bot just died! value = {}", b_p.just_died);
             b_p.just_died = false;
             // run special logic like hide the default model
             let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
@@ -1148,19 +1133,15 @@ fn move_bot(
             // run special logic to begin the animation
             // TODO(skend): eventually i will have more than one of these and will have to look up
             // the right one
-            let mut anim = qanimation.single_mut();
+            let anim = qanimation.single_mut();
             //let mut wiggler = wigglers.get_mut(anim.
             //let mut wiggler = qwiggler.single_mut();
             //wiggler.play(anim.index).repeat();
-            for (mut wiggler, parent) in qwiggler.iter_mut() {
+            for (mut wiggler) in qwiggler.iter_mut() {
                 // what if we just blast all the animations
                 // disconcertingly, that did not work.
                 //wiggler.play(anim.index).repeat();
                 wiggler.play(anim.index);
-                let parent_id = parent.get();
-                if let Ok(enjoy) = qenjoy.get(parent_id) {
-                    warn!("SKEND: we found our animation!");
-                }
             }
 
             // run special logic to start a timer to also then mark the exploded ship invisible
