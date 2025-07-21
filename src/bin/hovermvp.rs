@@ -1155,7 +1155,8 @@ fn move_bot(
             for (mut wiggler, parent) in qwiggler.iter_mut() {
                 // what if we just blast all the animations
                 // disconcertingly, that did not work.
-                wiggler.play(anim.index).repeat();
+                //wiggler.play(anim.index).repeat();
+                wiggler.play(anim.index);
                 let parent_id = parent.get();
                 if let Ok(enjoy) = qenjoy.get(parent_id) {
                     warn!("SKEND: we found our animation!");
