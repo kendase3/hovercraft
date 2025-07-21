@@ -420,6 +420,10 @@ struct AnimationToPlay {
     ready: bool,
 }
 
+// yet another marker component for now
+#[derive(Component)]
+struct AnimationToEnjoy;
+
 // FIXME(skend): we can just have this triggered function set a bool somewhere
 // and the actual logic can be part of another function, or fire
 // at a different time/rate.
@@ -734,6 +738,7 @@ fn setup(
                     animation_to_play,
                     animation_scene,
                     Visibility::Hidden,
+                    AnimationToEnjoy,
                 ))
                 .observe(mark_animation_ready);
         });
@@ -876,21 +881,6 @@ fn handle_laser(
                                 .with_volume(Volume::new(0.5)),
                         });
                         laser_sound.is_playing = true;
-                        // there's just one for now thankfully
-                        //for graph in graphs.iter_mut() {
-                        //    info!("we found our animation graph!");
-                        //}
-                        // that was fun! now we're done!
-                        // except that the gubbins should
-                        // explode now that we have fired
-                        // our weird-looking laser at it
-                        // so the player understands
-                        // its raw power
-
-                        // TODO(skend): actually that logic is secondary
-                        // to the laser bit. we will just mark the target dead
-                        // and another function will read that a pilot is dead
-                        // and play the animation/replace the model accordingly.
                     }
                 }
             }
@@ -1146,7 +1136,8 @@ fn move_bot(
         (With<Player>, Without<Bot>, Without<AnimationToPlay>),
     >,
     mut qanimation: Query<&mut AnimationToPlay>,
-    mut qwiggler: Query<&mut AnimationPlayer>,
+    mut qwiggler: Query<(&mut AnimationPlayer, &Parent)>,
+    qenjoy: Query<&AnimationToEnjoy>,
     time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
@@ -1174,8 +1165,14 @@ fn move_bot(
             // the right one
             let mut anim = qanimation.single_mut();
             //let mut wiggler = wigglers.get_mut(anim.
-            let mut wiggler = qwiggler.single_mut();
-            wiggler.play(anim.index).repeat();
+            //let mut wiggler = qwiggler.single_mut();
+            //wiggler.play(anim.index).repeat();
+            for (wiggler, parent) in qwiggler.iter_mut() {
+                let parent_id = parent.get();
+                if let Ok(enjoy) = qenjoy.get(parent_id) {
+                    warn!("SKEND: we found our animation!");
+                }
+            }
 
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
