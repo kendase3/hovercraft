@@ -18,6 +18,7 @@ use hovercraft::physics;
 use bevy::animation::{AnimationClip, AnimationPlayer};
 use bevy::audio::Volume;
 use bevy::color::palettes::basic::PURPLE;
+use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::log::LogPlugin;
 use bevy::render::camera::ScalingMode;
 use bevy::render::mesh::{Indices, Mesh};
@@ -274,6 +275,8 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .add_plugins(MaterialPlugin::<LaserMaterial>::default())
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+        .add_plugins(LogDiagnosticsPlugin::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
