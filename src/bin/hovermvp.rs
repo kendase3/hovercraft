@@ -33,6 +33,7 @@ use bevy::{
 use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
+use std::time::Duration;
 
 const BOT_RADIUS: f32 = 10.;
 const PLANET_RADIUS: f32 = 15.;
@@ -216,6 +217,11 @@ struct OrbitCache {
 #[derive(Resource)]
 struct OrbitTimer(Timer);
 
+#[derive(Resource)]
+struct Timer10Hz(Timer);
+#[derive(Resource)]
+struct Timer1Hz(Timer);
+
 impl FromWorld for OrbitTimer {
     fn from_world(_: &mut World) -> Self {
         OrbitTimer(Timer::from_seconds(
@@ -288,19 +294,27 @@ fn main() {
         .add_systems(Update, (handle_laser).run_if(dont_need_laser_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
+        .insert_resource(Timer1Hz(Timer::new(
+            Duration::from_secs(1),
+            TimerMode::Repeating,
+        )))
         .add_systems(
             FixedUpdate,
             (
                 (physics::apply_acceleration, physics::apply_velocity).chain(),
+                system_10hz,
+                system_1hz,
             ),
         )
-        // FIXME(skend): surely i should name these
-        // won't i have dozens of fixed time events eventually?
         .insert_resource(Time::<Fixed>::from_seconds(
             (1.0 / MAX_FRAMERATE).into(),
         ))
         .run();
 }
+
+fn system_10hz() {}
+
+fn system_1hz() {}
 
 // FIXME(skend): doesn't do anything yet
 // run at startup when it's ready
