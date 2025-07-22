@@ -33,6 +33,7 @@ use bevy::{
 };
 use physics::Acceleration;
 use rand::Rng;
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::Duration;
 
@@ -60,8 +61,9 @@ const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
 // number of tile variants for the plaidsea
 const NUM_TILES: u32 = 10;
+const BOT_LASER_INTERVAL_SECONDS: u64 = 5;
 
-#[derive(Component, PartialEq)]
+#[derive(Component, PartialEq, Debug)]
 enum PilotType {
     Player,
     Bot,
@@ -73,7 +75,7 @@ impl Default for PilotType {
     }
 }
 
-#[derive(Component, Default, PartialEq)]
+#[derive(Component, Default, PartialEq, Debug)]
 struct Pilot {
     pilottype: PilotType,
     it: bool,
@@ -95,6 +97,7 @@ struct Pilot {
     // TODO(skend): make an enum
     dead: bool,
     just_died: bool,
+    lookup: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -169,10 +172,12 @@ struct NotchOffset(pub Vec3);
 #[derive(Component)]
 struct LargeLaser;
 
-#[derive(Resource)]
+#[derive(Resource, Default)]
 struct LaserSound {
     pub sound: Handle<AudioSource>,
-    pub is_playing: bool,
+    // each pilot can play their own sound
+    // and this dict tracks that
+    pub is_playing: HashMap<Entity, bool>,
 }
 
 #[derive(Resource, Default)]
@@ -226,6 +231,8 @@ struct Timer10hzForBot(Timer);
 struct Timer10hzForLaser(Timer);
 #[derive(Resource)]
 struct Timer1hz(Timer);
+#[derive(Resource)]
+struct Timer30sForBotLaser(Timer);
 
 impl FromWorld for OrbitTimer {
     fn from_world(_: &mut World) -> Self {
@@ -277,8 +284,8 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .add_plugins(MaterialPlugin::<LaserMaterial>::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_plugins(LogDiagnosticsPlugin::default())
+        //.add_plugins(FrameTimeDiagnosticsPlugin::default())
+        //.add_plugins(LogDiagnosticsPlugin::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
@@ -311,6 +318,10 @@ fn main() {
         )))
         .insert_resource(Timer10hzForLaser(Timer::new(
             Duration::from_millis(100),
+            TimerMode::Repeating,
+        )))
+        .insert_resource(Timer30sForBotLaser(Timer::new(
+            Duration::from_secs(BOT_LASER_INTERVAL_SECONDS),
             TimerMode::Repeating,
         )))
         .add_systems(
@@ -353,13 +364,13 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 */
 
 fn init_laser(
-    laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
+    qlaserstuff: Query<(Entity, &Parent), With<LargeLaser>>,
     mut pilot_query: Query<&mut Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut laser_initialized: ResMut<LaserInitialized>,
 ) {
-    for (laser_entity, laser_parent) in laser_stuff.iter() {
+    for (laser_entity, laser_parent) in qlaserstuff.iter() {
         let name = q_name.get(laser_entity);
         if let Ok(name_success) = name {
             //info!("cur name = {}", name_success);
@@ -483,7 +494,7 @@ fn setup(
     let bloo_sound = asset_server.load("sounds/laser.ogg");
     commands.insert_resource(LaserSound {
         sound: bloo_sound,
-        is_playing: false,
+        ..default()
     });
     // would not animations also be fun?
     let (graph, animation_index) =
@@ -594,6 +605,7 @@ fn setup(
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
+    let kewl_material = materials4.add(LaserMaterial {});
     commands
         .spawn((
             Pilot {
@@ -656,14 +668,13 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-            let kewl_material = materials4.add(LaserMaterial {});
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
             // seems like i may want an initial loading screen
             // See extreme bevy's loading state as an example
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
-                MeshMaterial3d(kewl_material),
+                MeshMaterial3d(kewl_material.clone()),
                 Visibility::Hidden,
                 LargeLaser,
                 Name::new("laser"),
@@ -727,6 +738,13 @@ fn setup(
                     Visibility::Hidden,
                 ))
                 .observe(mark_animation_ready);
+            parent.spawn((
+                Mesh3d(meshes.add(laser_mesh)),
+                MeshMaterial3d(kewl_material.clone()),
+                Visibility::Hidden,
+                LargeLaser,
+                Name::new("laser"),
+            ));
         });
 
     // kind of like a notification at the top of the screen
@@ -760,7 +778,9 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
             bot_id = Some(entity);
         }
     }
-    for (_, mut pilot) in query.iter_mut() {
+    for (entity, mut pilot) in query.iter_mut() {
+        // we also set the entity field on the pilot itself
+        pilot.lookup = Some(entity);
         if pilot.pilottype == PilotType::Player {
             pilot.target = bot_id;
         } else if pilot.pilottype == PilotType::Bot {
@@ -780,8 +800,10 @@ fn handle_laser(
     mut laser_sound: ResMut<LaserSound>,
     mut timer: ResMut<Timer10hzForLaser>,
     time: Res<Time>,
-    fixed_time: Res<Time<Fixed>>,
 ) {
+    // supposedly you can call time.delta() multiple times in a func
+    // but just reducing variables
+    let time_delta = time.delta();
     // we can iterate over all the pilots and see if their timers are up
     // make the laser invisible, set the bools appropriately
     // TODO(skend): currently we check this very often to ensure
@@ -792,20 +814,22 @@ fn handle_laser(
     for mut pilot in qpilot.iter_mut() {
         let mut finished = false;
         if let Some(lt) = pilot.laser_timer.as_mut() {
-            lt.tick(time.delta());
+            lt.tick(time_delta);
             if lt.finished() {
                 finished = true;
             }
         }
         if finished {
             // get our laser and hide it
-            let mut finally_laser_time = qlaservisibility.single_mut();
+            let mut finally_laser_time =
+                qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
             *finally_laser_time = Visibility::Hidden;
             pilot.still_firing_large_laser = false;
-            laser_sound.is_playing = false;
+            let pilot_entity = pilot.lookup.unwrap();
+            laser_sound.is_playing.insert(pilot_entity, false);
         }
     }
-    timer.0.tick(fixed_time.delta());
+    timer.0.tick(time_delta);
     if !timer.0.finished() {
         // this func only fires every 10hz
         return;
@@ -885,16 +909,22 @@ fn handle_laser(
                     //actual_mesh.compute_smooth_normals();
                     actual_mesh.duplicate_vertices();
                     actual_mesh.compute_flat_normals();
-                    let mut finally_laser_time = qlaservisibility.single_mut();
+                    let mut finally_laser_time = qlaservisibility
+                        .get_mut(pilot.laser.unwrap())
+                        .unwrap();
                     *finally_laser_time = Visibility::Visible;
                     // FIXME(skend): unify this with the visual aspect in pilot
-                    if !laser_sound.is_playing {
+                    let pilot_entity = pilot.lookup.unwrap();
+                    let is_playing = laser_sound.is_playing.get(&pilot_entity);
+                    if is_playing.is_none()
+                        || !laser_sound.is_playing.get(&pilot_entity).unwrap()
+                    {
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
                             settings: PlaybackSettings::ONCE
                                 .with_volume(Volume::new(0.5)),
                         });
-                        laser_sound.is_playing = true;
+                        laser_sound.is_playing.insert(pilot_entity, true);
                     }
                 }
             }
@@ -907,6 +937,8 @@ fn handle_laser(
         p.needs_start_fire_large_laser = false;
         p.still_firing_large_laser = true;
         // we need to reset our laser timer
+        // FIXME(skend): this should also have an
+        // index to look up which laser to work on
         if p.laser_timer.is_none() {
             p.laser_timer = Some(Timer::from_seconds(
                 laser::LASER_DURATION,
@@ -1130,10 +1162,17 @@ fn move_bot(
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
     mut timer: ResMut<Timer10hzForBot>,
+    mut timer_for_laser: ResMut<Timer30sForBotLaser>,
     time: Res<Time<Fixed>>,
 ) {
-    timer.0.tick(time.delta());
-    if !timer.0.finished() {
+    let time_delta = time.delta();
+    timer_for_laser.0.tick(time_delta);
+    let mut bot_laser_timer_finished = false;
+    if timer_for_laser.0.finished() {
+        bot_laser_timer_finished = true;
+    }
+    timer.0.tick(time_delta);
+    if !timer.0.finished() && !bot_laser_timer_finished {
         // this func only fires every 10hz
         return;
     }
@@ -1143,6 +1182,8 @@ fn move_bot(
         if b_p.just_died {
             b_p.just_died = false;
             // run special logic like hide the default model
+            // FIXME(skend): weirdly this caused a crash for me just now
+            // there was no ship visibility? that doesn't make much sense to me
             let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
             *ship_vis = Visibility::Hidden;
             // run special logic to reveal the exploding ship model
@@ -1173,9 +1214,18 @@ fn move_bot(
         // it's dead so it does not do the normal stuff
         return;
     }
+    // FIXME(skend): use bot target instead of single_mut()
     let p_t = player.single_mut();
+    // logic to handle bot firing its laser at you
+    if bot_laser_timer_finished {
+        if !b_p.still_firing_large_laser {
+            // notably the bot's target was
+            // already set to be the player
+            b_p.needs_start_fire_large_laser = true;
+        }
+    }
 
-    orbit_timer.0.tick(time.delta());
+    orbit_timer.0.tick(time_delta);
     // only update destination if it's time
     if orbit_timer.0.finished() {
         orbit_cache.destination = physics::orbit(
@@ -1245,7 +1295,7 @@ fn init_plaidsea(
 ) {
     let mut rng = rand::rng();
     let mut mesh_palette = Vec::new();
-    for i in 0..NUM_TILES {
+    for _ in 0..NUM_TILES {
         let mut cur_plane = Mesh::from(
             Plane3d {
                 normal: Dir3::Z,
