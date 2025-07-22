@@ -1217,6 +1217,7 @@ fn move_bot(
         // it's dead so it does not do the normal stuff
         return;
     }
+    // FIXME(skend): use bot target instead of single_mut()
     let p_t = player.single_mut();
     // logic to handle bot firing its laser at you
     if bot_laser_timer_finished {
