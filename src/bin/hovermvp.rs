@@ -33,6 +33,7 @@ use bevy::{
 use physics::Acceleration;
 use rand::Rng;
 use std::f32::consts::PI;
+use std::time::Duration;
 
 const BOT_RADIUS: f32 = 10.;
 const PLANET_RADIUS: f32 = 15.;
@@ -216,6 +217,11 @@ struct OrbitCache {
 #[derive(Resource)]
 struct OrbitTimer(Timer);
 
+#[derive(Resource)]
+struct Timer10hz(Timer);
+#[derive(Resource)]
+struct Timer1hz(Timer);
+
 impl FromWorld for OrbitTimer {
     fn from_world(_: &mut World) -> Self {
         OrbitTimer(Timer::from_seconds(
@@ -278,7 +284,6 @@ fn main() {
                 move_player,
                 face_all,
                 rotface_all,
-                move_bot,
                 handle_tag,
                 camera_follow,
                 handle_target,
@@ -288,16 +293,41 @@ fn main() {
         .add_systems(Update, (handle_laser).run_if(dont_need_laser_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
+        .insert_resource(Timer1hz(Timer::new(
+            Duration::from_secs(1),
+            TimerMode::Repeating,
+        )))
+        .insert_resource(Timer10hz(Timer::new(
+            Duration::from_millis(100),
+            TimerMode::Repeating,
+        )))
         .add_systems(
             FixedUpdate,
-            (physics::apply_acceleration, physics::apply_velocity).chain(),
+            (
+                (physics::apply_acceleration, physics::apply_velocity).chain(),
+                system_10hz,
+                system_1hz,
+                move_bot,
+            ),
         )
-        // FIXME(skend): surely i should name these
-        // won't i have dozens of fixed time events eventually?
         .insert_resource(Time::<Fixed>::from_seconds(
             (1.0 / MAX_FRAMERATE).into(),
         ))
         .run();
+}
+
+fn system_10hz(mut timer: ResMut<Timer10hz>, time: Res<Time<Fixed>>) {
+    timer.0.tick(time.delta());
+    if timer.0.finished() {
+        // 10 hz logic
+    }
+}
+
+fn system_1hz(mut timer: ResMut<Timer1hz>, time: Res<Time<Fixed>>) {
+    timer.0.tick(time.delta());
+    if timer.0.finished() {
+        // 1 hz logic
+    }
 }
 
 // FIXME(skend): doesn't do anything yet
@@ -1107,10 +1137,16 @@ fn move_bot(
     >,
     mut qanimation: Query<&mut AnimationToPlay>,
     mut qwiggler: Query<&mut AnimationPlayer>,
-    time: Res<Time>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
+    mut timer: ResMut<Timer10hz>,
+    time: Res<Time<Fixed>>,
 ) {
+    timer.0.tick(time.delta());
+    if !timer.0.finished() {
+        // this func only fires every 10hz
+        return;
+    }
     // receive an x/y coordinate we're currently flying to
     let (b_t, mut b_p, b_v, mut b_a) = bot.single_mut();
     if b_p.dead {
