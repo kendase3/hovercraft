@@ -511,6 +511,22 @@ fn setup(
         asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
+    // animations were in fact so fun we will add one for the player
+    let (graph2, animation_index2) = AnimationGraph::from_clip(
+        asset_server
+            .load(GltfAssetLabel::Animation(0).from_asset(GNAT_EXPLODE_PATH)),
+    );
+    let graph_handle2 = graphs.add(graph2);
+    let animation_to_play2 = AnimationToPlay {
+        graph_handle: graph_handle2,
+        index: animation_index2,
+        ready: false,
+    };
+    let animation_scene2 = SceneRoot(
+        asset_server
+            .load(GltfAssetLabel::Scene(0).from_asset(GNAT_EXPLODE_PATH)),
+    );
+
     // used later in bot
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
@@ -679,6 +695,13 @@ fn setup(
                 LargeLaser,
                 Name::new("laser"),
             ));
+            parent
+                .spawn((
+                    animation_to_play2,
+                    animation_scene2,
+                    Visibility::Hidden,
+                ))
+                .observe(mark_animation_ready);
         });
     let bot_target = meshes
         .add(Mesh::from(Rectangle::new(BOT_RADIUS * 2., BOT_RADIUS * 2.)));
@@ -1196,6 +1219,9 @@ fn move_bot(
             // TODO(skend): give the pilot a ref to its exploding model for lookup
             // right now there's only one so we'll shortcut it.
             let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
+            // FIXME(skend): well, well, well. looks like i used a nice
+            // little shortcut implementing the first animation.
+            // in fact i appear to have done it twice.
             let mut explode_t = qexplosiont.single_mut();
             explode_t.rotation = shipt.rotation;
             let mut explode_vis = qexplosionvis.single_mut();
