@@ -353,13 +353,13 @@ fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 */
 
 fn init_laser(
-    laser_stuff: Query<(Entity, &Parent), With<LargeLaser>>,
+    qlaserstuff: Query<(Entity, &Parent), With<LargeLaser>>,
     mut pilot_query: Query<&mut Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut laser_initialized: ResMut<LaserInitialized>,
 ) {
-    for (laser_entity, laser_parent) in laser_stuff.iter() {
+    for (laser_entity, laser_parent) in qlaserstuff.iter() {
         let name = q_name.get(laser_entity);
         if let Ok(name_success) = name {
             //info!("cur name = {}", name_success);
@@ -594,6 +594,7 @@ fn setup(
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
+    let kewl_material = materials4.add(LaserMaterial {});
     commands
         .spawn((
             Pilot {
@@ -656,14 +657,13 @@ fn setup(
                 MeshMaterial2d(materials.add(triangle_color)),
                 Visibility::Visible,
             ));
-            let kewl_material = materials4.add(LaserMaterial {});
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
             // seems like i may want an initial loading screen
             // See extreme bevy's loading state as an example
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
-                MeshMaterial3d(kewl_material),
+                MeshMaterial3d(kewl_material.clone()),
                 Visibility::Hidden,
                 LargeLaser,
                 Name::new("laser"),
@@ -727,6 +727,13 @@ fn setup(
                     Visibility::Hidden,
                 ))
                 .observe(mark_animation_ready);
+            parent.spawn((
+                Mesh3d(meshes.add(laser_mesh)),
+                MeshMaterial3d(kewl_material.clone()),
+                Visibility::Hidden,
+                LargeLaser,
+                Name::new("laser"),
+            ));
         });
 
     // kind of like a notification at the top of the screen
@@ -799,7 +806,7 @@ fn handle_laser(
         }
         if finished {
             // get our laser and hide it
-            let mut finally_laser_time = qlaservisibility.single_mut();
+            let mut finally_laser_time = qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
             *finally_laser_time = Visibility::Hidden;
             pilot.still_firing_large_laser = false;
             laser_sound.is_playing = false;
@@ -907,6 +914,8 @@ fn handle_laser(
         p.needs_start_fire_large_laser = false;
         p.still_firing_large_laser = true;
         // we need to reset our laser timer
+        // FIXME(skend): this should also have an
+        // index to look up which laser to work on
         if p.laser_timer.is_none() {
             p.laser_timer = Some(Timer::from_seconds(
                 laser::LASER_DURATION,
