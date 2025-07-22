@@ -1155,8 +1155,13 @@ fn move_bot(
     time: Res<Time<Fixed>>,
 ) {
     let time_delta = time.delta();
+    timer_for_laser.0.tick(time_delta);
+    let mut bot_laser_timer_finished = false;
+    if timer_for_laser.0.finished() {
+        bot_laser_timer_finished = true;
+    }
     timer.0.tick(time_delta);
-    if !timer.0.finished() {
+    if !timer.0.finished() && !bot_laser_timer_finished {
         // this func only fires every 10hz
         return;
     }
@@ -1199,11 +1204,8 @@ fn move_bot(
         return;
     }
     let p_t = player.single_mut();
-    // logic to conditionally fire laser at player
-    // apparently it's fine to call time.delta() multiple
-    // times in the same func
-    timer_for_laser.0.tick(time_delta);
-    if timer_for_laser.0.finished() {
+    // logic to handle bot firing its laser at you
+    if bot_laser_timer_finished {
         warn!("SKEND: timer_for_laser finished!");
         if !b_p.still_firing_large_laser {
             // notably the bot's target was
