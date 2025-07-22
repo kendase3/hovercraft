@@ -218,7 +218,9 @@ struct OrbitCache {
 struct OrbitTimer(Timer);
 
 #[derive(Resource)]
-struct Timer10hz(Timer);
+struct Timer10hzForBot(Timer);
+#[derive(Resource)]
+struct Timer10hzForLaser(Timer);
 #[derive(Resource)]
 struct Timer1hz(Timer);
 
@@ -293,11 +295,16 @@ fn main() {
         .add_systems(FixedUpdate, (handle_laser).run_if(dont_need_laser_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
+        // TODO(skend): not used for anything yet
         .insert_resource(Timer1hz(Timer::new(
             Duration::from_secs(1),
             TimerMode::Repeating,
         )))
-        .insert_resource(Timer10hz(Timer::new(
+        .insert_resource(Timer10hzForBot(Timer::new(
+            Duration::from_millis(100),
+            TimerMode::Repeating,
+        )))
+        .insert_resource(Timer10hzForLaser(Timer::new(
             Duration::from_millis(100),
             TimerMode::Repeating,
         )))
@@ -305,8 +312,6 @@ fn main() {
             FixedUpdate,
             (
                 (physics::apply_acceleration, physics::apply_velocity).chain(),
-                system_10hz,
-                system_1hz,
                 move_bot,
             ),
         )
@@ -314,20 +319,6 @@ fn main() {
             (1.0 / MAX_FRAMERATE).into(),
         ))
         .run();
-}
-
-fn system_10hz(mut timer: ResMut<Timer10hz>, time: Res<Time<Fixed>>) {
-    timer.0.tick(time.delta());
-    if timer.0.finished() {
-        // 10 hz logic
-    }
-}
-
-fn system_1hz(mut timer: ResMut<Timer1hz>, time: Res<Time<Fixed>>) {
-    timer.0.tick(time.delta());
-    if timer.0.finished() {
-        // 1 hz logic
-    }
 }
 
 // FIXME(skend): doesn't do anything yet
@@ -797,12 +788,14 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
+    mut timer: ResMut<Timer10hzForLaser>,
     time: Res<Time<Fixed>>,
 ) {
-    // FIXME(skend): even when i early return from here, as soon as
-    // i make this function fixedupdate it seems to break bot movement.
-    // isn't that rather odd?
-    return;
+    timer.0.tick(time.delta());
+    if !timer.0.finished() {
+        // this func only fires every 10hz
+        return;
+    }
     let mut pilots_to_mark: Vec<Entity> = Vec::new();
     let mut pilots_to_kill: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
@@ -1143,7 +1136,7 @@ fn move_bot(
     mut qwiggler: Query<&mut AnimationPlayer>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
-    mut timer: ResMut<Timer10hz>,
+    mut timer: ResMut<Timer10hzForBot>,
     time: Res<Time<Fixed>>,
 ) {
     timer.0.tick(time.delta());
