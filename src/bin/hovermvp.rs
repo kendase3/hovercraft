@@ -63,7 +63,7 @@ const GUBBINS_PATH: &str = "models/gubbins2.glb";
 const NUM_TILES: u32 = 10;
 const BOT_LASER_INTERVAL_SECONDS: u64 = 30;//5;
 
-#[derive(Component, PartialEq)]
+#[derive(Component, PartialEq, Debug)]
 enum PilotType {
     Player,
     Bot,
@@ -75,7 +75,7 @@ impl Default for PilotType {
     }
 }
 
-#[derive(Component, Default, PartialEq)]
+#[derive(Component, Default, PartialEq, Debug)]
 struct Pilot {
     pilottype: PilotType,
     it: bool,
@@ -922,6 +922,7 @@ fn handle_laser(
                     if is_playing.is_some()
                         && !laser_sound.is_playing.get(&pilot_entity).unwrap()
                     {
+                        warn!("we successfully fire the audiobundle for {:?}!", pilot);
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
                             settings: PlaybackSettings::ONCE
@@ -935,6 +936,9 @@ fn handle_laser(
                         // even when the sound suddenly plays
                         // after the bot dies
                         warn!("failed our new lookup!");
+                        if is_playing.is_some() {
+                            warn!("but at least is_some() call works!");
+                        }
                     }
                 }
             }
