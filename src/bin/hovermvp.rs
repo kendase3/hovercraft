@@ -170,6 +170,9 @@ struct NotchOffset(pub Vec3);
 #[derive(Component)]
 struct LargeLaser;
 
+// FIXME(skend): need to rethink is_playing
+// now that multiple players can generate
+// the same sound
 #[derive(Resource)]
 struct LaserSound {
     pub sound: Handle<AudioSource>,
