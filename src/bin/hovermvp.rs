@@ -277,7 +277,7 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
-        .add_systems(Startup, (draw_map, (setup, init_targets).chain()))
+        .add_systems(Startup, (init_plaidsea, (setup, init_targets).chain()))
         .add_systems(PreUpdate, (init_ship).run_if(need_cannon_init))
         .add_systems(PreUpdate, (init_laser).run_if(need_laser_init))
         .add_systems(
@@ -445,7 +445,7 @@ fn mark_animation_ready(
     mut animations_to_play: Query<&mut AnimationToPlay>,
     mut commands: Commands,
     children: Query<&Children>,
-    mut qwiggler: Query<&mut AnimationPlayer>,
+    qwiggler: Query<&AnimationPlayer>,
 ) {
     if let Ok(mut animation_to_play) =
         animations_to_play.get_mut(trigger.entity())
@@ -454,9 +454,7 @@ fn mark_animation_ready(
     }
     if let Ok(animation_to_play) = animations_to_play.get(trigger.entity()) {
         for child in children.iter_descendants(trigger.entity()) {
-            if let Ok(mut wiggler) = qwiggler.get_mut(child) {
-                //wiggler.play(animation_to_play.index).repeat();
-                // this part must be important. maybe i could do it during setup.
+            if let Ok(_) = qwiggler.get(child) {
                 commands.entity(child).insert(AnimationGraphHandle(
                     animation_to_play.graph_handle.clone(),
                 ));
@@ -488,7 +486,6 @@ fn setup(
             GltfAssetLabel::Animation(0).from_asset(GUBBINS_EXPLODE_PATH),
         ));
     let graph_handle = graphs.add(graph);
-    info!("animation index is {:?}", animation_index);
     let animation_to_play = AnimationToPlay {
         graph_handle,
         index: animation_index,
@@ -591,15 +588,12 @@ fn setup(
     let notch_circle =
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
-    //let laser_color = Color::srgb(0.0, 0.9, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     commands
         .spawn((
             Pilot {
                 pilottype: PilotType::Player,
-                ..default() //it: false,
-                            //facing: Some(0.0),
-                            //target: None,
+                ..default()
             },
             Player,
             physics::Velocity(
@@ -658,19 +652,10 @@ fn setup(
                 Visibility::Visible,
             ));
             let kewl_material = materials4.add(LaserMaterial {});
-            /*
-            let kewl_material = materials3.add(StandardMaterial {
-                base_color_texture: Some(lol.clone()),
-                emissive: Color::srgb(0.0, 1., 1.).into(),
-                alpha_mode: AlphaMode::Blend,
-                unlit: true,
-                ..default()
-            });
-            */
-            // TODO(skend): add for bot too
             // TODO(skend): i think this actually should be a child on the cannon.
             // so spawning it would be a little weird/late
             // seems like i may want an initial loading screen
+            // See extreme bevy's loading state as an example
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
                 MeshMaterial3d(kewl_material),
@@ -1025,11 +1010,8 @@ fn aim_cannon(
         let mut target_xy: Option<Vec2> = None;
         let ship_transform = qtransform.get(craft.0).unwrap();
         if let Ok(cur_pilot) = pilots.get(dude.0) {
-            //info!("we found our pilot");
             if let Some(cur_target) = cur_pilot.target {
-                //info!("our pilot has a target");
                 if let Ok(their_pilot_t) = qtransform.get(cur_target) {
-                    //info!("the target has a transform");
                     target_xy = Some(their_pilot_t.translation.xy());
                 }
             }
@@ -1174,7 +1156,7 @@ fn move_bot(
             //let mut wiggler = wigglers.get_mut(anim.
             //let mut wiggler = qwiggler.single_mut();
             //wiggler.play(anim.index).repeat();
-            for (mut wiggler) in qwiggler.iter_mut() {
+            for mut wiggler in qwiggler.iter_mut() {
                 // what if we just blast all the animations
                 // disconcertingly, that did not work.
                 //wiggler.play(anim.index).repeat();
@@ -1243,7 +1225,7 @@ fn get_random_color() -> LinearRgba {
     LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
 }
 
-fn draw_map(
+fn init_plaidsea(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
