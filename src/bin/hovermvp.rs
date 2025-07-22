@@ -1228,6 +1228,12 @@ fn get_random_color() -> LinearRgba {
     LinearRgba::new(rand_red, rand_green, rand_blue, 1.0)
 }
 
+// TODO(skend): in order to do even non-custom-shader
+// optimization for plaidsea, they need to have
+// the same Handle<Material> and same Handle<Mesh>
+// for more info, see:
+// https://bevy.org/examples/shaders/custom-shader-instancing/
+// I need to assert this is actually true for the plaidsea.
 fn init_plaidsea(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
