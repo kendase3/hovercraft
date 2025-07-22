@@ -789,9 +789,33 @@ fn handle_laser(
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
     mut timer: ResMut<Timer10hzForLaser>,
-    time: Res<Time<Fixed>>,
+    time: Res<Time>,
+    fixed_time: Res<Time<Fixed>>,
 ) {
-    timer.0.tick(time.delta());
+    // we can iterate over all the pilots and see if their timers are up
+    // make the laser invisible, set the bools appropriately
+    // TODO(skend): currently we check this very often to ensure
+    // the laser ends at the correct time.
+    // It's likely we do not need to check it quite so often
+    // and can consolidate the time here to also use fixed time
+    // rather than confusingly having both in the func
+    for mut pilot in qpilot.iter_mut() {
+        let mut finished = false;
+        if let Some(lt) = pilot.laser_timer.as_mut() {
+            lt.tick(time.delta());
+            if lt.finished() {
+                finished = true;
+            }
+        }
+        if finished {
+            // get our laser and hide it
+            let mut finally_laser_time = qlaservisibility.single_mut();
+            *finally_laser_time = Visibility::Hidden;
+            pilot.still_firing_large_laser = false;
+            laser_sound.is_playing = false;
+        }
+    }
+    timer.0.tick(fixed_time.delta());
     if !timer.0.finished() {
         // this func only fires every 10hz
         return;
@@ -907,24 +931,6 @@ fn handle_laser(
         p.dead = true;
         // TODO(skend): make livingness an enum
         p.just_died = true;
-    }
-    // then we can iterate over all the pilots and see if their timers are up
-    // make the laser invisible, set the bools appropriately
-    for mut pilot in qpilot.iter_mut() {
-        let mut finished = false;
-        if let Some(lt) = pilot.laser_timer.as_mut() {
-            lt.tick(time.delta());
-            if lt.finished() {
-                finished = true;
-            }
-        }
-        if finished {
-            // get our laser and hide it
-            let mut finally_laser_time = qlaservisibility.single_mut();
-            *finally_laser_time = Visibility::Hidden;
-            pilot.still_firing_large_laser = false;
-            laser_sound.is_playing = false;
-        }
     }
 }
 
