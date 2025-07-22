@@ -892,7 +892,7 @@ fn handle_laser(
                     //actual_mesh.compute_smooth_normals();
                     actual_mesh.duplicate_vertices();
                     actual_mesh.compute_flat_normals();
-                    let mut finally_laser_time = qlaservisibility.single_mut();
+                    let mut finally_laser_time = qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
                     *finally_laser_time = Visibility::Visible;
                     // FIXME(skend): unify this with the visual aspect in pilot
                     if !laser_sound.is_playing {
