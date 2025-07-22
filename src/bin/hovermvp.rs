@@ -33,6 +33,7 @@ use bevy::{
 };
 use physics::Acceleration;
 use rand::Rng;
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::Duration;
 
@@ -96,6 +97,7 @@ struct Pilot {
     // TODO(skend): make an enum
     dead: bool,
     just_died: bool,
+    entity: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -173,10 +175,12 @@ struct LargeLaser;
 // FIXME(skend): need to rethink is_playing
 // now that multiple players can generate
 // the same sound
-#[derive(Resource)]
+#[derive(Resource, Default)]
 struct LaserSound {
     pub sound: Handle<AudioSource>,
-    pub is_playing: bool,
+    // maybe a dict for each player entity
+    // and a bool?
+    pub is_playing: HashMap<Entity, bool>,
 }
 
 #[derive(Resource, Default)]
@@ -493,7 +497,7 @@ fn setup(
     let bloo_sound = asset_server.load("sounds/laser.ogg");
     commands.insert_resource(LaserSound {
         sound: bloo_sound,
-        is_playing: false,
+        ..default()
     });
     // would not animations also be fun?
     let (graph, animation_index) =
@@ -777,7 +781,9 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
             bot_id = Some(entity);
         }
     }
-    for (_, mut pilot) in query.iter_mut() {
+    for (entity, mut pilot) in query.iter_mut() {
+        // we also set the entity field on the pilot itself
+        pilot.entity = Some(entity);
         if pilot.pilottype == PilotType::Player {
             pilot.target = bot_id;
         } else if pilot.pilottype == PilotType::Bot {
@@ -822,7 +828,8 @@ fn handle_laser(
                 qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
             *finally_laser_time = Visibility::Hidden;
             pilot.still_firing_large_laser = false;
-            laser_sound.is_playing = false;
+            let pilot_entity = pilot.entity.unwrap();
+            laser_sound.is_playing.insert(pilot_entity, false);
         }
     }
     timer.0.tick(time_delta);
@@ -910,13 +917,14 @@ fn handle_laser(
                         .unwrap();
                     *finally_laser_time = Visibility::Visible;
                     // FIXME(skend): unify this with the visual aspect in pilot
-                    if !laser_sound.is_playing {
+                    let pilot_entity = pilot.entity.unwrap();
+                    if !laser_sound.is_playing.get(&pilot_entity).unwrap() {
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
                             settings: PlaybackSettings::ONCE
                                 .with_volume(Volume::new(0.5)),
                         });
-                        laser_sound.is_playing = true;
+                        laser_sound.is_playing.insert(pilot_entity, true);
                     }
                 }
             }
