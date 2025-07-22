@@ -290,7 +290,9 @@ fn main() {
         .init_resource::<OrbitCache>()
         .add_systems(
             FixedUpdate,
-            (physics::apply_acceleration, physics::apply_velocity).chain(),
+            (
+                (physics::apply_acceleration, physics::apply_velocity).chain(),
+            ),
         )
         // FIXME(skend): surely i should name these
         // won't i have dozens of fixed time events eventually?
