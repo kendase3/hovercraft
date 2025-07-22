@@ -226,6 +226,8 @@ struct Timer10hzForBot(Timer);
 struct Timer10hzForLaser(Timer);
 #[derive(Resource)]
 struct Timer1hz(Timer);
+#[derive(Resource)]
+struct Timer30sForBotLaser(Timer);
 
 impl FromWorld for OrbitTimer {
     fn from_world(_: &mut World) -> Self {
@@ -311,6 +313,10 @@ fn main() {
         )))
         .insert_resource(Timer10hzForLaser(Timer::new(
             Duration::from_millis(100),
+            TimerMode::Repeating,
+        )))
+        .insert_resource(Timer30sForBotLaser(Timer::new(
+            Duration::from_secs(30),
             TimerMode::Repeating,
         )))
         .add_systems(
@@ -806,7 +812,8 @@ fn handle_laser(
         }
         if finished {
             // get our laser and hide it
-            let mut finally_laser_time = qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
+            let mut finally_laser_time =
+                qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
             *finally_laser_time = Visibility::Hidden;
             pilot.still_firing_large_laser = false;
             laser_sound.is_playing = false;
@@ -892,7 +899,9 @@ fn handle_laser(
                     //actual_mesh.compute_smooth_normals();
                     actual_mesh.duplicate_vertices();
                     actual_mesh.compute_flat_normals();
-                    let mut finally_laser_time = qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
+                    let mut finally_laser_time = qlaservisibility
+                        .get_mut(pilot.laser.unwrap())
+                        .unwrap();
                     *finally_laser_time = Visibility::Visible;
                     // FIXME(skend): unify this with the visual aspect in pilot
                     if !laser_sound.is_playing {
