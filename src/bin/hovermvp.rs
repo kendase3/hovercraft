@@ -290,7 +290,7 @@ fn main() {
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
-        .add_systems(Update, (handle_laser).run_if(dont_need_laser_init))
+        .add_systems(FixedUpdate, (handle_laser).run_if(dont_need_laser_init))
         .init_resource::<OrbitTimer>()
         .init_resource::<OrbitCache>()
         .insert_resource(Timer1hz(Timer::new(
@@ -797,8 +797,12 @@ fn handle_laser(
     mut qlaservisibility: Query<&mut Visibility, With<LargeLaser>>,
     mut commands: Commands,
     mut laser_sound: ResMut<LaserSound>,
-    time: Res<Time>,
+    time: Res<Time<Fixed>>,
 ) {
+    // FIXME(skend): even when i early return from here, as soon as
+    // i make this function fixedupdate it seems to break bot movement.
+    // isn't that rather odd?
+    return;
     let mut pilots_to_mark: Vec<Entity> = Vec::new();
     let mut pilots_to_kill: Vec<Entity> = Vec::new();
     for pilot in qpilot.iter() {
