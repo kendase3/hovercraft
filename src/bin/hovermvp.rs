@@ -60,7 +60,7 @@ const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
 // number of tile variants for the plaidsea
 const NUM_TILES: u32 = 10;
-const BOT_LASER_INTERVAL_SECONDS: u64 = 30;
+const BOT_LASER_INTERVAL_SECONDS: u64 = 5;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -1149,6 +1149,7 @@ fn move_bot(
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
     mut timer: ResMut<Timer10hzForBot>,
+    mut timer_for_laser: ResMut<Timer30sForBotLaser>,
     time: Res<Time<Fixed>>,
 ) {
     timer.0.tick(time.delta());
@@ -1193,6 +1194,18 @@ fn move_bot(
         return;
     }
     let p_t = player.single_mut();
+    // logic to conditionally fire laser at player
+    // apparently it's fine to call time.delta() multiple
+    // times in the same func
+    timer_for_laser.0.tick(time.delta());
+    if timer_for_laser.0.finished() {
+        if !b_p.still_firing_large_laser {
+            // FIXME(skend): do i need to set the bot's
+            // target to player? or did i already handle
+            // that for the orbit logic?
+            b_p.needs_start_fire_large_laser = true;
+        }
+    }
 
     orbit_timer.0.tick(time.delta());
     // only update destination if it's time
