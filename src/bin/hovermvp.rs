@@ -918,7 +918,10 @@ fn handle_laser(
                     *finally_laser_time = Visibility::Visible;
                     // FIXME(skend): unify this with the visual aspect in pilot
                     let pilot_entity = pilot.entity.unwrap();
-                    if !laser_sound.is_playing.get(&pilot_entity).unwrap() {
+                    let is_playing = laser_sound.is_playing.get(&pilot_entity);
+                    if is_playing.is_some()
+                        && !laser_sound.is_playing.get(&pilot_entity).unwrap()
+                    {
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
                             settings: PlaybackSettings::ONCE
@@ -1217,11 +1220,9 @@ fn move_bot(
     let p_t = player.single_mut();
     // logic to handle bot firing its laser at you
     if bot_laser_timer_finished {
-        warn!("SKEND: timer_for_laser finished!");
         if !b_p.still_firing_large_laser {
             // notably the bot's target was
             // already set to be the player
-            warn!("SKEND: bot is definitely shooting you!");
             b_p.needs_start_fire_large_laser = true;
         }
     }
