@@ -1239,6 +1239,26 @@ fn init_plaidsea(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    let mut plane = Mesh::from(
+        Plane3d {
+            normal: Dir3::Z,
+            half_size: Vec2::new(GRID_SIZE as f32 / 2., GRID_SIZE as f32 / 2.),
+            ..default()
+        }
+        .mesh(),
+    );
+    let vertex_colors: Vec<[f32; 4]> = vec![
+        get_random_color().to_f32_array(),
+        get_random_color().to_f32_array(),
+        get_random_color().to_f32_array(),
+        get_random_color().to_f32_array(),
+    ];
+    plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+    let repeat_material = materials.add(StandardMaterial {
+        base_color: Color::from(PURPLE),
+        ..default()
+    });
+    let boring_mesh = meshes.add(plane);
     // we have MAP_SIZE for both width and depth
     for y in ((-1 * physics::MAP_SIZE as i32 / 2
         + ((0.5 * GRID_SIZE as f32) as i32))
@@ -1251,42 +1271,9 @@ fn init_plaidsea(
             .step_by(GRID_SIZE as usize)
         {
             let center = Vec3::new(x as f32, y as f32, 0.0);
-            /*
-            let mut matl = |color| {
-                materials.add(StandardMaterial {
-                    base_color: color,
-                    //perceptual_roughness: 1.0,
-                    //metallic: 1.0,
-                    //emissive: PURPLE.into(),
-                    ..default()
-                })
-            };
-            */
-            let mut plane = Mesh::from(
-                Plane3d {
-                    normal: Dir3::Z,
-                    half_size: Vec2::new(
-                        GRID_SIZE as f32 / 2.,
-                        GRID_SIZE as f32 / 2.,
-                    ),
-                    ..default()
-                }
-                .mesh(),
-            );
-            let vertex_colors: Vec<[f32; 4]> = vec![
-                get_random_color().to_f32_array(),
-                get_random_color().to_f32_array(),
-                get_random_color().to_f32_array(),
-                get_random_color().to_f32_array(),
-            ];
-            plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
-            let repeat_material = materials.add(StandardMaterial {
-                base_color: Color::from(PURPLE),
-                ..default()
-            });
             commands.spawn((
-                Mesh3d(meshes.add(plane)),
-                MeshMaterial3d(repeat_material),
+                Mesh3d(boring_mesh.clone()),
+                MeshMaterial3d(repeat_material.clone()),
                 Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
             ));
         }
