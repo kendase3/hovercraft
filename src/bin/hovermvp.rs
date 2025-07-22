@@ -58,6 +58,8 @@ const GNAT_EXPLODE_PATH: &str = "models/gnat2explosion.glb";
 const GUBBINS_EXPLODE_PATH: &str = "models/gubbins2explosion.glb";
 const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
+// number of tile variants for the plaidsea
+const NUM_TILES: u32 = 10;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -1234,31 +1236,41 @@ fn get_random_color() -> LinearRgba {
 // for more info, see:
 // https://bevy.org/examples/shaders/custom-shader-instancing/
 // I need to assert this is actually true for the plaidsea.
+// For now I've made ten variants and the framerate still
+// seems solid when zoomed out.
 fn init_plaidsea(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    let mut plane = Mesh::from(
-        Plane3d {
-            normal: Dir3::Z,
-            half_size: Vec2::new(GRID_SIZE as f32 / 2., GRID_SIZE as f32 / 2.),
-            ..default()
-        }
-        .mesh(),
-    );
-    let vertex_colors: Vec<[f32; 4]> = vec![
-        get_random_color().to_f32_array(),
-        get_random_color().to_f32_array(),
-        get_random_color().to_f32_array(),
-        get_random_color().to_f32_array(),
-    ];
-    plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+    let mut rng = rand::rng();
+    let mut mesh_palette = Vec::new();
+    for i in 0..NUM_TILES {
+        let mut cur_plane = Mesh::from(
+            Plane3d {
+                normal: Dir3::Z,
+                half_size: Vec2::new(
+                    GRID_SIZE as f32 / 2.,
+                    GRID_SIZE as f32 / 2.,
+                ),
+                ..default()
+            }
+            .mesh(),
+        );
+        let vertex_colors: Vec<[f32; 4]> = vec![
+            get_random_color().to_f32_array(),
+            get_random_color().to_f32_array(),
+            get_random_color().to_f32_array(),
+            get_random_color().to_f32_array(),
+        ];
+        cur_plane.insert_attribute(Mesh::ATTRIBUTE_COLOR, vertex_colors);
+        let exciting_mesh = meshes.add(cur_plane);
+        mesh_palette.push(exciting_mesh);
+    }
     let repeat_material = materials.add(StandardMaterial {
         base_color: Color::from(PURPLE),
         ..default()
     });
-    let boring_mesh = meshes.add(plane);
     // we have MAP_SIZE for both width and depth
     for y in ((-1 * physics::MAP_SIZE as i32 / 2
         + ((0.5 * GRID_SIZE as f32) as i32))
@@ -1270,9 +1282,10 @@ fn init_plaidsea(
             ..=(physics::MAP_SIZE as i32 / 2))
             .step_by(GRID_SIZE as usize)
         {
+            let random_plaid_index = rng.random_range(0..NUM_TILES) as usize;
             let center = Vec3::new(x as f32, y as f32, 0.0);
             commands.spawn((
-                Mesh3d(boring_mesh.clone()),
+                Mesh3d(mesh_palette[random_plaid_index].clone()),
                 MeshMaterial3d(repeat_material.clone()),
                 Transform::from_xyz(center.x, center.y, -1.0), //.with_scale(Vec3::splat(10. as f32)),
             ));
