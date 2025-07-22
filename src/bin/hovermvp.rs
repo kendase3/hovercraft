@@ -60,6 +60,7 @@ const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
 // number of tile variants for the plaidsea
 const NUM_TILES: u32 = 10;
+const BOT_LASER_INTERVAL_SECONDS: u64 = 30;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -316,7 +317,7 @@ fn main() {
             TimerMode::Repeating,
         )))
         .insert_resource(Timer30sForBotLaser(Timer::new(
-            Duration::from_secs(30),
+            Duration::from_secs(BOT_LASER_INTERVAL_SECONDS),
             TimerMode::Repeating,
         )))
         .add_systems(
