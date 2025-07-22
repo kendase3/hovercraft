@@ -298,6 +298,10 @@ fn main() {
             Duration::from_secs(1),
             TimerMode::Repeating,
         )))
+        .insert_resource(Timer10Hz(Timer::new(
+            Duration::from_millis(100),
+            TimerMode::Repeating,
+        )))
         .add_systems(
             FixedUpdate,
             (
@@ -312,9 +316,21 @@ fn main() {
         .run();
 }
 
-fn system_10hz() {}
+fn system_10hz(mut timer: ResMut<Timer10Hz>, time: Res<Time<Fixed>>) {
+    timer.0.tick(time.delta());
+    if timer.0.finished() {
+        // 10 hz logic
 
-fn system_1hz() {}
+    }
+}
+
+fn system_1hz(mut timer: ResMut<Timer1Hz>, time: Res<Time<Fixed>>) {
+    timer.0.tick(time.delta());
+    if timer.0.finished() {
+        // 1 hz logic
+
+    }
+}
 
 // FIXME(skend): doesn't do anything yet
 // run at startup when it's ready
