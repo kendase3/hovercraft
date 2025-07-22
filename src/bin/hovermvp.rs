@@ -280,8 +280,8 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .add_plugins(MaterialPlugin::<LaserMaterial>::default())
-        .add_plugins(FrameTimeDiagnosticsPlugin::default())
-        .add_plugins(LogDiagnosticsPlugin::default())
+        //.add_plugins(FrameTimeDiagnosticsPlugin::default())
+        //.add_plugins(LogDiagnosticsPlugin::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
@@ -794,8 +794,10 @@ fn handle_laser(
     mut laser_sound: ResMut<LaserSound>,
     mut timer: ResMut<Timer10hzForLaser>,
     time: Res<Time>,
-    fixed_time: Res<Time<Fixed>>,
 ) {
+    // supposedly you can call time.delta() multiple times in a func
+    // but just reducing variables
+    let time_delta = time.delta();
     // we can iterate over all the pilots and see if their timers are up
     // make the laser invisible, set the bools appropriately
     // TODO(skend): currently we check this very often to ensure
@@ -806,7 +808,7 @@ fn handle_laser(
     for mut pilot in qpilot.iter_mut() {
         let mut finished = false;
         if let Some(lt) = pilot.laser_timer.as_mut() {
-            lt.tick(time.delta());
+            lt.tick(time_delta);
             if lt.finished() {
                 finished = true;
             }
@@ -820,7 +822,7 @@ fn handle_laser(
             laser_sound.is_playing = false;
         }
     }
-    timer.0.tick(fixed_time.delta());
+    timer.0.tick(time_delta);
     if !timer.0.finished() {
         // this func only fires every 10hz
         return;
@@ -1152,7 +1154,8 @@ fn move_bot(
     mut timer_for_laser: ResMut<Timer30sForBotLaser>,
     time: Res<Time<Fixed>>,
 ) {
-    timer.0.tick(time.delta());
+    let time_delta = time.delta();
+    timer.0.tick(time_delta);
     if !timer.0.finished() {
         // this func only fires every 10hz
         return;
@@ -1163,6 +1166,8 @@ fn move_bot(
         if b_p.just_died {
             b_p.just_died = false;
             // run special logic like hide the default model
+            // FIXME(skend): weirdly this caused a crash for me just now
+            // there was no ship visibility? that doesn't make much sense to me
             let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
             *ship_vis = Visibility::Hidden;
             // run special logic to reveal the exploding ship model
@@ -1197,17 +1202,18 @@ fn move_bot(
     // logic to conditionally fire laser at player
     // apparently it's fine to call time.delta() multiple
     // times in the same func
-    timer_for_laser.0.tick(time.delta());
+    timer_for_laser.0.tick(time_delta);
     if timer_for_laser.0.finished() {
+        warn!("SKEND: timer_for_laser finished!");
         if !b_p.still_firing_large_laser {
-            // FIXME(skend): do i need to set the bot's
-            // target to player? or did i already handle
-            // that for the orbit logic?
+            // notably the bot's target was
+            // already set to be the player
+            warn!("SKEND: bot is definitely shooting you!");
             b_p.needs_start_fire_large_laser = true;
         }
     }
 
-    orbit_timer.0.tick(time.delta());
+    orbit_timer.0.tick(time_delta);
     // only update destination if it's time
     if orbit_timer.0.finished() {
         orbit_cache.destination = physics::orbit(
