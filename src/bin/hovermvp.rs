@@ -61,7 +61,7 @@ const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
 // number of tile variants for the plaidsea
 const NUM_TILES: u32 = 10;
-const BOT_LASER_INTERVAL_SECONDS: u64 = 5;
+const BOT_LASER_INTERVAL_SECONDS: u64 = 30;//5;
 
 #[derive(Component, PartialEq)]
 enum PilotType {
@@ -928,6 +928,13 @@ fn handle_laser(
                                 .with_volume(Volume::new(0.5)),
                         });
                         laser_sound.is_playing.insert(pilot_entity, true);
+                    } else {
+                        // FIXME(skend): fails for both the player
+                        // and the bot
+                        // and most perplexing of all...fails
+                        // even when the sound suddenly plays
+                        // after the bot dies
+                        warn!("failed our new lookup!");
                     }
                 }
             }
