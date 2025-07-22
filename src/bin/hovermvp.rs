@@ -1079,7 +1079,11 @@ fn move_player(
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
 ) {
+    // FIXME(skend): another single_mut for player here
     let (mut accel, mut play) = players.single_mut();
+    if play.dead {
+        warn!("the player technically dies already!");
+    }
     // FIXME(skend): complete rework
     // W now accelerates forward in the current direction
     // A and D now modify theta's derivative, accelerating angularly that way
