@@ -61,7 +61,7 @@ const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
 // number of tile variants for the plaidsea
 const NUM_TILES: u32 = 10;
-const BOT_LASER_INTERVAL_SECONDS: u64 = 30;//5;
+const BOT_LASER_INTERVAL_SECONDS: u64 = 30; //5;
 
 #[derive(Component, PartialEq, Debug)]
 enum PilotType {
@@ -97,7 +97,7 @@ struct Pilot {
     // TODO(skend): make an enum
     dead: bool,
     just_died: bool,
-    entity: Option<Entity>,
+    lookup: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -783,7 +783,7 @@ fn init_targets(mut query: Query<(Entity, &mut Pilot)>) {
     }
     for (entity, mut pilot) in query.iter_mut() {
         // we also set the entity field on the pilot itself
-        pilot.entity = Some(entity);
+        pilot.lookup = Some(entity);
         if pilot.pilottype == PilotType::Player {
             pilot.target = bot_id;
         } else if pilot.pilottype == PilotType::Bot {
@@ -828,7 +828,7 @@ fn handle_laser(
                 qlaservisibility.get_mut(pilot.laser.unwrap()).unwrap();
             *finally_laser_time = Visibility::Hidden;
             pilot.still_firing_large_laser = false;
-            let pilot_entity = pilot.entity.unwrap();
+            let pilot_entity = pilot.lookup.unwrap();
             laser_sound.is_playing.insert(pilot_entity, false);
         }
     }
@@ -917,12 +917,15 @@ fn handle_laser(
                         .unwrap();
                     *finally_laser_time = Visibility::Visible;
                     // FIXME(skend): unify this with the visual aspect in pilot
-                    let pilot_entity = pilot.entity.unwrap();
+                    let pilot_entity = pilot.lookup.unwrap();
                     let is_playing = laser_sound.is_playing.get(&pilot_entity);
                     if is_playing.is_some()
                         && !laser_sound.is_playing.get(&pilot_entity).unwrap()
                     {
-                        warn!("we successfully fire the audiobundle for {:?}!", pilot);
+                        warn!(
+                            "we successfully fire the audiobundle for {:?}!",
+                            pilot
+                        );
                         commands.spawn(AudioBundle {
                             source: AudioPlayer(laser_sound.sound.clone()),
                             settings: PlaybackSettings::ONCE
