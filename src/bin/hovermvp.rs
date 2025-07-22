@@ -1082,7 +1082,9 @@ fn move_player(
     // FIXME(skend): another single_mut for player here
     let (mut accel, mut play) = players.single_mut();
     if play.dead {
-        warn!("the player technically dies already!");
+        // once the player dies they cannot control themselves
+        // anymore
+        return;
     }
     // FIXME(skend): complete rework
     // W now accelerates forward in the current direction
