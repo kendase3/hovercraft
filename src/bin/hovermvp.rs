@@ -400,7 +400,11 @@ fn init_laser(
 
 fn init_animations(
     qanimation: Query<(Entity, &Parent), With<AnimationToPlay>>,
+    qpilot: Query<&mut Pilot>,
 ) {
+    for (entity, parent) in qanimation.iter() {
+
+    }
 }
 
 fn init_ship(
