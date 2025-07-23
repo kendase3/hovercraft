@@ -497,8 +497,6 @@ fn setup(
         ..default()
     });
     // would not animations also be fun?
-    // 
-    /*
     let (graph, animation_index) =
         AnimationGraph::from_clip(asset_server.load(
             GltfAssetLabel::Animation(0).from_asset(GUBBINS_EXPLODE_PATH),
@@ -509,11 +507,11 @@ fn setup(
         index: animation_index,
         ready: false,
     };
+    // FIXME(skend): this line creates 750 animation players
     let animation_scene = SceneRoot(
         asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
-    */
     // used later in bot
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
@@ -734,7 +732,6 @@ fn setup(
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
-            /*
             parent
                 .spawn((
                     animation_to_play,
@@ -742,7 +739,6 @@ fn setup(
                     Visibility::Hidden,
                 ))
                 .observe(mark_animation_ready);
-                */
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
                 MeshMaterial3d(kewl_material.clone()),
