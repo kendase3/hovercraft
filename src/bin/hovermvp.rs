@@ -1202,12 +1202,15 @@ fn move_bot(
             //let mut wiggler = wigglers.get_mut(anim.
             //let mut wiggler = qwiggler.single_mut();
             //wiggler.play(anim.index).repeat();
+            let mut i = 0;
             for mut wiggler in qwiggler.iter_mut() {
                 // what if we just blast all the animations
                 // disconcertingly, that did not work.
                 //wiggler.play(anim.index).repeat();
                 wiggler.play(anim.index);
+                i+=1;
             }
+            warn!("SKEND: i = {i}");
 
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
