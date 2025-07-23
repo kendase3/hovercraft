@@ -503,6 +503,7 @@ fn mark_animation_ready(
         animation_to_play.ready = true;
     }
     if let Ok(animation_to_play) = animations_to_play.get(trigger.entity()) {
+        // FIXME(skend): is this my problem getting me 800 animation players?
         for child in children.iter_descendants(trigger.entity()) {
             if let Ok(_) = qwiggler.get(child) {
                 commands.entity(child).insert(AnimationGraphHandle(
@@ -1329,6 +1330,7 @@ fn move_bot(
                 //}
             }
             */
+            //warn!("SKEND: i = {i}");
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
         // it's dead so it does not do the normal stuff
