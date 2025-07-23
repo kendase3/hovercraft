@@ -1177,11 +1177,13 @@ fn move_player(
             *explode_vis = Visibility::Visible;
             // then we begin the animation
             let anim = qanimation.get_mut(play.explosion.unwrap()).unwrap();
+            /*
             for (mut wiggler, marker) in qwiggler.iter_mut() {
                 if marker.0 == GNAT_EXPLODES_NAME {
                     wiggler.play(anim.index);
                 }
             }
+            */
         }
         return;
     }
@@ -1310,12 +1312,13 @@ fn move_bot(
             // the right one
             let anim = qanimation.get_mut(b_p.explosion.unwrap()).unwrap();
             let mut i = 0;
+            /*
             for (mut wiggler, parent) in qwiggler.iter_mut() {
                 if let Ok(marker) = qsceneroots.get(parent.get()) {
-                    warn!("SKEND: we found at least one parent with a marker. ideally two");
+                    //warn!("SKEND: we found at least one parent with a marker. ideally two");
                 } else {
                     // FIXME(skend): what? there are 800 animation players?
-                    warn!("SKEND: found some other animation {i}");
+                    //warn!("SKEND: found some other animation {i}");
                     i += 1;
                 }
                 // FIXME(skend): this never happens
@@ -1325,6 +1328,7 @@ fn move_bot(
                 //    wiggler.play(anim.index);
                 //}
             }
+            */
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
         // it's dead so it does not do the normal stuff
