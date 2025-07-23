@@ -62,6 +62,8 @@ const GUBBINS_PATH: &str = "models/gubbins2.glb";
 // number of tile variants for the plaidsea
 const NUM_TILES: u32 = 10;
 const BOT_LASER_INTERVAL_SECONDS: u64 = 5;
+const GNAT_EXPLODES_NAME: &str = "gnat_explodes";
+const GUBBINS_EXPLODES_NAME: &str = "gubbins_explodes";
 
 #[derive(Component, PartialEq, Debug)]
 enum PilotType {
@@ -172,6 +174,9 @@ struct NotchOffset(pub Vec3);
 
 #[derive(Component)]
 struct LargeLaser;
+
+#[derive(Component)]
+struct AnimationMarker(pub String);
 
 #[derive(Resource, Default)]
 struct LaserSound {
@@ -725,11 +730,11 @@ fn setup(
                 Name::new("laser"),
             ));
             parent
-                // TODO(skend): make a component for the explosion
                 .spawn((
                     animation_to_play2,
                     animation_scene2,
                     Visibility::Hidden,
+                    AnimationMarker(GNAT_EXPLODES_NAME.to_string()),
                 ))
                 .observe(mark_animation_ready);
         });
@@ -789,6 +794,7 @@ fn setup(
                     animation_to_play,
                     animation_scene,
                     Visibility::Hidden,
+                    AnimationMarker(GUBBINS_EXPLODES_NAME.to_string()),
                 ))
                 .observe(mark_animation_ready);
             parent.spawn((
@@ -1149,7 +1155,7 @@ fn move_player(
         &mut Visibility,
         (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
     >,
-    mut qwiggler: Query<&mut AnimationPlayer>,
+    mut qwiggler: Query<(&mut AnimationPlayer, &AnimationMarker)>,
     mut qanimation: Query<&mut AnimationToPlay>,
 ) {
     // FIXME(skend): another single_mut for player here
@@ -1171,8 +1177,10 @@ fn move_player(
             *explode_vis = Visibility::Visible;
             // then we begin the animation
             let anim = qanimation.get_mut(play.explosion.unwrap()).unwrap();
-            for mut wiggler in qwiggler.iter_mut() {
-                wiggler.play(anim.index);
+            for (mut wiggler, marker) in qwiggler.iter_mut() {
+                if marker.0 == GNAT_EXPLODES_NAME {
+                    wiggler.play(anim.index);
+                }
             }
         }
         return;
@@ -1255,7 +1263,7 @@ fn move_bot(
         (With<Player>, Without<Bot>, Without<AnimationToPlay>),
     >,
     mut qanimation: Query<&mut AnimationToPlay>,
-    mut qwiggler: Query<&mut AnimationPlayer>,
+    mut qwiggler: Query<(&mut AnimationPlayer, &AnimationMarker)>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
     mut timer: ResMut<Timer10hzForBot>,
@@ -1298,8 +1306,10 @@ fn move_bot(
             // TODO(skend): eventually i will have more than one of these and will have to look up
             // the right one
             let anim = qanimation.get_mut(b_p.explosion.unwrap()).unwrap();
-            for mut wiggler in qwiggler.iter_mut() {
-                wiggler.play(anim.index);
+            for (mut wiggler, marker) in qwiggler.iter_mut() {
+                if marker.0 == GUBBINS_EXPLODES_NAME {
+                    wiggler.play(anim.index);
+                }
             }
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
