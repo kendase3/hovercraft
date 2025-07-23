@@ -1249,28 +1249,20 @@ fn move_bot(
             // TODO(skend): give the pilot a ref to its exploding model for lookup
             // right now there's only one so we'll shortcut it.
             let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
-            // FIXME(skend): well well well. looks like i used a nice
-            // little shortcut implementing the first animation.
-            // in fact i appear to have done it twice.
-            let mut explode_t = qexplosiont.single_mut();
+            let mut explode_t =
+                qexplosiont.get_mut(b_p.explosion.unwrap()).unwrap();
             explode_t.rotation = shipt.rotation;
-            let mut explode_vis = qexplosionvis.single_mut();
+            let mut explode_vis =
+                qexplosionvis.get_mut(b_p.explosion.unwrap()).unwrap();
             *explode_vis = Visibility::Visible;
 
             // run special logic to begin the animation
             // TODO(skend): eventually i will have more than one of these and will have to look up
             // the right one
-            let anim = qanimation.single_mut();
-            //let mut wiggler = wigglers.get_mut(anim.
-            //let mut wiggler = qwiggler.single_mut();
-            //wiggler.play(anim.index).repeat();
+            let anim = qanimation.get_mut(b_p.explosion.unwrap()).unwrap();
             for mut wiggler in qwiggler.iter_mut() {
-                // what if we just blast all the animations
-                // disconcertingly, that did not work.
-                //wiggler.play(anim.index).repeat();
                 wiggler.play(anim.index);
             }
-
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
         // it's dead so it does not do the normal stuff
