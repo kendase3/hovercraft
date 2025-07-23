@@ -1131,12 +1131,50 @@ fn move_player(
     mut players: Query<(&mut Acceleration, &mut Pilot), With<Player>>,
     keys: Res<ButtonInput<KeyCode>>,
     time: Res<Time>,
+    mut qshipvis: Query<&mut Visibility, With<ShipModel>>,
+    qshipt: Query<
+        &Transform,
+        (
+            With<ShipModel>,
+            Without<AnimationToPlay>,
+            Without<Player>,
+            Without<Bot>,
+        ),
+    >,
+    mut qexplosiont: Query<
+        &mut Transform,
+        (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
+    >,
+    mut qexplosionvis: Query<
+        &mut Visibility,
+        (With<AnimationToPlay>, Without<ShipModel>, Without<Bot>),
+    >,
+    mut qwiggler: Query<&mut AnimationPlayer>,
+    mut qanimation: Query<&mut AnimationToPlay>,
 ) {
     // FIXME(skend): another single_mut for player here
     let (mut accel, mut play) = players.single_mut();
     if play.dead {
         // once the player dies they cannot control themselves
         // anymore
+        if play.just_died {
+            play.just_died = false;
+            // explosion logic here
+            let mut ship_vis = qshipvis.get_mut(play.ship.unwrap()).unwrap();
+            *ship_vis = Visibility::Hidden;
+            let shipt = qshipt.get(play.ship.unwrap()).unwrap();
+            let mut explode_t =
+                qexplosiont.get_mut(play.explosion.unwrap()).unwrap();
+            explode_t.rotation = shipt.rotation;
+            let mut explode_vis =
+                qexplosionvis.get_mut(play.explosion.unwrap()).unwrap();
+            *explode_vis = Visibility::Visible;
+            // then we begin the animation
+            let anim = qanimation.get_mut(play.explosion.unwrap()).unwrap();
+            for mut wiggler in qwiggler.iter_mut() {
+                wiggler.play(anim.index);
+            }
+        }
         return;
     }
     // FIXME(skend): complete rework
