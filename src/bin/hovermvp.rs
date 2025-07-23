@@ -98,6 +98,7 @@ struct Pilot {
     dead: bool,
     just_died: bool,
     lookup: Option<Entity>,
+    explosiont: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -395,6 +396,11 @@ fn init_laser(
     // TODO(skend): here we can reparent the laser s.t. the cannon is its parent
 
     laser_initialized.0 = true;
+}
+
+fn init_animations(
+    qanimation: Query<(Entity, &Parent), With<AnimationToPlay>>,
+) {
 }
 
 fn init_ship(
@@ -696,6 +702,7 @@ fn setup(
                 Name::new("laser"),
             ));
             parent
+                // TODO(skend): make a component for the explosion
                 .spawn((
                     animation_to_play2,
                     animation_scene2,
@@ -1219,7 +1226,7 @@ fn move_bot(
             // TODO(skend): give the pilot a ref to its exploding model for lookup
             // right now there's only one so we'll shortcut it.
             let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
-            // FIXME(skend): well, well, well. looks like i used a nice
+            // FIXME(skend): well well well. looks like i used a nice
             // little shortcut implementing the first animation.
             // in fact i appear to have done it twice.
             let mut explode_t = qexplosiont.single_mut();
