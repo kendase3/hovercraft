@@ -98,7 +98,7 @@ struct Pilot {
     dead: bool,
     just_died: bool,
     lookup: Option<Entity>,
-    explosiont: Option<Entity>,
+    explosion: Option<Entity>,
 }
 
 // is it actually fine to not have normal form
@@ -187,6 +187,9 @@ struct CannonInitialized(bool);
 #[derive(Resource, Default)]
 struct LaserInitialized(bool);
 
+#[derive(Resource, Default)]
+struct ExplosionInitialized(bool);
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
     #[uniform(0)] // same
@@ -261,6 +264,14 @@ fn need_laser_init(ci: Res<LaserInitialized>) -> bool {
     !ci.0
 }
 
+fn dont_need_explosion_init(ci: Res<ExplosionInitialized>) -> bool {
+    ci.0
+}
+
+fn need_explosion_init(ci: Res<ExplosionInitialized>) -> bool {
+    !ci.0
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -290,9 +301,14 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
+        .insert_resource(ExplosionInitialized(false))
         .add_systems(Startup, (init_plaidsea, (setup, init_targets).chain()))
         .add_systems(PreUpdate, (init_ship).run_if(need_cannon_init))
         .add_systems(PreUpdate, (init_laser).run_if(need_laser_init))
+        // TODO(skend): explicit loading state. right now the game just begins
+        // and we hope nothing happens too fast. the explosions may not be loaded
+        // by the time the player fires the laser.
+        .add_systems(PreUpdate, (init_explosions).run_if(need_explosion_init))
         .add_systems(
             Update,
             (
@@ -398,13 +414,16 @@ fn init_laser(
     laser_initialized.0 = true;
 }
 
-fn init_animations(
+fn init_explosions(
     qanimation: Query<(Entity, &Parent), With<AnimationToPlay>>,
-    qpilot: Query<&mut Pilot>,
+    mut qpilot: Query<&mut Pilot>,
+    mut explosion_initialized: ResMut<LaserInitialized>,
 ) {
     for (entity, parent) in qanimation.iter() {
-
+        let mut pilot = qpilot.get_mut(parent.get()).unwrap();
+        pilot.explosion = Some(entity);
     }
+    explosion_initialized.0 = true;
 }
 
 fn init_ship(
