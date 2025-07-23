@@ -1263,7 +1263,8 @@ fn move_bot(
         (With<Player>, Without<Bot>, Without<AnimationToPlay>),
     >,
     mut qanimation: Query<&mut AnimationToPlay>,
-    mut qwiggler: Query<(&mut AnimationPlayer, &AnimationMarker)>,
+    mut qwiggler: Query<(&mut AnimationPlayer, &Parent)>,
+    mut qsceneroots: Query<&AnimationMarker>,
     mut orbit_timer: ResMut<OrbitTimer>,
     mut orbit_cache: ResMut<OrbitCache>,
     mut timer: ResMut<Timer10hzForBot>,
@@ -1289,6 +1290,8 @@ fn move_bot(
             // run special logic like hide the default model
             // FIXME(skend): weirdly this caused a crash for me just now
             // there was no ship visibility? that doesn't make much sense to me
+            // FIXME(skend): happened twice now. i think it would be solved
+            // by having an explicit loading state.
             let mut ship_vis = qshipvis.get_mut(b_p.ship.unwrap()).unwrap();
             *ship_vis = Visibility::Hidden;
             // run special logic to reveal the exploding ship model
@@ -1306,13 +1309,21 @@ fn move_bot(
             // TODO(skend): eventually i will have more than one of these and will have to look up
             // the right one
             let anim = qanimation.get_mut(b_p.explosion.unwrap()).unwrap();
-            for (mut wiggler, marker) in qwiggler.iter_mut() {
-                // FIXME(skend): this never happens
-                warn!("SKEND: found a wiggler with a marker!");
-                if marker.0 == GUBBINS_EXPLODES_NAME {
-                    warn!("SKEND: found a wiggler that matches {}!", GUBBINS_EXPLODES_NAME);
-                    wiggler.play(anim.index);
+            let mut i = 0;
+            for (mut wiggler, parent) in qwiggler.iter_mut() {
+                if let Ok(marker) = qsceneroots.get(parent.get()) {
+                    warn!("SKEND: we found at least one parent with a marker. ideally two");
+                } else {
+                    // FIXME(skend): what? there are 800 animation players?
+                    warn!("SKEND: found some other animation {i}");
+                    i += 1;
                 }
+                // FIXME(skend): this never happens
+                //warn!("SKEND: found a wiggler with a marker!");
+                //if marker.0 == GUBBINS_EXPLODES_NAME {
+                //    warn!("SKEND: found a wiggler that matches {}!", GUBBINS_EXPLODES_NAME);
+                //    wiggler.play(anim.index);
+                //}
             }
             // run special logic to start a timer to also then mark the exploded ship invisible
         }
