@@ -497,6 +497,8 @@ fn setup(
         ..default()
     });
     // would not animations also be fun?
+    // 
+    /*
     let (graph, animation_index) =
         AnimationGraph::from_clip(asset_server.load(
             GltfAssetLabel::Animation(0).from_asset(GUBBINS_EXPLODE_PATH),
@@ -511,6 +513,7 @@ fn setup(
         asset_server
             .load(GltfAssetLabel::Scene(0).from_asset(GUBBINS_EXPLODE_PATH)),
     );
+    */
     // used later in bot
     commands.spawn(TagReady { ready: true });
     // create a tag cooldown timer
@@ -731,6 +734,7 @@ fn setup(
                 // slightly higher z axis
                 Transform::from_xyz(0.0, 0.0, 0.1),
             ));
+            /*
             parent
                 .spawn((
                     animation_to_play,
@@ -738,6 +742,7 @@ fn setup(
                     Visibility::Hidden,
                 ))
                 .observe(mark_animation_ready);
+                */
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
                 MeshMaterial3d(kewl_material.clone()),
@@ -1189,16 +1194,16 @@ fn move_bot(
             // run special logic to reveal the exploding ship model
             // TODO(skend): give the pilot a ref to its exploding model for lookup
             // right now there's only one so we'll shortcut it.
-            let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
-            let mut explode_t = qexplosiont.single_mut();
-            explode_t.rotation = shipt.rotation;
-            let mut explode_vis = qexplosionvis.single_mut();
-            *explode_vis = Visibility::Visible;
+            //let shipt = qshipt.get(b_p.ship.unwrap()).unwrap();
+            //let mut explode_t = qexplosiont.single_mut();
+            //explode_t.rotation = shipt.rotation;
+            //let mut explode_vis = qexplosionvis.single_mut();
+            //*explode_vis = Visibility::Visible;
 
             // run special logic to begin the animation
             // TODO(skend): eventually i will have more than one of these and will have to look up
             // the right one
-            let anim = qanimation.single_mut();
+            //let anim = qanimation.single_mut();
             //let mut wiggler = wigglers.get_mut(anim.
             //let mut wiggler = qwiggler.single_mut();
             //wiggler.play(anim.index).repeat();
@@ -1207,7 +1212,7 @@ fn move_bot(
                 // what if we just blast all the animations
                 // disconcertingly, that did not work.
                 //wiggler.play(anim.index).repeat();
-                wiggler.play(anim.index);
+                //wiggler.play(anim.index);
                 i+=1;
             }
             warn!("SKEND: i = {i}");
