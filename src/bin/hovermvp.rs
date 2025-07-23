@@ -1307,7 +1307,10 @@ fn move_bot(
             // the right one
             let anim = qanimation.get_mut(b_p.explosion.unwrap()).unwrap();
             for (mut wiggler, marker) in qwiggler.iter_mut() {
+                // FIXME(skend): this never happens
+                warn!("SKEND: found a wiggler with a marker!");
                 if marker.0 == GUBBINS_EXPLODES_NAME {
+                    warn!("SKEND: found a wiggler that matches {}!", GUBBINS_EXPLODES_NAME);
                     wiggler.play(anim.index);
                 }
             }
