@@ -56,6 +56,11 @@ const NOTCH_INNER_SIZE: f32 = 4.75;
 const NOTCH_TRIANGLE_RADIUS_KINDOF: f32 = 20.;
 const BOT_START_OFFSET: f32 = 50.;
 const GNAT_EXPLODE_PATH: &str = "models/gnat2explosion.glb";
+// FIXME(skend): i may have re-export this one. i think my gnat
+// explosion has like 50 players, whereas gubbins has 750.
+// I can check this by having the gnat explosion play for the bot
+// on its own branch next time I look at this. I can then iterate
+// over the players and see how high i gets. My guess is about 50.
 const GUBBINS_EXPLODE_PATH: &str = "models/gubbins2explosion.glb";
 const GNAT_PATH: &str = "models/gnat2_6.glb";
 const GUBBINS_PATH: &str = "models/gubbins2.glb";
