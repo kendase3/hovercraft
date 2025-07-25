@@ -149,6 +149,23 @@ struct TagReady {
 #[derive(Component)]
 struct ShipModel;
 
+#[derive(Component)]
+struct ExplodingModel {
+    timer: Timer,
+    duration: f32,
+    exploded: bool,
+}
+
+impl Default for ExplodingModel {
+    fn default() -> Self {
+        Self {
+            timer: Timer::from_seconds(3., TimerMode::Once),
+            duration: 3.,
+            exploded: false,
+        }
+    }
+}
+
 // we have to add this component after initial load
 // because it's a child in the glb
 // FIXME(skend): should just call cannon and ship? it's not like there's a non-model version of
@@ -610,7 +627,10 @@ fn setup(
     let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     let kewl_material = materials4.add(LaserMaterial {});
-    let explode_material = materials5.add(ExplodeMaterial {});
+    let explode_material = materials5.add(ExplodeMaterial {
+            explode_center: Vec3::ZERO,
+            explode_progress: 0.,
+    });
     commands
         .spawn((
             Pilot {
@@ -706,7 +726,7 @@ fn setup(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_ACCEL_RATE,
             ),
-        ))
+        )).insert(ExplodingModel::default())
         .with_children(|parent| {
             parent.spawn((
                 SceneRoot(
