@@ -434,14 +434,17 @@ fn init_laser(
 }
 
 fn init_ship(
-    ship_stuff: Query<(Entity, &Parent), With<ShipModel>>,
+    mut ship_stuff: Query<(Entity, &Parent, &mut ShipModel)>,
     children: Query<&Children>,
     mut pilot_query: Query<&mut Pilot>,
     q_name: Query<&Name>,
     mut commands: Commands,
     mut cannon_initialized: ResMut<CannonInitialized>,
 ) {
-    for (ship_gubbins, ship_parent) in &ship_stuff {
+    for (ship_gubbins, ship_parent, mut ship_model) in &mut ship_stuff {
+        // the parent transform information used in explosion shader
+        ship_model.parent_lookup = Some(ship_parent.get());
+
         for entity in children.iter_descendants(ship_gubbins) {
             let name = q_name.get(entity);
             if let Ok(name_success) = name {
