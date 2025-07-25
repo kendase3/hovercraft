@@ -376,9 +376,13 @@ fn explode(
         }
         exploding_model.timer.tick(time.delta());
         let progress = exploding_model.timer.fraction(); // 0. to 1.
+        // FIXME(skend): almost certainly can avoid this clone
         if let Some(our_material) = exploding_model.material.clone() {
         if let Some(material) = materials.get_mut(&our_material) {
             material.explode_progress = progress;
+            if exploding_model.timer.finished() {
+                exploding_model.exploded = true;
+            }
         }
         }
     }
