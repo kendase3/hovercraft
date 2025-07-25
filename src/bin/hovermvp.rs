@@ -154,7 +154,7 @@ struct ExplodingModel {
     timer: Timer,
     duration: f32,
     exploded: bool,
-    material: Option<Handle<ExplodeMaterial>>
+    material: Option<Handle<ExplodeMaterial>>,
 }
 
 impl Default for ExplodingModel {
@@ -379,14 +379,14 @@ fn explode(
         let progress = exploding_model.timer.fraction(); // 0. to 1.
         // FIXME(skend): almost certainly can avoid this clone
         if let Some(our_material) = exploding_model.material.clone() {
-        if let Some(material) = materials.get_mut(&our_material) {
-            warn!("setting progress to {progress}");
-            material.explode_progress = progress;
-            if exploding_model.timer.finished() {
-                warn!("finished explosion");
-                exploding_model.exploded = true;
+            if let Some(material) = materials.get_mut(&our_material) {
+                warn!("setting progress to {progress}");
+                material.explode_progress = progress;
+                if exploding_model.timer.finished() {
+                    warn!("finished explosion");
+                    exploding_model.exploded = true;
+                }
             }
-        }
         }
     }
 }
@@ -631,8 +631,8 @@ fn setup(
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     let kewl_material = materials4.add(LaserMaterial {});
     let explode_material = materials5.add(ExplodeMaterial {
-            explode_center: Vec3::ZERO,
-            explode_progress: 0.,
+        explode_center: Vec3::ZERO,
+        explode_progress: 0.,
     });
     let mut exploding_model = ExplodingModel::default();
     exploding_model.material = Some(explode_material);
@@ -731,24 +731,24 @@ fn setup(
                 Vec3::new(0., 0., 0.),
                 physics::BOT_ACCEL_RATE,
             ),
-        )).insert(ExplodingModel::default())
+        ))
         .with_children(|parent| {
-            parent.spawn((
-                SceneRoot(
-                    asset_server.load(
+            parent
+                .spawn((
+                    SceneRoot(asset_server.load(
                         GltfAssetLabel::Scene(0).from_asset(GUBBINS_PATH),
-                    ),
-                ),
-                // NB(skend): notably does nothing
-                Transform {
-                    translation: Vec3::new(0., 0., 0.),
-                    rotation: Quat::default(),
-                    scale: Vec3::new(1.0, 1.0, 1.0),
-                },
-                Visibility::Visible,
-                Facing,
-                ShipModel,
-            ));
+                    )),
+                    // NB(skend): notably does nothing
+                    Transform {
+                        translation: Vec3::new(0., 0., 0.),
+                        rotation: Quat::default(),
+                        scale: Vec3::new(1.0, 1.0, 1.0),
+                    },
+                    Visibility::Visible,
+                    Facing,
+                    ShipModel,
+                ))
+                .insert(ExplodingModel::default());
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
