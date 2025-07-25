@@ -391,6 +391,8 @@ fn explode(
                     // get an updated value for the ship's location
                     // which is our parent's transform
                     material.explode_center = pilot_position;
+                    // this gave expected output
+                    //warn!("our center for the shader is {pilot_position}");
                     if exploding_model.timer.finished() {
                         warn!("finished explosion");
                         exploding_model.exploded = true;
