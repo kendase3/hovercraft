@@ -108,13 +108,6 @@ struct Player;
 #[derive(Component)]
 struct Bot;
 
-// for faster lookups. may not need depending on query setup
-#[derive(Component)]
-struct PlayerSub;
-
-#[derive(Component)]
-struct BotSub;
-
 // a dude is the union between a player and a bot
 // a player-like entity
 #[derive(Component)]
@@ -426,11 +419,6 @@ fn init_ship(
                         entity_commands.insert(Craft(ship_gubbins));
                         if let Ok(pilot) = pilot_query.get(ship_parent.get()) {
                             // then the ship's parent is a player
-                            if pilot.pilottype == PilotType::Player {
-                                entity_commands.insert(PlayerSub {});
-                            } else if pilot.pilottype == PilotType::Bot {
-                                entity_commands.insert(BotSub {});
-                            }
                             cannon_initialized.0 = true;
                         }
                     }
@@ -640,7 +628,6 @@ fn setup(
                 Visibility::Visible,
                 Facing,
                 ShipModel,
-                PlayerSub,
             ));
             parent.spawn((
                 Text2d::new("@"),
