@@ -642,7 +642,7 @@ fn setup(
         meshes.add(Annulus::new(NOTCH_INNER_SIZE, NOTCH_OUTER_SIZE));
     let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
-    let kewl_material = materials4.add(LaserMaterial {});
+    let laser_material = materials4.add(LaserMaterial {});
     let explode_material = materials5.add(ExplodeMaterial {
         explode_center: Vec3::ZERO,
         explode_progress: 0.,
@@ -716,7 +716,7 @@ fn setup(
             // See extreme bevy's loading state as an example
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
-                MeshMaterial3d(kewl_material.clone()),
+                MeshMaterial3d(laser_material.clone()),
                 Visibility::Hidden,
                 LargeLaser,
                 Name::new("laser"),
@@ -784,7 +784,7 @@ fn setup(
                 .observe(mark_animation_ready);
             parent.spawn((
                 Mesh3d(meshes.add(laser_mesh)),
-                MeshMaterial3d(kewl_material.clone()),
+                MeshMaterial3d(laser_material.clone()),
                 Visibility::Hidden,
                 LargeLaser,
                 Name::new("laser"),
