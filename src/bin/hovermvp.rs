@@ -146,8 +146,10 @@ struct TagReady {
 }
 
 // the glb asset itself
-#[derive(Component)]
-struct ShipModel;
+#[derive(Component, Default)]
+struct ShipModel {
+    parent_lookup: Option<Entity>,
+}
 
 #[derive(Component)]
 struct ExplodingModel {
@@ -376,12 +378,17 @@ fn explode(
         }
         exploding_model.timer.tick(time.delta());
         let progress = exploding_model.timer.fraction(); // 0. to 1.
-        // FIXME(skend): almost certainly can avoid this clone
+        // this clone kind of fine since it's just a pointer anyway
+        // but could fix up
         if let Some(our_material) = exploding_model.material.clone() {
             if exploding_model.material.is_some() {
                 if let Some(material) = materials.get_mut(&our_material) {
                     warn!("setting progress to {progress}");
                     material.explode_progress = progress;
+                    // FIXME(skend): it's important the material center
+                    // get an updated value for the ship's location
+                    // which is our parent's transform
+                    //material.explode_center =
                     if exploding_model.timer.finished() {
                         warn!("finished explosion");
                         exploding_model.exploded = true;
@@ -670,7 +677,7 @@ fn setup(
                 },
                 Visibility::Visible,
                 Facing,
-                ShipModel,
+                ShipModel::default(),
             ));
             parent.spawn((
                 Text2d::new("@"),
@@ -734,23 +741,24 @@ fn setup(
             ),
         ))
         .with_children(|parent| {
-            parent
-                .spawn((
-                    SceneRoot(asset_server.load(
+            parent.spawn((
+                SceneRoot(
+                    asset_server.load(
                         GltfAssetLabel::Scene(0).from_asset(GUBBINS_PATH),
-                    )),
-                    // NB(skend): notably does nothing
-                    Transform {
-                        translation: Vec3::new(0., 0., 0.),
-                        rotation: Quat::default(),
-                        scale: Vec3::new(1.0, 1.0, 1.0),
-                    },
-                    Visibility::Visible,
-                    Facing,
-                    ShipModel,
-                    MeshMaterial3d(explode_material.clone()),
-                ))
-                .insert(exploding_model);
+                    ),
+                ),
+                // NB(skend): notably does nothing
+                Transform {
+                    translation: Vec3::new(0., 0., 0.),
+                    rotation: Quat::default(),
+                    scale: Vec3::new(1.0, 1.0, 1.0),
+                },
+                Visibility::Visible,
+                Facing,
+                ShipModel::default(),
+                MeshMaterial3d(explode_material.clone()),
+                exploding_model,
+            ));
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
