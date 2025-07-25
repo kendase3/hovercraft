@@ -368,11 +368,13 @@ fn main() {
 }
 
 fn explode(
-    time: Res<Time>,
-    mut query: Query<&mut ExplodingModel>,
+    mut qexplodemodel: Query<(&mut ExplodingModel, &ShipModel)>,
+    qpilot_transform: Query<&Transform, With<Pilot>>,
     mut materials: ResMut<Assets<ExplodeMaterial>>,
+    time: Res<Time>,
 ) {
-    for mut exploding_model in query.iter_mut() {
+    for (mut exploding_model, ship_model) in qexplodemodel.iter_mut() {
+        let pilot_position = qpilot_transform.get(ship_model.parent_lookup.unwrap()).unwrap().translation;
         if exploding_model.exploded {
             continue;
         }
@@ -388,7 +390,7 @@ fn explode(
                     // FIXME(skend): it's important the material center
                     // get an updated value for the ship's location
                     // which is our parent's transform
-                    //material.explode_center =
+                    material.explode_center = pilot_position;
                     if exploding_model.timer.finished() {
                         warn!("finished explosion");
                         exploding_model.exploded = true;
