@@ -208,6 +208,15 @@ impl Material for LaserMaterial {
     //}
 }
 
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct ExplodeMaterial {}
+
+impl Material for ExplodeMaterial {
+    fn vertex_shader() -> ShaderRef {
+        "shaders/explode.wgsl".into()
+    }
+}
+
 // rather than perpetually compute the destination, we'll cache it and only check a few times a
 // second
 #[derive(Resource, Default)]
@@ -277,6 +286,7 @@ fn main() {
         )
         .add_plugins(Material2dPlugin::<TargetMaterial>::default())
         .add_plugins(MaterialPlugin::<LaserMaterial>::default())
+        .add_plugins(MaterialPlugin::<ExplodeMaterial>::default())
         //.add_plugins(FrameTimeDiagnosticsPlugin::default())
         //.add_plugins(LogDiagnosticsPlugin::default())
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
@@ -475,6 +485,7 @@ fn setup(
     // will likely use soon
     //mut materials3: ResMut<Assets<StandardMaterial>>,
     mut materials4: ResMut<Assets<LaserMaterial>>,
+    mut materials5: ResMut<Assets<ExplodeMaterial>>,
     asset_server: Res<AssetServer>,
     mut graphs: ResMut<Assets<AnimationGraph>>,
 ) {
@@ -594,6 +605,7 @@ fn setup(
     let laser_mesh = Cuboid::new(1.0, 1.0, 1.0);
     let notch_offset = Vec3::new(NOTCH_OUTER_SIZE, 0., 0.);
     let kewl_material = materials4.add(LaserMaterial {});
+    let explode_material = materials5.add(ExplodeMaterial {});
     commands
         .spawn((
             Pilot {
