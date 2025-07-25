@@ -227,7 +227,7 @@ impl Material for LaserMaterial {
     //}
 }
 
-#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+#[derive(Asset, TypePath, AsBindGroup, Debug, Copy, Clone)]
 pub struct ExplodeMaterial {
     #[uniform(0)]
     explode_center: Vec3,
@@ -367,21 +367,21 @@ fn main() {
 
 fn explode(
     time: Res<Time>,
-//    mut query: Query<(&mut ExplodingModel, &mut Handle<ExplodeMaterial>)>,
+    mut query: Query<&mut ExplodingModel>,
     mut materials: ResMut<Assets<ExplodeMaterial>>,
 ) {
-    /*
-    for (mut exploding_model, explode_material) in query.iter_mut() {
+    for mut exploding_model in query.iter_mut() {
         if exploding_model.exploded {
             continue;
         }
         exploding_model.timer.tick(time.delta());
         let progress = exploding_model.timer.fraction(); // 0. to 1.
-        //if let Some(material) = materials.single_mut() {
-        //    material.explosion_progress = progress;
-        //}
+        if let Some(our_material) = exploding_model.material.clone() {
+        if let Some(material) = materials.get_mut(&our_material) {
+            material.explode_progress = progress;
+        }
+        }
     }
-    */
 }
 
 fn init_laser(
