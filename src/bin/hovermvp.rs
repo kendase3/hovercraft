@@ -326,6 +326,7 @@ fn main() {
                 handle_tag,
                 camera_follow,
                 handle_target,
+                explode,
             ),
         )
         .add_systems(Update, (aim_cannon).run_if(dont_need_cannon_init))
@@ -362,31 +363,10 @@ fn main() {
         .run();
 }
 
-// FIXME(skend): doesn't do anything yet
-// run at startup when it's ready
-//
-/*
-fn init_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let font = asset_server.load("fonts/DejaVuSansMono.ttf");
-    let text_font = TextFont {
-        font: font.clone(),
-        font_size: 100.0,
-        ..default()
-    };
-    commands.spawn((
-        Text2d::new("warp destinations"),
-        text_font,
-        TextColor(Color::srgb(0., 1., 1.)),
-        Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.2)),
-        Node {
-            position_type: PositionType::Absolute,
-            top: Val::Px(20.),
-            right: Val::Px(20.),
-            ..default()
-        },
-    ));
+fn explode(
+
+) {
 }
-*/
 
 fn init_laser(
     qlaserstuff: Query<(Entity, &Parent), With<LargeLaser>>,
