@@ -368,6 +368,13 @@ fn explode(
     mut query: Query<&mut ExplodingModel>,
     mut materials: ResMut<Assets<ExplodeMaterial>>,
 ) {
+    for mut exploding_model in query.iter_mut() {
+        if exploding_model.exploded {
+            continue;
+        }
+        exploding_model.timer.tick(time.delta());
+        let progress = exploding_model.timer.fraction(); // 0. to 1.
+    }
 }
 
 fn init_laser(
