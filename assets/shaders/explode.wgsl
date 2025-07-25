@@ -6,14 +6,13 @@
     forward_io::VertexOutput,
 }
 
-struct ExplosionMaterial {
-    color: vec4<f32>,
-    explosion_center: vec3<f32>,
-    explosion_progress: f32,
+struct ExplodeMaterial {
+    explode_center: vec3<f32>,
+    explode_progress: f32,
 }
 
 @group(2) @binding(0)
-var<uniform> material: ExplosionMaterial;
+var<uniform> material: ExplodeMaterial;
 
 @vertex(in: VertexInput) -> VertexOutput {
     var out: VertexOutput;
