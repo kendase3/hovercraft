@@ -364,7 +364,9 @@ fn main() {
 }
 
 fn explode(
-
+    time: Res<Time>,
+    mut query: Query<&mut ExplodingModel>,
+    mut materials: ResMut<Assets<ExplodeMaterial>>,
 ) {
 }
 
