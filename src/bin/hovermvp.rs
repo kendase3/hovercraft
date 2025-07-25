@@ -371,7 +371,6 @@ fn explode(
     mut materials: ResMut<Assets<ExplodeMaterial>>,
 ) {
     for mut exploding_model in query.iter_mut() {
-        warn!("iterating over exploding model");
         if exploding_model.exploded {
             continue;
         }
@@ -379,6 +378,10 @@ fn explode(
         let progress = exploding_model.timer.fraction(); // 0. to 1.
         // FIXME(skend): almost certainly can avoid this clone
         if let Some(our_material) = exploding_model.material.clone() {
+        if exploding_model.material.is_some() {
+            // FIXME(skend): we never get here
+            warn!("passed first some check");
+            /*
             if let Some(material) = materials.get_mut(&our_material) {
                 warn!("setting progress to {progress}");
                 material.explode_progress = progress;
@@ -386,6 +389,7 @@ fn explode(
                     warn!("finished explosion");
                     exploding_model.exploded = true;
                 }
+            */
             }
         }
     }
@@ -748,7 +752,7 @@ fn setup(
                     Facing,
                     ShipModel,
                 ))
-                .insert(ExplodingModel::default());
+                .insert(exploding_model);
             parent.spawn((
                 Mesh2d(bot_target),
                 Name::new("Bot Target"),
