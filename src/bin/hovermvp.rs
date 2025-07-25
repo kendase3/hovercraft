@@ -200,6 +200,9 @@ struct CannonInitialized(bool);
 #[derive(Resource, Default)]
 struct LaserInitialized(bool);
 
+#[derive(Resource, Default)]
+struct ExplodeInitialized(bool);
+
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct TargetMaterial {
     #[uniform(0)] // same
@@ -288,6 +291,14 @@ fn need_laser_init(ci: Res<LaserInitialized>) -> bool {
     !ci.0
 }
 
+fn dont_need_explode_init(ci: Res<ExplodeInitialized>) -> bool {
+    ci.0
+}
+
+fn need_explode_init(ci: Res<ExplodeInitialized>) -> bool {
+    !ci.0
+}
+
 fn main() {
     App::new()
         .add_plugins(
@@ -318,6 +329,7 @@ fn main() {
         .insert_resource(ClearColor(Color::srgb(0.53, 0.53, 0.53)))
         .insert_resource(CannonInitialized(false))
         .insert_resource(LaserInitialized(false))
+        .insert_resource(ExplodeInitialized(false))
         .add_systems(Startup, (init_plaidsea, (setup, init_targets).chain()))
         .add_systems(PreUpdate, (init_ship).run_if(need_cannon_init))
         .add_systems(PreUpdate, (init_laser).run_if(need_laser_init))
@@ -374,7 +386,10 @@ fn explode(
     time: Res<Time>,
 ) {
     for (mut exploding_model, ship_model) in qexplodemodel.iter_mut() {
-        let pilot_position = qpilot_transform.get(ship_model.parent_lookup.unwrap()).unwrap().translation;
+        let pilot_position = qpilot_transform
+            .get(ship_model.parent_lookup.unwrap())
+            .unwrap()
+            .translation;
         if exploding_model.exploded {
             continue;
         }
@@ -484,6 +499,9 @@ fn init_ship(
         }
     }
 }
+
+fn init_explode() {}
+
 // temp
 #[derive(Component)]
 struct AnimationToPlay {
