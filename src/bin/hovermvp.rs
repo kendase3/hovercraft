@@ -209,7 +209,12 @@ impl Material for LaserMaterial {
 }
 
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
-pub struct ExplodeMaterial {}
+pub struct ExplodeMaterial {
+    #[uniform(0)]
+    explode_center: Vec3,
+    #[uniform(1)]
+    explode_progress: f32,
+}
 
 impl Material for ExplodeMaterial {
     fn vertex_shader() -> ShaderRef {
