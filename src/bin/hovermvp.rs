@@ -154,6 +154,7 @@ struct ExplodingModel {
     timer: Timer,
     duration: f32,
     exploded: bool,
+    material: Option<Handle<ExplodeMaterial>>
 }
 
 impl Default for ExplodingModel {
@@ -162,6 +163,7 @@ impl Default for ExplodingModel {
             timer: Timer::from_seconds(3., TimerMode::Once),
             duration: 3.,
             exploded: false,
+            material: None,
         }
     }
 }
@@ -365,16 +367,21 @@ fn main() {
 
 fn explode(
     time: Res<Time>,
-    mut query: Query<&mut ExplodingModel>,
+//    mut query: Query<(&mut ExplodingModel, &mut Handle<ExplodeMaterial>)>,
     mut materials: ResMut<Assets<ExplodeMaterial>>,
 ) {
-    for mut exploding_model in query.iter_mut() {
+    /*
+    for (mut exploding_model, explode_material) in query.iter_mut() {
         if exploding_model.exploded {
             continue;
         }
         exploding_model.timer.tick(time.delta());
         let progress = exploding_model.timer.fraction(); // 0. to 1.
+        //if let Some(material) = materials.single_mut() {
+        //    material.explosion_progress = progress;
+        //}
     }
+    */
 }
 
 fn init_laser(
@@ -620,6 +627,8 @@ fn setup(
             explode_center: Vec3::ZERO,
             explode_progress: 0.,
     });
+    let mut exploding_model = ExplodingModel::default();
+    exploding_model.material = Some(explode_material);
     commands
         .spawn((
             Pilot {
