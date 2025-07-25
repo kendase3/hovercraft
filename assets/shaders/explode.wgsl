@@ -11,7 +11,7 @@ struct ExplodeMaterial {
     explode_progress: f32,
 }
 
-@group(2) @binding(0)
+@group(0) @binding(0)
 var<uniform> material: ExplodeMaterial;
 
 @vertex(in: VertexInput) -> VertexOutput {
