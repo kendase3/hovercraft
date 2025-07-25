@@ -378,18 +378,15 @@ fn explode(
         let progress = exploding_model.timer.fraction(); // 0. to 1.
         // FIXME(skend): almost certainly can avoid this clone
         if let Some(our_material) = exploding_model.material.clone() {
-        if exploding_model.material.is_some() {
-            // FIXME(skend): we never get here
-            warn!("passed first some check");
-            /*
-            if let Some(material) = materials.get_mut(&our_material) {
-                warn!("setting progress to {progress}");
-                material.explode_progress = progress;
-                if exploding_model.timer.finished() {
-                    warn!("finished explosion");
-                    exploding_model.exploded = true;
+            if exploding_model.material.is_some() {
+                if let Some(material) = materials.get_mut(&our_material) {
+                    warn!("setting progress to {progress}");
+                    material.explode_progress = progress;
+                    if exploding_model.timer.finished() {
+                        warn!("finished explosion");
+                        exploding_model.exploded = true;
+                    }
                 }
-            */
             }
         }
     }
@@ -639,7 +636,7 @@ fn setup(
         explode_progress: 0.,
     });
     let mut exploding_model = ExplodingModel::default();
-    exploding_model.material = Some(explode_material);
+    exploding_model.material = Some(explode_material.clone());
     commands
         .spawn((
             Pilot {
@@ -751,6 +748,7 @@ fn setup(
                     Visibility::Visible,
                     Facing,
                     ShipModel,
+                    MeshMaterial3d(explode_material.clone()),
                 ))
                 .insert(exploding_model);
             parent.spawn((
