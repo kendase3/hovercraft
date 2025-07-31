@@ -331,7 +331,7 @@ fn main() {
         .insert_resource(LaserInitialized(false))
         .insert_resource(ExplodeInitialized(false))
         .add_systems(Startup, (init_plaidsea, (setup, init_targets).chain()))
-        .add_systems(PreUpdate, (init_ship).run_if(need_cannon_init))
+        .add_systems(PreUpdate, (init_ship, init_explode).chain().run_if(need_cannon_init))
         .add_systems(PreUpdate, (init_laser).run_if(need_laser_init))
         .add_systems(
             Update,
@@ -508,7 +508,15 @@ pub struct GlbScene(pub Handle<Scene>);
 fn init_explode(
     mut materials: ResMut<Assets<ExplodeMaterial>>,
     mut qchildren: Query<(&Children, &ExplodingModel, &ShipModel)>,
-) {}
+    mut qmaterial: Query<&mut Handle<StandardMaterial>, With<Handle<Mesh>>>,
+) {
+    for (child, exploder, ship) in qchildren.iter() {
+        warn!("got a match!");
+        // FIXME(skend): format this lookup correctly
+        if let Some(cur_material) = qmaterial.get(child) {
+        }
+    }
+}
 
 // temp
 #[derive(Component)]
