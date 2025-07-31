@@ -500,7 +500,15 @@ fn init_ship(
     }
 }
 
-fn init_explode() {}
+#[derive(Resource)]
+pub struct GlbScene(pub Handle<Scene>);
+
+// TODO(skend): walk all the children of the exploding model
+// and apply the material
+fn init_explode(
+    mut materials: ResMut<Assets<ExplodeMaterial>>,
+    mut qchildren: Query<(&Children, &ExplodingModel, &ShipModel)>,
+) {}
 
 // temp
 #[derive(Component)]
