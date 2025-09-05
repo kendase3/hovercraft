@@ -32,6 +32,10 @@ cargo install wasm-server-runner
 cargo run
 ```
 
+### Common Issues
+
+You may get an issue stating there's a version mismatch of wasm-bindgen. Deleting the `Cargo.lock` file resolved the issue for me.
+
 ## License
 
 Apache 2.0; see [`LICENSE`](LICENSE) for details.
