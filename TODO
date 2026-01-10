@@ -1,5 +1,7 @@
 --- plan ---
 
+i've now reset the project to be a central project for a few different rust/bevy game ideas i'd been working on. i set aside the idea of targeting wasm for now, though the proof of concept worked well enough. i'm convinced i could add it back in as a target later but for now it just adds complexity when i haven't finished a game mvp yet. so native only for all these little game demo ideas for now.
+
 i want to at least look into training AI via reinforcement learning how to play my 1v1 game. it seems like tch-rs binds the C++ bindings from pytorch into rust. so i would just have to find a way for my game to run headless. or maybe i should have the AI actually read screen renders?  i don't know enough about it yet.
 
 https://bevy.org/examples/animation/animated-mesh/

@@ -1,8 +1,8 @@
 # hovercraft
 
-a vector-based 2d vehicle combat game
+a collection of small game ideas in rust and bevy
 
-## Goals
+## Goals for 'main' game MVP
 
 - create a series of 1v1 battles with AI opponents with different loadouts
 - model architecture on https://johanhelsing.studio/posts/extreme-bevy
@@ -27,14 +27,8 @@ Please read before proceeding to [Getting Started](#getting-started)
 ### Build and Run
 
 ```
-rustup target add wasm32-unknown-unknown
-cargo install wasm-server-runner
 cargo run
 ```
-
-### Common Issues
-
-You may get an issue stating there's a version mismatch of wasm-bindgen. Deleting the `Cargo.lock` file resolved the issue for me.
 
 ## License
 
@@ -59,12 +53,3 @@ https://github.com/rust-windowing/winit/issues/3603#issuecomment-2204376719
 ## Work in Progress
 
 Note that this game is currently just a lil' demo. But game coming soon!
-
-### Janky Features
-
-`cargo run` will run on a local port you can visit in your browser
-
-`cargo run --target x86_64-unknown-linux-gnu` is not supported yet, but will run natively rather than on web
-
-### Small demo game
-To run a small demo game, run `cargo run --bin smol`.
