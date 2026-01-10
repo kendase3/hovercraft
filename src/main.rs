@@ -14,6 +14,8 @@ const FONT_SIZE: f32 = 10.;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .insert_resource(Time::<Fixed>::from_hz(60.))
+        .add_systems(FixedUpdate, iterate_world)
         .add_systems(Startup, setup)
         .add_systems(Update, handle_input)
         .run();
@@ -51,7 +53,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     ));
 }
 
-fn handle_input(keys: Res<ButtonInput<KeyCode>>, mut exit: MessageWriter<AppExit>) {
+fn iterate_world() {}
+
+fn handle_input(
+    keys: Res<ButtonInput<KeyCode>>,
+    mut exit: MessageWriter<AppExit>,
+) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.write(AppExit::Success);
     }
