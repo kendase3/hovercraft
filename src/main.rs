@@ -21,7 +21,7 @@ fn main() {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // TODO(skend): first how about displaying any ttf
-    let font = asset_server.load("fonts/NotoSansMono.ttf");
+    let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
         font: font.clone(),
         font_size: FONT_SIZE * 10.,
