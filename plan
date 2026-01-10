@@ -1,5 +1,15 @@
 --- plan ---
 
+maybe a good initial rehack mvp would be one static dungeon level; you win when you get to the end. your character has inventory like potions and all the basic inventory management works. when you get to stairs down it flashes 'you win!'
+
+maybe it would be funny to make all my 'games' little demos that end in 'you win!'
+- hovercraft itself
+- rehack
+- the hex rpg one
+- the idtech one
+
+once i have really crude versions of those four i can get feedback and proceed with the most promising one.
+
 i've now reset the project to be a central project for a few different rust/bevy game ideas i'd been working on. i set aside the idea of targeting wasm for now, though the proof of concept worked well enough. i'm convinced i could add it back in as a target later but for now it just adds complexity when i haven't finished a game mvp yet. so native only for all these little game demo ideas for now.
 
 i want to at least look into training AI via reinforcement learning how to play my 1v1 game. it seems like tch-rs binds the C++ bindings from pytorch into rust. so i would just have to find a way for my game to run headless. or maybe i should have the AI actually read screen renders?  i don't know enough about it yet.
