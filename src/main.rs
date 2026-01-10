@@ -11,6 +11,33 @@ const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // height of the largest letter
 const FONT_SIZE: f32 = 10.;
 
+#[derive(Resource)]
+pub struct Mapp {
+    pub width: usize,
+    pub height: usize,
+    pub cells: Vec<TileType>,
+}
+
+#[derive(Default, Copy, Clone, PartialEq)]
+pub enum TileType {
+    #[default]
+    Wall,
+    Empty,
+}
+
+impl Mapp {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            width,
+            height,
+            cells: vec![TileType::Wall; width * height],
+        }
+    }
+    pub fn at(&self, x: usize, y: usize) -> usize {
+        y * self.width + x
+    }
+}
+
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
