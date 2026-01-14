@@ -1,5 +1,7 @@
 --- plan ---
 
+for starters, how about a map is 3x3 with the player in the center.
+
 for this rehack project, need to ascertain how big a cell is. we can just start by saying it's 1/10th of the screen height
 
 maybe a good initial rehack mvp would be one static dungeon level; you win when you get to the end. your character has inventory like potions and all the basic inventory management works. when you get to stairs down it flashes 'you win!'
