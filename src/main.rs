@@ -48,7 +48,12 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
     // TODO(skend): first how about displaying any ttf
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     let text_font = TextFont {
@@ -78,6 +83,15 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         // NB(skend): needed to make font look prettier
         Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.1)),
     ));
+    // TODO(skend): make a square behind the text, both because we will use background colors
+    // and as a way to find out what font size is correct for our cell size
+    let rect =
+        Rectangle::new(0.1 * CAMERA_DEFAULT_SIZE, 0.1 * CAMERA_DEFAULT_SIZE);
+    let rectmesh = meshes.add(rect);
+    commands.spawn((
+        Mesh2d(rectmesh),
+        MeshMaterial2d(materials.add(Color::srgb(255., 255., 0.))),
+    ));
 }
 
 fn iterate_world() {}
@@ -89,4 +103,5 @@ fn handle_input(
     if keys.just_pressed(KeyCode::Escape) {
         exit.write(AppExit::Success);
     }
+    if keys.just_pressed(KeyCode::KeyW) {}
 }
