@@ -1,0 +1,17 @@
+# room 0
+[[room]]
+id = "field"
+name = "Open Field"
+description = "A wide field of tall grass with the horizon nearly visible in all directions. To the east you see a small hill."
+start = true
+    [room.connections]
+    east = "hill"
+
+# room 1
+[[room]]
+id = "hill"
+name = "Hillside"
+description = "As you approach the hillside you notice a rather traditional large wooden door. Perplexingly it is slightly concave and at an angle, perfectly matching the hillside behind it. You see its handle is a dark brass."
+exit = true
+    [room.connections]
+    west = "field"

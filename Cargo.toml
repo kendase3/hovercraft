@@ -7,5 +7,10 @@ edition = "2024"
 opt-level = 2
 
 [dependencies]
-bevy = "0.17"
-rand = "0.9.2"
+bevy = "0.18"
+rand = "0.10.0"
+toml = "1.0.1"
+serde = { version = "1.0.228", features = ["derive"] }
+
+[lints.rust]
+warnings = "allow"
