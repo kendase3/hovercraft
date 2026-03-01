@@ -191,7 +191,7 @@ fn setup(
     let mut roomlist: RoomList = toml::from_str(&contents).unwrap();
     let mut world = World::default();
     for room in roomlist.rooms.iter_mut() {
-        //println!("room id is {}, room name is {}, room description is {}, player start is {}", room.id, room.name, room.description, room.start);
+        println!("room id is {}, room name is {}, room description is {}, player start is {}", room.id, room.name, room.description, room.start);
         world.rooms.insert(room.id.clone(), room.clone());
     }
     // find the player start and save it to state
