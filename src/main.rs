@@ -20,6 +20,7 @@ use std::collections::HashMap;
 use std::{fs, io};
 
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
+const FAUXPIXELS_PER_CHAR_WIDTH: f32 = 8.14;
 // height of the largest letter
 const FONT_SIZE: f32 = 10.; // what this means is the font will be 10 percent of the screen currently
 
@@ -54,6 +55,11 @@ struct World {
 #[derive(Component, Default)]
 struct BlitState {
     is_dirty: bool,
+}
+
+#[derive(Component, Default)]
+struct ScreenState {
+    aspect_ratio: f32,
 }
 
 #[derive(Resource)]
@@ -186,6 +192,7 @@ fn setup(
     ));
     let w = windowq.single().unwrap();
     let aspect_ratio = w.width() / w.height();
+    commands.spawn((ScreenState { aspect_ratio }));
     let minotaur_assets = MinotaurAssets {
         standard_font: font,
     };
@@ -222,11 +229,24 @@ fn update(
     mut commands: Commands,
     minotaur_assets: Res<MinotaurAssets>,
     mut blitq: Query<&mut BlitState>,
+    mut screenq: Query<&mut ScreenState>,
     compq: Query<(&Text, &ComputedNode), Changed<ComputedNode>>,
 ) {
     for (text, cn) in &compq {
         println!("text {} is {} pixels wide", text.0, cn.size.x);
     }
+    let mut screenstate = screenq.single_mut().unwrap();
+    println!("the screen is {} faux-pixels tall and {} faux-pixels wide", CAMERA_DEFAULT_SIZE, CAMERA_DEFAULT_SIZE * screenstate.aspect_ratio);
+    // even though we've shown the text will autowrap
+    // we should manually split up the lines ourselves.
+    // how do we know how many of our faux-pixels wide our text is?
+    // guess and check?
+    let description = "darkness was cheap and scrooge liked it";
+    // we fit 21 characters there
+    // the screen is 171 faux-pixels wide
+    // each character is 8.14 faux-pixels
+    // so now we want a utility function that will turn one string into an array of strings that
+    // will fit within the current screen width. then we can append them to the circular buffer.
 
     let mut blitstate = blitq.single_mut().unwrap();
     if blitstate.is_dirty {
@@ -238,7 +258,7 @@ fn update(
         // i really just need to write content in update not setup.
         // it is silly to write a lot of logic in setup about writing
         write_to_line(
-            "darkness was cheap and scrooge liked it".to_string(),
+            description.to_string(),
             0,
             &w,
             commands,
