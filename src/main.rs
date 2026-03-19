@@ -135,11 +135,19 @@ fn main() {
         .run();
 }
 
-fn chunkify_strings(input: String) -> Vec<String> {
+fn chunkify_strings(input: String, aspect_ratio: f32) -> Vec<String> {
+    // first we need to find the number of characters each line can be
+    // each character is 8.14 faux-pixels
+    let camera_width = CAMERA_DEFAULT_SIZE * aspect_ratio;
+    let char_width = (camera_width / FAUXPIXELS_PER_CHAR_WIDTH) as usize;
+
     let chars: Vec<char> = input.chars().collect();
     // FIXME(skend): pass in screen length in chars or
     // compute it based on aspect ratio here
-    chars.chunks(5).map(|line| line.iter().collect::<String>()).collect()
+    chars
+        .chunks(char_width)
+        .map(|line| line.iter().collect::<String>())
+        .collect()
 }
 
 fn buffer_to_monostring(buffer: Vec<String>) -> String {
@@ -216,7 +224,10 @@ fn setup(
     // NB(skend): make a square behind the text, both because we will use background colors
     // and as a way to find out what font size is correct for our cell size
     // exactly fill the screen
-    let background_rect = Rectangle::new(CAMERA_DEFAULT_SIZE * aspect_ratio, CAMERA_DEFAULT_SIZE);
+    let background_rect = Rectangle::new(
+        CAMERA_DEFAULT_SIZE * aspect_ratio,
+        CAMERA_DEFAULT_SIZE,
+    );
     let rectmesh = meshes.add(background_rect);
     commands.spawn((
         Mesh2d(rectmesh),
@@ -229,7 +240,10 @@ fn setup(
     let mut roomlist: RoomList = toml::from_str(&contents).unwrap();
     let mut world = World::default();
     for room in roomlist.rooms.iter_mut() {
-        println!("room id is {}, room name is {}, room description is {}, player start is {}", room.id, room.name, room.description, room.start);
+        println!(
+            "room id is {}, room name is {}, room description is {}, player start is {}",
+            room.id, room.name, room.description, room.start
+        );
         world.rooms.insert(room.id.clone(), room.clone());
     }
     // find the player start and save it to state
@@ -253,7 +267,11 @@ fn update(
         println!("text {} is {} pixels wide", text.0, cn.size.x);
     }
     let mut screenstate = screenq.single_mut().unwrap();
-    println!("the screen is {} faux-pixels tall and {} faux-pixels wide", CAMERA_DEFAULT_SIZE, CAMERA_DEFAULT_SIZE * screenstate.aspect_ratio);
+    println!(
+        "the screen is {} faux-pixels tall and {} faux-pixels wide",
+        CAMERA_DEFAULT_SIZE,
+        CAMERA_DEFAULT_SIZE * screenstate.aspect_ratio
+    );
     // even though we've shown the text will autowrap
     // we should manually split up the lines ourselves.
     // how do we know how many of our faux-pixels wide our text is?
@@ -274,15 +292,10 @@ fn update(
         // the screen is...10 characters tall? how many characters wide?
         // i really just need to write content in update not setup.
         // it is silly to write a lot of logic in setup about writing
-        let lines_vec = chunkify_strings(description.to_string());
+        let lines_vec =
+            chunkify_strings(description.to_string(), aspect_ratio);
         let megastring = buffer_to_monostring(lines_vec);
-        write_to_line(
-            megastring,
-            0,
-            &w,
-            commands,
-            minotaur_assets,
-        );
+        write_to_line(megastring, 0, &w, commands, minotaur_assets);
         blitstate.is_dirty = false;
     }
     if keys.just_pressed(KeyCode::Escape) {
