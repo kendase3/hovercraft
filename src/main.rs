@@ -287,7 +287,8 @@ fn update(
     // we should manually split up the lines ourselves.
     // how do we know how many of our faux-pixels wide our text is?
     // guess and check?
-    let description = "darkness was cheap and scrooge liked it";
+    //let description = "darkness was cheap and scrooge liked it";
+    let description = "dark";
     // we fit 21 characters there (and change)
     // the screen is 171 faux-pixels wide
     // each character is 8.14 faux-pixels
