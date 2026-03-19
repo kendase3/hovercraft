@@ -25,7 +25,7 @@ use std::{fs, io};
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // FIXME(skend): likely wrong. this is from the pre-text2d era when i was using UI coordinates not
 // screen coordinates
-const FAUXPIXELS_PER_CHAR_WIDTH: f32 = 8.14;
+const FAUXPIXELS_PER_CHAR_WIDTH: f32 = 6.25;
 // height of the largest letter
 const FONT_SIZE: f32 = 10.; // what this means is the font will be 10 percent of the screen currently
 
@@ -160,8 +160,9 @@ fn chunkify_strings(input: String, aspect_ratio: f32) -> Vec<String> {
     // FIXME(skend): pass in screen length in chars or
     // compute it based on aspect ratio here
     chars
-        //.chunks(char_width)
-        .chunks(1)
+        .chunks(char_width)
+        //.chunks(100)
+        //.chunks(1)
         .map(|line| line.iter().collect::<String>())
         .collect()
 }
@@ -178,11 +179,13 @@ fn buffer_to_monostring(buffer: Vec<String>) -> String {
 // the screen is ostensibly divided into lines
 fn write_to_line(
     contents: String,
-    line_num: u32,
+    aspect_ratio: f32,
     window: &Window,
     mut commands: Commands,
     minotaur_assets: Res<MinotaurAssets>,
 ) {
+    let vert_offset = 50.;
+    let horiz_offset = -1. * vert_offset * aspect_ratio;
     let font = get_usual_textfont(minotaur_assets.standard_font.clone());
     commands.spawn((
         Text2d::new(contents),
@@ -191,7 +194,8 @@ fn write_to_line(
         TextColor(Color::srgb(1., 1., 1.)),
         // NB(skend): needed to make font look prettier
         // FIXME(skend): pass in aspect ratio to get the x transform amount
-        Transform::from_xyz(0., 50., 0.).with_scale(Vec3::splat(0.1)),
+        Transform::from_xyz(horiz_offset, vert_offset, 0.)
+            .with_scale(Vec3::splat(0.1)),
         NoFrustumCulling,
         TextLayout {
             justify: Justify::Left,
@@ -292,8 +296,7 @@ fn update(
     // we should manually split up the lines ourselves.
     // how do we know how many of our faux-pixels wide our text is?
     // guess and check?
-    //let description = "darkness was cheap and scrooge liked it";
-    let description = "dark";
+    let description = "darkness was cheap and scrooge liked it";
     // we fit 21 characters there (and change)
     // the screen is 171 faux-pixels wide
     // each character is 8.14 faux-pixels
@@ -312,7 +315,7 @@ fn update(
         let lines_vec =
             chunkify_strings(description.to_string(), aspect_ratio);
         let megastring = buffer_to_monostring(lines_vec);
-        write_to_line(megastring, 0, &w, commands, minotaur_assets);
+        write_to_line(megastring, aspect_ratio, &w, commands, minotaur_assets);
         blitstate.is_dirty = false;
     }
     if keys.just_pressed(KeyCode::Escape) {
