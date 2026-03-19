@@ -21,10 +21,9 @@ use std::collections::HashMap;
 use std::{fs, io};
 
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
+// FIXME(skend): likely wrong. this is from the pre-text2d era when i was using UI coordinates not
+// screen coordinates
 const FAUXPIXELS_PER_CHAR_WIDTH: f32 = 8.14;
-// NB(skend): it seems like with my current setup i only get six lines?
-// i will need smaller text i suppose.
-const FAUXPIXELS_PER_CHAR_HEIGHT: f32 = 16.7;
 // height of the largest letter
 const FONT_SIZE: f32 = 10.; // what this means is the font will be 10 percent of the screen currently
 
