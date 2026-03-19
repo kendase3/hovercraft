@@ -135,6 +135,22 @@ fn main() {
         .run();
 }
 
+fn chunkify_strings(input: String) -> Vec<String> {
+    let chars: Vec<char> = input.chars().collect();
+    // FIXME(skend): pass in screen length in chars or
+    // compute it based on aspect ratio here
+    chars.chunks(5).map(|line| line.iter().collect::<String>()).collect()
+}
+
+fn buffer_to_monostring(buffer: Vec<String>) -> String {
+    let mut output = String::from("");
+    for line in buffer {
+        output.push_str(&line);
+        output.push_str("\n");
+    }
+    output
+}
+
 // the screen is ostensibly divided into lines
 fn write_to_line(
     contents: String,
@@ -154,7 +170,8 @@ fn write_to_line(
             justify: Justify::Left,
             // this does not really seem to work
             //linebreak: LineBreak::WordBoundary,
-            linebreak: LineBreak::AnyCharacter,
+            //linebreak: LineBreak::AnyCharacter,
+            linebreak: LineBreak::NoWrap,
         },
         Node {
             align_self: AlignSelf::Start,
@@ -242,7 +259,7 @@ fn update(
     // how do we know how many of our faux-pixels wide our text is?
     // guess and check?
     let description = "darkness was cheap and scrooge liked it";
-    // we fit 21 characters there
+    // we fit 21 characters there (and change)
     // the screen is 171 faux-pixels wide
     // each character is 8.14 faux-pixels
     // so now we want a utility function that will turn one string into an array of strings that
@@ -257,8 +274,10 @@ fn update(
         // the screen is...10 characters tall? how many characters wide?
         // i really just need to write content in update not setup.
         // it is silly to write a lot of logic in setup about writing
+        let lines_vec = chunkify_strings(description.to_string());
+        let megastring = buffer_to_monostring(lines_vec);
         write_to_line(
-            description.to_string(),
+            megastring,
             0,
             &w,
             commands,
