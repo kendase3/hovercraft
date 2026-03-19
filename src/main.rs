@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use bevy::camera::ScalingMode;
+use bevy::camera::visibility::NoFrustumCulling;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::text::FontSmoothing;
@@ -189,7 +190,9 @@ fn write_to_line(
         Anchor::TOP_LEFT,
         TextColor(Color::srgb(1., 1., 1.)),
         // NB(skend): needed to make font look prettier
-        Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.1)),
+        // FIXME(skend): pass in aspect ratio to get the x transform amount
+        Transform::from_xyz(0., 50., 0.).with_scale(Vec3::splat(0.1)),
+        NoFrustumCulling,
         TextLayout {
             justify: Justify::Left,
             linebreak: LineBreak::NoWrap,
@@ -198,8 +201,6 @@ fn write_to_line(
             align_self: AlignSelf::Start,
             ..default()
         },
-        // FIXME(skend): pass in aspect ratio to get the x transform amount
-        //Transform::from_xyz(0., 50., 0.),
         // ostensibly should have a red background, natch?
         //BackgroundColor(Color::srgb(1., 0., 0.,)),
     ));
