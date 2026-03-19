@@ -2,6 +2,8 @@
 
 --- making the initial screen
 
+i think i want to specify a target number of lines to fit in the screen as a constant. and then everything else would be a derived value. during setup i could do a trial blit and see if our test content reaches the target # of lines, then grow or shrink it until we hit the desired size. the aspect ratio is always going to be variable and that's fine. after i do that i can put together a formalized component struct for our line buffer. that will take up all but the very bottom rows of text on the screen. the last line or two will be our actions as described below. and then yeah i think i am in good shape for my game. i could always expand upon it later if i wanted to blit individual characters to x/y coords for some nethack gameplay segments. but i think we're looking good.
+
 we want a backscroll of room descriptions and titles, our actions. but we also want our options as the bottom line at all times. we could do this with ten lines ostensibly. we would have 8 lines as our backbuffer, a space, and then one line for our action options like move (n)orth.
 
 it would require a complete rework, really just a "work" since it's not implemented yet, but it would require implementing the backscroll, allocating characters to their rightful place, etc. i think it should be as simple as take a string % char_width and throw it into the buffer. once it's in the circular buffer we save our buffer offset and print the previous x lines. we can always add complications later.
