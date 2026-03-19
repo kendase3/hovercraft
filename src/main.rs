@@ -133,8 +133,7 @@ fn get_instruction() -> Instruction {
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
-        /*
+        //.add_plugins(DefaultPlugins)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 title: "mino2r".into(),
@@ -145,7 +144,6 @@ fn main() {
             }),
             ..default()
         }))
-        */
         .add_systems(Startup, setup)
         .add_systems(Update, update)
         .run();
@@ -186,7 +184,7 @@ fn write_to_line(
 ) {
     let font = get_usual_textfont(minotaur_assets.standard_font.clone());
     commands.spawn((
-        Text::new(contents),
+        Text2d::new(contents),
         font,
         TextColor(Color::srgb(1., 1., 1.)),
         // NB(skend): needed to make font look prettier
