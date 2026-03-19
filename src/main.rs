@@ -15,12 +15,16 @@
 use bevy::camera::ScalingMode;
 use bevy::prelude::*;
 use bevy::text::FontSmoothing;
+use bevy::window::WindowMode;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::{fs, io};
 
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
 const FAUXPIXELS_PER_CHAR_WIDTH: f32 = 8.14;
+// NB(skend): it seems like with my current setup i only get six lines?
+// i will need smaller text i suppose.
+const FAUXPIXELS_PER_CHAR_HEIGHT: f32 = 16.7;
 // height of the largest letter
 const FONT_SIZE: f32 = 10.; // what this means is the font will be 10 percent of the screen currently
 
@@ -130,6 +134,18 @@ fn get_instruction() -> Instruction {
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        /*
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "mino2r".into(),
+                mode: WindowMode::BorderlessFullscreen(
+                    MonitorSelection::Primary,
+                ),
+                ..default()
+            }),
+            ..default()
+        }))
+        */
         .add_systems(Startup, setup)
         .add_systems(Update, update)
         .run();
@@ -145,7 +161,8 @@ fn chunkify_strings(input: String, aspect_ratio: f32) -> Vec<String> {
     // FIXME(skend): pass in screen length in chars or
     // compute it based on aspect ratio here
     chars
-        .chunks(char_width)
+        //.chunks(char_width)
+        .chunks(1)
         .map(|line| line.iter().collect::<String>())
         .collect()
 }
@@ -176,9 +193,6 @@ fn write_to_line(
         Transform::from_xyz(0., 0., 0.).with_scale(Vec3::splat(0.1)),
         TextLayout {
             justify: Justify::Left,
-            // this does not really seem to work
-            //linebreak: LineBreak::WordBoundary,
-            //linebreak: LineBreak::AnyCharacter,
             linebreak: LineBreak::NoWrap,
         },
         Node {
