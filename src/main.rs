@@ -17,6 +17,7 @@ use bevy::camera::visibility::NoFrustumCulling;
 use bevy::prelude::*;
 use bevy::sprite::Anchor;
 use bevy::text::FontSmoothing;
+use bevy::text::TextLayoutInfo;
 use bevy::window::WindowMode;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -29,6 +30,7 @@ const CAMERA_DEFAULT_SIZE: f32 = 100.;
 // will be downstream values of this value. i want to say the number of lines of text
 // that fit from top to bottom here and it makes it for me.
 const TARGET_LINES: u32 = 10;
+const STARTING_FONT_SIZE: u32 = 10;
 
 // FIXME(skend): likely wrong. this is from the pre-text2d era when i was using UI coordinates not
 // screen coordinates
@@ -86,10 +88,10 @@ struct MinotaurAssets {
     standard_font: Handle<Font>,
 }
 
-fn get_usual_textfont(font: Handle<Font>) -> TextFont {
+fn get_usual_textfont(font: Handle<Font>, font_size: u32) -> TextFont {
     TextFont {
         font: font,
-        font_size: FONT_SIZE * 10.,
+        font_size: font_size as f32 * 10.,
         font_smoothing: FontSmoothing::AntiAliased,
         ..default()
     }
@@ -197,10 +199,11 @@ fn write_to_line(
     window: &Window,
     mut commands: Commands,
     minotaur_assets: Res<MinotaurAssets>,
+    font_size: u32,
 ) {
     let vert_offset = 50.;
     let horiz_offset = -1. * vert_offset * aspect_ratio;
-    let font = get_usual_textfont(minotaur_assets.standard_font.clone());
+    let font = get_usual_textfont(minotaur_assets.standard_font.clone(), font_size);
     commands.spawn((
         Text2d::new(contents),
         font,
@@ -227,7 +230,6 @@ fn setup(
     // font setup part
     let font = asset_server.load("fonts/DejaVuSansMono.ttf");
     // FIXME(skend): the actual font i want is the text_font not the font
-    let text_font = get_usual_textfont(font.clone());
     commands.spawn((
         Camera2d,
         Camera {
@@ -291,6 +293,7 @@ fn update(
     mut screenq: Query<&mut ScreenState>,
     compq: Query<(&Text, &ComputedNode), Changed<ComputedNode>>,
     mut calibq: Query<&mut Calibration>,
+    mut alreadyregretmakingthisq: Query<(&TextLayoutInfo, &Transform)>
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.write(AppExit::Success);
@@ -298,9 +301,24 @@ fn update(
     if keys.just_pressed(KeyCode::KeyW) {
         println!("w pressed!");
     }
+    // begin text calibration section
     let mut calibration = calibq.single_mut().unwrap();
     if calibration.gold_font.is_none() {
-        // begin text calibration section
+        // confusingly, i think we need to start by looking
+        // at the results from the previous iteration
+        // before we draw anything this time
+        if calibration.last_font_size.is_none() {
+            calibration.last_font_size = Some(STARTING_FONT_SIZE);
+            return;
+        }
+        for (layout, transform) in &alreadyregretmakingthisq {
+            let width = layout.size.x;
+            let height = layout.size.y;
+            println!("width = {}, height = {}", width, height);
+            // this works so now i just need to be able to find the screen
+            // width and height
+        }
+
         // we are going to have a text calibration component.
         // we will render the calibration string and we want it
         // to fit within error margins perfectly to our vertical screen
@@ -308,6 +326,14 @@ fn update(
         for i in 0..TARGET_LINES {
             height_test_str.push_str("a\n");
         }
+        let w = windowq.single().unwrap();
+        // for simplicity, let's just pretend w == h for starters
+        // what if we have a very long string
+        let aspect_ratio = w.width() / w.height();
+        // the screen is...10 characters tall? how many characters wide?
+        // i really just need to write content in update not setup.
+        // it is silly to write a lot of logic in setup about writing
+        write_to_line(height_test_str, aspect_ratio, &w, commands, minotaur_assets, calibration.last_font_size.unwrap());
         return;
     }
     // end text calibration section
@@ -344,7 +370,7 @@ fn update(
         let lines_vec =
             chunkify_strings(description.to_string(), aspect_ratio);
         let megastring = buffer_to_monostring(lines_vec);
-        write_to_line(megastring, aspect_ratio, &w, commands, minotaur_assets);
+        write_to_line(megastring, aspect_ratio, &w, commands, minotaur_assets, 10);
         blitstate.is_dirty = false;
     }
 }
