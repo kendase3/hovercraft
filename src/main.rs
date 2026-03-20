@@ -70,6 +70,13 @@ struct BlitState {
 }
 
 #[derive(Component, Default)]
+struct Calibration {
+    gold_font: Option<u32>,
+    last_font_size: Option<u32>,
+    last_height: Option<f32>,
+}
+
+#[derive(Component, Default)]
 struct ScreenState {
     aspect_ratio: f32,
 }
@@ -207,8 +214,6 @@ fn write_to_line(
             justify: Justify::Left,
             linebreak: LineBreak::NoWrap,
         },
-        // ostensibly should have a red background, natch?
-        //BackgroundColor(Color::srgb(1., 0., 0.,)),
     ));
 }
 
@@ -272,6 +277,7 @@ fn setup(
     world.state.player_loc = world.get_start_id();
     // the world needs to be blitted
     commands.spawn((BlitState { is_dirty: true },));
+    commands.spawn((Calibration::default()));
     commands.insert_resource(minotaur_assets);
 }
 
@@ -284,7 +290,22 @@ fn update(
     mut blitq: Query<&mut BlitState>,
     mut screenq: Query<&mut ScreenState>,
     compq: Query<(&Text, &ComputedNode), Changed<ComputedNode>>,
+    mut calibq: Query<&mut Calibration>,
 ) {
+    let mut calibration = calibq.single_mut().unwrap();
+    if calibration.gold_font.is_none() {
+        // begin text calibration section
+        // we are going to have a text calibration component.
+        // we will render the calibration string and we want it
+        // to fit within error margins perfectly to our vertical screen
+        let mut height_test_str = String::from("");
+        for i in 0..TARGET_LINES {
+            height_test_str.push_str("a\n");
+        }
+        return;
+    }
+    // end text calibration section
+
     for (text, cn) in &compq {
         println!("text {} is {} pixels wide", text.0, cn.size.x);
     }
