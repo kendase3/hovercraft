@@ -22,7 +22,14 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::{fs, io};
 
+// the screen is defined as being 100 fauxpixels tall and aspect_ratio times this wide
 const CAMERA_DEFAULT_SIZE: f32 = 100.;
+
+// TODO(skend): my dream is that all the font size, character height and width
+// will be downstream values of this value. i want to say the number of lines of text
+// that fit from top to bottom here and it makes it for me.
+const TARGET_LINES: u32 = 10;
+
 // FIXME(skend): likely wrong. this is from the pre-text2d era when i was using UI coordinates not
 // screen coordinates
 const FAUXPIXELS_PER_CHAR_WIDTH: f32 = 6.25;
@@ -192,18 +199,13 @@ fn write_to_line(
         font,
         Anchor::TOP_LEFT,
         TextColor(Color::srgb(1., 1., 1.)),
-        // NB(skend): needed to make font look prettier
-        // FIXME(skend): pass in aspect ratio to get the x transform amount
+        // NB(skend): scaled up then down to make font look prettier
         Transform::from_xyz(horiz_offset, vert_offset, 0.)
             .with_scale(Vec3::splat(0.1)),
         NoFrustumCulling,
         TextLayout {
             justify: Justify::Left,
             linebreak: LineBreak::NoWrap,
-        },
-        Node {
-            align_self: AlignSelf::Start,
-            ..default()
         },
         // ostensibly should have a red background, natch?
         //BackgroundColor(Color::srgb(1., 0., 0.,)),
