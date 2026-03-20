@@ -287,11 +287,11 @@ fn update(
         println!("text {} is {} pixels wide", text.0, cn.size.x);
     }
     let mut screenstate = screenq.single_mut().unwrap();
-    println!(
-        "the screen is {} faux-pixels tall and {} faux-pixels wide",
-        CAMERA_DEFAULT_SIZE,
-        CAMERA_DEFAULT_SIZE * screenstate.aspect_ratio
-    );
+    //println!(
+    //    "the screen is {} faux-pixels tall and {} faux-pixels wide",
+    //    CAMERA_DEFAULT_SIZE,
+    //    CAMERA_DEFAULT_SIZE * screenstate.aspect_ratio
+    //);
     // even though we've shown the text will autowrap
     // we should manually split up the lines ourselves.
     // how do we know how many of our faux-pixels wide our text is?
