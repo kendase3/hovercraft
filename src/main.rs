@@ -292,6 +292,12 @@ fn update(
     compq: Query<(&Text, &ComputedNode), Changed<ComputedNode>>,
     mut calibq: Query<&mut Calibration>,
 ) {
+    if keys.just_pressed(KeyCode::Escape) {
+        exit.write(AppExit::Success);
+    }
+    if keys.just_pressed(KeyCode::KeyW) {
+        println!("w pressed!");
+    }
     let mut calibration = calibq.single_mut().unwrap();
     if calibration.gold_font.is_none() {
         // begin text calibration section
@@ -340,11 +346,5 @@ fn update(
         let megastring = buffer_to_monostring(lines_vec);
         write_to_line(megastring, aspect_ratio, &w, commands, minotaur_assets);
         blitstate.is_dirty = false;
-    }
-    if keys.just_pressed(KeyCode::Escape) {
-        exit.write(AppExit::Success);
-    }
-    if keys.just_pressed(KeyCode::KeyW) {
-        println!("w pressed!");
     }
 }
