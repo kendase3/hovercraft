@@ -163,6 +163,7 @@ fn main() {
         }))
         .add_systems(Startup, setup)
         .add_systems(Update, update)
+        //.insert_resource(ClearColor(Color::srgb(0., 0., 0.)))
         .run();
 }
 
@@ -418,7 +419,7 @@ fn update(
             &w,
             commands,
             minotaur_assets,
-            10,
+            calibration.gold_font.unwrap(),
         );
         blitstate.is_dirty = false;
     }
