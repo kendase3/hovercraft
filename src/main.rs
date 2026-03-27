@@ -333,7 +333,7 @@ fn update(
             // we want to say something like: we continue if window height is larger
             // and it's larger within one 'line' of text s.t. we could not fit another
             // so if we have 10 lines, it's within 10 percent.
-            let wiggle = 1.0 / TARGET_LINES as f32; // so if ten lines, .1
+            let wiggle = 1.0 / TARGET_LINES as f32 * 1.5; // so if ten lines, .1. then we give it 1.5x because we live in an imperfect world
             // testing if we are too big is easy
             if window_height > height {
                 // if our screen is 1000 pixels tall and our font is 900 pixels tall
