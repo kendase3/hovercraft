@@ -323,6 +323,10 @@ fn update(
                 "window width = {}, window height = {}",
                 window_width, window_height
             );
+            if width == 0. {
+                println!("this was zero probably more often than you wanted!");
+                continue;
+            }
             // this works so now i just need to be able to find the screen
             // width and height
 
@@ -339,10 +343,12 @@ fn update(
                     calibration.gold_font =
                         Some(calibration.last_font_size.unwrap());
                 } else {
+                    println!("growing font");
                     calibration.last_font_size =
                         Some(calibration.last_font_size.unwrap() + 1);
                 }
             } else {
+                println!("shrinking font");
                 calibration.last_font_size =
                     Some(calibration.last_font_size.unwrap() - 1);
             }
