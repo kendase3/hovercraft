@@ -203,7 +203,8 @@ fn write_to_line(
 ) {
     let vert_offset = 50.;
     let horiz_offset = -1. * vert_offset * aspect_ratio;
-    let font = get_usual_textfont(minotaur_assets.standard_font.clone(), font_size);
+    let font =
+        get_usual_textfont(minotaur_assets.standard_font.clone(), font_size);
     commands.spawn((
         Text2d::new(contents),
         font,
@@ -293,7 +294,7 @@ fn update(
     mut screenq: Query<&mut ScreenState>,
     compq: Query<(&Text, &ComputedNode), Changed<ComputedNode>>,
     mut calibq: Query<&mut Calibration>,
-    mut alreadyregretmakingthisq: Query<(&TextLayoutInfo, &Transform)>
+    mut alreadyregretmakingthisq: Query<(&TextLayoutInfo, &Transform)>,
 ) {
     if keys.just_pressed(KeyCode::Escape) {
         exit.write(AppExit::Success);
@@ -311,12 +312,40 @@ fn update(
             calibration.last_font_size = Some(STARTING_FONT_SIZE);
             return;
         }
+        let w = windowq.single().unwrap();
+        let window_width = w.width();
+        let window_height = w.height();
         for (layout, transform) in &alreadyregretmakingthisq {
             let width = layout.size.x;
             let height = layout.size.y;
             println!("width = {}, height = {}", width, height);
+            println!(
+                "window width = {}, window height = {}",
+                window_width, window_height
+            );
             // this works so now i just need to be able to find the screen
             // width and height
+
+            // we want to say something like: we continue if window height is larger
+            // and it's larger within one 'line' of text s.t. we could not fit another
+            // so if we have 10 lines, it's within 10 percent.
+            let wiggle = 1.0 / TARGET_LINES as f32; // so if ten lines, .1
+            // testing if we are too big is easy
+            if window_height > height {
+                // if our screen is 1000 pixels tall and our font is 900 pixels tall
+                let ratio_under = 1. - height as f32 / window_height;
+                if ratio_under <= wiggle {
+                    // we passed
+                    calibration.gold_font =
+                        Some(calibration.last_font_size.unwrap());
+                } else {
+                    calibration.last_font_size =
+                        Some(calibration.last_font_size.unwrap() + 1);
+                }
+            } else {
+                calibration.last_font_size =
+                    Some(calibration.last_font_size.unwrap() - 1);
+            }
         }
 
         // we are going to have a text calibration component.
@@ -333,7 +362,14 @@ fn update(
         // the screen is...10 characters tall? how many characters wide?
         // i really just need to write content in update not setup.
         // it is silly to write a lot of logic in setup about writing
-        write_to_line(height_test_str, aspect_ratio, &w, commands, minotaur_assets, calibration.last_font_size.unwrap());
+        write_to_line(
+            height_test_str,
+            aspect_ratio,
+            &w,
+            commands,
+            minotaur_assets,
+            calibration.last_font_size.unwrap(),
+        );
         return;
     }
     // end text calibration section
@@ -370,7 +406,14 @@ fn update(
         let lines_vec =
             chunkify_strings(description.to_string(), aspect_ratio);
         let megastring = buffer_to_monostring(lines_vec);
-        write_to_line(megastring, aspect_ratio, &w, commands, minotaur_assets, 10);
+        write_to_line(
+            megastring,
+            aspect_ratio,
+            &w,
+            commands,
+            minotaur_assets,
+            10,
+        );
         blitstate.is_dirty = false;
     }
 }
