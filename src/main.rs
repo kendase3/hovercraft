@@ -304,6 +304,9 @@ fn update(
         println!("w pressed!");
     }
     // begin text calibration section
+    // FIXME(skend): i believe we need a force blit or something
+    // my logic below is getting the same value for text size even
+    // after growing or shrinking
     let mut calibration = calibq.single_mut().unwrap();
     if calibration.gold_font.is_none() {
         // confusingly, i think we need to start by looking
