@@ -206,6 +206,8 @@ fn write_to_line(
     let horiz_offset = -1. * vert_offset * aspect_ratio;
     let font =
         get_usual_textfont(minotaur_assets.standard_font.clone(), font_size);
+    // FIXME(skend): i am only supposed to run this once in setup
+    // then query for it later
     commands.spawn((
         Text2d::new(contents),
         font,
