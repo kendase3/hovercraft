@@ -285,6 +285,28 @@ fn setup(
     commands.spawn((BlitState { is_dirty: true },));
     commands.spawn((Calibration::default()));
     commands.insert_resource(minotaur_assets);
+
+    // FIXME(skend): so then i no longer need get_usual_textfont?
+    // this is a rather large reorg.
+    let vert_offset = 50.;
+    let horiz_offset = -1. * vert_offset * aspect_ratio;
+    let font =
+        get_usual_textfont(minotaur_assets.standard_font.clone(), font_size);
+    // we will make the main text block that fills the screen. for starters it will be blank
+    commands.spawn((
+        Text2d::new(contents),
+        font,
+        Anchor::TOP_LEFT,
+        TextColor(Color::srgb(1., 1., 1.)),
+        // NB(skend): scaled up then down to make font look prettier
+        Transform::from_xyz(horiz_offset, vert_offset, 0.)
+            .with_scale(Vec3::splat(0.1)),
+        NoFrustumCulling,
+        TextLayout {
+            justify: Justify::Left,
+            linebreak: LineBreak::NoWrap,
+        },
+    ));
 }
 
 fn update(
