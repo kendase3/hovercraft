@@ -1,0 +1,5 @@
+[unstable]
+min-publish-age = true
+
+[resolver]
+min-publish-age = "3 weeks"
