@@ -1,0 +1,15 @@
+### step 1:
+```
+cat .cargo/config.toml 
+[unstable]
+min-publish-age = true
+
+[registries.crates-io]
+min-publish-age = "3 weeks"
+```
+### step 2:
+in .bashrc: 
+export CARGO_UNSTABLE_MIN_PUBLISH_AGE=true
+
+### step 3:
+switch project to nightly via: `rustup override set nightly`
